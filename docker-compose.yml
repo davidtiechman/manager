@@ -4,8 +4,9 @@ services:
       context: ./manager-service
       dockerfile: Dockerfile
     ports:
-      - "9000:9000"
+      - "${MANAGER_PORT:-9000}:${MANAGER_PORT:-9000}"
     environment:
+      - MANAGER_PORT=${MANAGER_PORT:-9000}
       - REDIS_URL=redis://redis:6379
     depends_on:
       redis:
@@ -30,7 +31,7 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_BASE_URL=http://localhost:9000
+      - VITE_API_BASE_URL=http://localhost:${MANAGER_PORT:-9000}
       - HOST=0.0.0.0
     depends_on:
       - manager
@@ -41,7 +42,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - AGENT_ID=agent-001
-      - MANAGER_URL=http://manager:9000
+      - MANAGER_URL=http://manager:${MANAGER_PORT:-9000}
     depends_on:
       - manager
 
@@ -51,7 +52,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - AGENT_ID=agent-002
-      - MANAGER_URL=http://manager:9000
+      - MANAGER_URL=http://manager:${MANAGER_PORT:-9000}
     depends_on:
       - manager
 
@@ -61,7 +62,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - AGENT_ID=agent-003
-      - MANAGER_URL=http://manager:9000
+      - MANAGER_URL=http://manager:${MANAGER_PORT:-9000}
     depends_on:
       - manager
 
@@ -71,7 +72,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - AGENT_ID=agent-004
-      - MANAGER_URL=http://manager:9000
+      - MANAGER_URL=http://manager:${MANAGER_PORT:-9000}
     depends_on:
       - manager
 
@@ -81,7 +82,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - AGENT_ID=agent-005
-      - MANAGER_URL=http://manager:9000
+      - MANAGER_URL=http://manager:${MANAGER_PORT:-9000}
     depends_on:
       - manager
 

@@ -14,7 +14,7 @@ npm start
 Optional environment variables:
 
 ```bash
-PORT=9000
+MANAGER_PORT=9000
 REDIS_URL=redis://localhost:6379
 ```
 

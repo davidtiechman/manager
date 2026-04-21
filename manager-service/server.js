@@ -1,6 +1,36 @@
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('redis');
+const fs = require('fs');
+const path = require('path');
+
+function loadEnvFile(filePath) {
+    if (!fs.existsSync(filePath)) {
+        return;
+    }
+
+    const content = fs.readFileSync(filePath, 'utf8');
+    for (const line of content.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) {
+            continue;
+        }
+
+        const separatorIndex = trimmed.indexOf('=');
+        if (separatorIndex === -1) {
+            continue;
+        }
+
+        const key = trimmed.slice(0, separatorIndex).trim();
+        const value = trimmed.slice(separatorIndex + 1).trim();
+        if (key && process.env[key] === undefined) {
+            process.env[key] = value;
+        }
+    }
+}
+
+loadEnvFile(path.resolve(__dirname, '..', '.env'));
+loadEnvFile(path.resolve(__dirname, '.env'));
 
 const app = express();
 app.use(cors());
@@ -75,14 +105,15 @@ function createHistoryPoint() {
 
 app.get('/api/ui/agents', async (req, res) => {
     try {
-        const list = [];
-
-        for await (const key of redis.scanIterator({ MATCH: 'agents:*:status' })) {
-            const value = await redis.get(key);
-            if (value) {
-                list.push(JSON.parse(value));
-            }
+        const keys = await redis.keys('agents:*:status');
+        if (keys.length === 0) {
+            return res.json([]);
         }
+
+        const values = await redis.mGet(keys);
+        const list = values
+            .filter(Boolean)
+            .map((value) => JSON.parse(value));
 
         res.json(list);
     } catch (error) {
@@ -161,7 +192,7 @@ app.post('/api/agents/sync', async (req, res) => {
 
 app.get('/health', (req, res) => res.send('ok'));
 
-const port = process.env.PORT || 9000;
+const port = process.env.MANAGER_PORT || 9000;
 redis.connect()
     .then(() => {
         app.listen(port, () => {
