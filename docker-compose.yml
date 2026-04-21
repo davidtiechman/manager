@@ -41,7 +41,7 @@ services:
       context: ./agent-service
       dockerfile: Dockerfile
     environment:
-      - AGENT_ID=agent-001
+      - FIXED_AGENT_ID=agent-001
       - MANAGER_URL=http://manager:${MANAGER_PORT:-9000}
     depends_on:
       - manager
@@ -51,7 +51,7 @@ services:
       context: ./agent-service
       dockerfile: Dockerfile
     environment:
-      - AGENT_ID=agent-002
+      - FIXED_AGENT_ID=agent-002
       - MANAGER_URL=http://manager:${MANAGER_PORT:-9000}
     depends_on:
       - manager
@@ -61,7 +61,7 @@ services:
       context: ./agent-service
       dockerfile: Dockerfile
     environment:
-      - AGENT_ID=agent-003
+      - FIXED_AGENT_ID=agent-003
       - MANAGER_URL=http://manager:${MANAGER_PORT:-9000}
     depends_on:
       - manager
@@ -71,7 +71,7 @@ services:
       context: ./agent-service
       dockerfile: Dockerfile
     environment:
-      - AGENT_ID=agent-004
+      - FIXED_AGENT_ID=agent-004
       - MANAGER_URL=http://manager:${MANAGER_PORT:-9000}
     depends_on:
       - manager
@@ -81,7 +81,7 @@ services:
       context: ./agent-service
       dockerfile: Dockerfile
     environment:
-      - AGENT_ID=agent-005
+      - FIXED_AGENT_ID=agent-005
       - MANAGER_URL=http://manager:${MANAGER_PORT:-9000}
     depends_on:
       - manager
