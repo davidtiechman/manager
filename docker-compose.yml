@@ -1,0 +1,89 @@
+services:
+  manager:
+    build:
+      context: ./manager-service
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - manager-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ui:
+    build:
+      context: ./manager-ui
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:9000
+      - HOST=0.0.0.0
+    depends_on:
+      - manager
+
+  agent-001:
+    build:
+      context: ./agent-service
+      dockerfile: Dockerfile
+    environment:
+      - AGENT_ID=agent-001
+      - MANAGER_URL=http://manager:9000
+    depends_on:
+      - manager
+
+  agent-002:
+    build:
+      context: ./agent-service
+      dockerfile: Dockerfile
+    environment:
+      - AGENT_ID=agent-002
+      - MANAGER_URL=http://manager:9000
+    depends_on:
+      - manager
+
+  agent-003:
+    build:
+      context: ./agent-service
+      dockerfile: Dockerfile
+    environment:
+      - AGENT_ID=agent-003
+      - MANAGER_URL=http://manager:9000
+    depends_on:
+      - manager
+
+  agent-004:
+    build:
+      context: ./agent-service
+      dockerfile: Dockerfile
+    environment:
+      - AGENT_ID=agent-004
+      - MANAGER_URL=http://manager:9000
+    depends_on:
+      - manager
+
+  agent-005:
+    build:
+      context: ./agent-service
+      dockerfile: Dockerfile
+    environment:
+      - AGENT_ID=agent-005
+      - MANAGER_URL=http://manager:9000
+    depends_on:
+      - manager
+
+volumes:
+  manager-redis-data:

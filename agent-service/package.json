@@ -1,0 +1,9 @@
+{
+    "name": "agent-service",
+    "private": true,
+    "version": "1.0.0",
+    "main": "agent.js",
+    "scripts": {
+        "start": "node agent.js"
+    }
+}
