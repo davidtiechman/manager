@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { AgentStatus } from '../types';
-import Details from "../components/Details";
+import Details from '../components/Details';
 import { ApiService } from '../api';
 import TankIcon from '../components/TankIcon';
+
+type ViewMode = 'icon' | 'list';
 
 export default function HomePage() {
   const [agents, setAgents] = useState<AgentStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState<AgentStatus | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('icon');
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -49,27 +52,50 @@ export default function HomePage() {
     <div className="page">
       <div className="page-header">
         <h1>ניטור סוכנים בזמן אמת</h1>
-        <p className="muted">לחץ על אייקון כדי לראות פרטים</p>
+        <p className="muted">
+          {viewMode === 'icon'
+            ? 'לחץ על אייקון כדי לראות פרטים'
+            : 'לחץ על שורה כדי לראות פרטים'}
+        </p>
+        <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
+          <button
+            type="button"
+            className={`view-toggle-button ${viewMode === 'icon' ? 'active' : ''}`}
+            onClick={() => setViewMode('icon')}
+          >
+            אייקונים
+          </button>
+          <button
+            type="button"
+            className={`view-toggle-button ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => setViewMode('list')}
+          >
+            רשימה
+          </button>
+        </div>
       </div>
 
-      <div className="agents-grid">
+      <div className={`agents-grid ${viewMode === 'list' ? 'agents-list' : ''}`}>
         {agents.map((agent) => (
           <div
             key={agent.id}
             className={`agent-tile ${selectedAgent?.id === agent.id ? 'selected' : ''}`}
           >
             <button
-              className={`agent-card ${agent.status}`}
+              type="button"
+              className={`agent-card ${agent.status} ${viewMode === 'list' ? 'list-view' : ''}`}
               onClick={() => setSelectedAgent(agent)}
             >
               <div className="tank-icon">
                 <TankIcon status={agent.status} />
               </div>
-              <div className="agent-label">{getAgentLabel(agent)}</div>
-              <div className="agent-info">
-                <div className="info-item">יחידה: {agent.unit}</div>
-                <div className="info-item">קוד יחידה: {agent.unit_code}</div>
-                <div className="info-item">ציד ID: {agent.zayad_id}</div>
+              <div className="agent-content">
+                <div className="agent-label">{getAgentLabel(agent)}</div>
+                <div className="agent-info">
+                  <div className="info-item">יחידה: {agent.unit}</div>
+                  <div className="info-item">קוד יחידה: {agent.unit_code}</div>
+                  <div className="info-item">ציד ID: {agent.zayad_id}</div>
+                </div>
               </div>
             </button>
 

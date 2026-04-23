@@ -6,6 +6,31 @@
   margin-bottom: 20px;
 }
 
+.view-toggle {
+  display: inline-flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+
+.view-toggle-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  background: transparent;
+  color: #334155;
+  font: inherit;
+  font-weight: 600;
+}
+
+.view-toggle-button.active {
+  background: #0f172a;
+  color: #fff;
+}
+
 .muted {
   color: #777;
 }
@@ -14,6 +39,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 16px;
+}
+
+.agents-list {
+  display: flex;
+  flex-direction: column;
 }
 
 .agent-tile {
@@ -37,6 +67,13 @@
   text-align: center;
 }
 
+.agent-card.list-view {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+}
+
 .agent-card.online {
   border: 2px solid #22c55e;
 }
@@ -52,6 +89,15 @@
 .tank-icon {
   font-size: 32px;
   margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.list-view .tank-icon {
+  margin-bottom: 0;
+}
+
+.agent-content {
+  flex: 1;
 }
 
 .agent-label {
@@ -62,6 +108,12 @@
 .agent-info {
   font-size: 12px;
   text-align: left;
+}
+
+.list-view .agent-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 6px 12px;
 }
 
 .info-item {
@@ -186,5 +238,14 @@
 @media (max-width: 520px) {
   .agent-tile.selected {
     grid-column: span 1;
+  }
+
+  .agent-card.list-view {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .list-view .agent-info {
+    grid-template-columns: 1fr;
   }
 }
