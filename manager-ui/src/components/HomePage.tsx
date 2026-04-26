@@ -75,38 +75,45 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className={`agents-grid ${viewMode === 'list' ? 'agents-list' : ''}`}>
-        {agents.map((agent) => (
-          <div
-            key={agent.id}
-            className={`agent-tile ${selectedAgent?.id === agent.id ? 'selected' : ''}`}
-          >
-            <button
-              type="button"
-              className={`agent-card ${agent.status} ${viewMode === 'list' ? 'list-view' : ''}`}
-              onClick={() => setSelectedAgent(agent)}
-            >
-              <div className="tank-icon">
-                <TankIcon status={agent.status} />
-              </div>
-              <div className="agent-content">
-                <div className="agent-label">{getAgentLabel(agent)}</div>
-                <div className="agent-info">
-                  <div className="info-item">יחידה: {agent.unit}</div>
-                  <div className="info-item">קוד יחידה: {agent.unit_code}</div>
-                  <div className="info-item">ציד ID: {agent.zayad_id}</div>
+      <div className="home-layout">
+        <aside className="agents-pane">
+          <div className={`agents-grid ${viewMode === 'list' ? 'agents-list' : ''}`}>
+            {agents.map((agent) => (
+              <button
+                key={agent.id}
+                type="button"
+                className={`agent-card ${agent.status} ${viewMode === 'list' ? 'list-view' : ''} ${selectedAgent?.id === agent.id ? 'selected' : ''}`}
+                onClick={() => setSelectedAgent(agent)}
+              >
+                <div className="tank-icon">
+                  <TankIcon status={agent.status} />
                 </div>
-              </div>
-            </button>
-
-            {selectedAgent?.id === agent.id && (
-              <Details
-                agent={selectedAgent}
-                onClose={() => setSelectedAgent(null)}
-              />
-            )}
+                <div className="agent-content">
+                  <div className="agent-label">{getAgentLabel(agent)}</div>
+                  <div className="agent-info">
+                    <div className="info-item">יחידה: {agent.unit}</div>
+                    <div className="info-item">קוד יחידה: {agent.unit_code}</div>
+                    <div className="info-item">ציד ID: {agent.zayad_id}</div>
+                  </div>
+                </div>
+              </button>
+            ))}
           </div>
-        ))}
+        </aside>
+
+        <main className="details-pane">
+          {selectedAgent ? (
+            <Details
+              agent={selectedAgent}
+              onClose={() => setSelectedAgent(null)}
+            />
+          ) : (
+            <div className="empty-details">
+              <h2>Agent Details</h2>
+              <p className="muted">Select an agent to view details.</p>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );
