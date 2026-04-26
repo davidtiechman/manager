@@ -6,14 +6,14 @@ This repository contains the Docker Compose workspace for the agent manager plat
 
 - `manager-service` - Express backend on `http://localhost:9000`. It receives agent sync requests, stores the latest agent state, history, and configuration in Redis, and exposes API endpoints for the UI.
 - `manager-ui` - React Vite UI on `http://localhost:5173`. It displays the agents returned by the manager service.
-- `agent-service` - Simulated agent service. Each agent periodically sends a sync payload to the manager and receives its configuration in the same response.
+- `agent-service` - Simulated agent service. In Docker it runs as a single process and periodically sends sync payloads for random agents unless `FIXED_AGENT_ID` is set.
 
 ## Runtime Services
 
 - `manager`
 - `redis`
 - `ui`
-- `agent-001`..`agent-005`
+- `agent`
 
 ## Run All Services
 
