@@ -50,6 +50,7 @@
 .agents-pane {
   max-height: calc(100vh - 170px);
   overflow: auto;
+  padding: 6px;
 }
 
 .agents-grid {
