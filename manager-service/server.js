@@ -37,14 +37,15 @@ loadEnvFile(path.resolve(__dirname, '..', '.env'));
 loadEnvFile(path.resolve(__dirname, '.env'));
 
 const managerUiUrl = process.env.MANAGER_UI_URL || 'http://localhost:5173';
+const allowedOrigins = managerUiUrl.split(',').map((origin) => origin.trim()).filter(Boolean);
 const io = new Server(server, {
     cors: {
-        origin: managerUiUrl,
+        origin: allowedOrigins,
         methods: ['GET', 'POST', 'PUT'],
     },
 });
 
-app.use(cors());
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 const redis = createClient({
@@ -76,6 +77,18 @@ function defaultConfig(agentId) {
 
 async function saveAgentSync(agent) {
     await redis.set(agentStatusKey(agent.id), JSON.stringify(agent));
+}
+
+async function loadAgents() {
+    const keys = await redis.keys('agents:*:status');
+    if (keys.length === 0) {
+        return [];
+    }
+
+    const values = await redis.mGet(keys);
+    return values
+        .filter(Boolean)
+        .map((value) => JSON.parse(value));
 }
 
 async function getAgentConfig(agentId) {
@@ -116,17 +129,7 @@ function createHistoryPoint() {
 
 app.get('/api/ui/agents', async (req, res) => {
     try {
-        const keys = await redis.keys('agents:*:status');
-        if (keys.length === 0) {
-            return res.json([]);
-        }
-
-        const values = await redis.mGet(keys);
-        const list = values
-            .filter(Boolean)
-            .map((value) => JSON.parse(value));
-
-        res.json(list);
+        res.json(await loadAgents());
     } catch (error) {
         console.error('Failed to load agents from Redis:', error);
         res.status(500).json({ error: 'Failed to load agents' });
@@ -194,13 +197,7 @@ app.post('/api/agents/sync', async (req, res) => {
         await redis.lPush(agentHistoryKey(payload.id), JSON.stringify(createHistoryPoint()));
         await redis.lTrim(agentHistoryKey(payload.id), 0, 49);
         const config = await getAgentConfig(payload.id);
-        const keys = await redis.keys('agents:*:status');
-        const values = await redis.mGet(keys);
-        const agents = values
-            .filter(Boolean)
-            .map((value) => JSON.parse(value));
-
-        io.emit('agents:snapshot', agents);
+        io.emit('agents:snapshot', await loadAgents());
         res.json({ ok: true, config });
     } catch (error) {
         console.error('Failed to save agent sync:', error);
@@ -209,6 +206,14 @@ app.post('/api/agents/sync', async (req, res) => {
 });
 
 app.get('/health', (req, res) => res.send('ok'));
+
+io.on('connection', async (socket) => {
+    try {
+        socket.emit('agents:snapshot', await loadAgents());
+    } catch (error) {
+        console.error('Failed to send initial agents snapshot:', error);
+    }
+});
 
 const port = process.env.MANAGER_PORT || 9000;
 async function startServer() {

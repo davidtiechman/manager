@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { AgentStatus } from '../types';
+import {socket} from '../socket';
 import Details from './AgentDetails';
 import { ApiService } from '../api';
 import TankIcon from '../components/TankIcon';
@@ -26,11 +27,26 @@ export default function HomePage() {
       }
     };
 
-    fetchAgents();
+    const handleAgentsSnapshot = (updatedAgents: AgentStatus[]) => {
+      setAgents(updatedAgents);
+      setSelectedAgent((current) => {
+        if (!current) {
+          return current;
+        }
 
-    // Refresh data every 30 seconds
+        return updatedAgents.find((agent) => agent.id === current.id) || current;
+      });
+      setLoading(false);
+    };
+
+    fetchAgents();
+    socket.on('agents:snapshot', handleAgentsSnapshot);
     const interval = setInterval(fetchAgents, 30000);
-    return () => clearInterval(interval);
+
+    return () => {
+      socket.off('agents:snapshot', handleAgentsSnapshot);
+      clearInterval(interval);
+    }
   }, []);
 
   function getAgentLabel(agent: AgentStatus) {
