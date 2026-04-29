@@ -41,12 +41,10 @@ export default function HomePage() {
 
     fetchAgents();
     socket.on('agents:snapshot', handleAgentsSnapshot);
-    const interval = setInterval(fetchAgents, 30000);
 
     return () => {
       socket.off('agents:snapshot', handleAgentsSnapshot);
-      clearInterval(interval);
-    }
+    };
   }, []);
 
   function getAgentLabel(agent: AgentStatus) {
