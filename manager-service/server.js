@@ -2,7 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const { createClient } = require('redis');
 const fs = require('fs');
+const app = express();
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
+const server = http.createServer(app);
 
 function loadEnvFile(filePath) {
     if (!fs.existsSync(filePath)) {
@@ -32,7 +36,14 @@ function loadEnvFile(filePath) {
 loadEnvFile(path.resolve(__dirname, '..', '.env'));
 loadEnvFile(path.resolve(__dirname, '.env'));
 
-const app = express();
+const managerUiUrl = process.env.MANAGER_UI_URL || 'http://localhost:5173';
+const io = new Server(server, {
+    cors: {
+        origin: managerUiUrl,
+        methods: ['GET', 'POST', 'PUT'],
+    },
+});
+
 app.use(cors());
 app.use(express.json());
 
@@ -183,6 +194,13 @@ app.post('/api/agents/sync', async (req, res) => {
         await redis.lPush(agentHistoryKey(payload.id), JSON.stringify(createHistoryPoint()));
         await redis.lTrim(agentHistoryKey(payload.id), 0, 49);
         const config = await getAgentConfig(payload.id);
+        const keys = await redis.keys('agents:*:status');
+        const values = await redis.mGet(keys);
+        const agents = values
+            .filter(Boolean)
+            .map((value) => JSON.parse(value));
+
+        io.emit('agents:snapshot', agents);
         res.json({ ok: true, config });
     } catch (error) {
         console.error('Failed to save agent sync:', error);
@@ -193,13 +211,16 @@ app.post('/api/agents/sync', async (req, res) => {
 app.get('/health', (req, res) => res.send('ok'));
 
 const port = process.env.MANAGER_PORT || 9000;
-redis.connect()
-    .then(() => {
-        app.listen(port, () => {
+async function startServer() {
+    try {
+        await redis.connect();
+        server.listen(port, () => {
             console.log(`Manager service listening on port ${port}`);
         });
-    })
-    .catch((error) => {
+    } catch (error) {
         console.error('Failed to connect to Redis:', error);
         process.exit(1);
-    });
+    }
+}
+
+startServer();
