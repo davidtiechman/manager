@@ -140,7 +140,7 @@
   border-radius: 12px;
   background: #f8fafc;
   border: 1px solid #ddd;
-  max-height: 70vh;
+  /* max-height: 70vh; */
   overflow: auto;
 }
 
@@ -158,10 +158,35 @@
 }
 
 .details-header {
+  position: relative;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   margin-bottom: 16px;
+}
+.details-header button {
+  position: absolute;
+  right: 24px;
+}
+.details-tables-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.details-section {
+  padding: 14px;
+  border: 3px solid #94a3b8;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.details-section h3 {
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #cbd5e1;
+  color: #0f172a;
+  font-size: 16px;
 }
 
 .details-table {
@@ -280,6 +305,10 @@
   }
 
   .list-view .agent-info {
+    grid-template-columns: 1fr;
+  }
+
+  .details-tables-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -105,8 +105,9 @@ export default function HomePage() {
                 <div className="agent-content">
                   <div className="agent-label">{getAgentLabel(agent)}</div>
                   <div className="agent-info">
+                    <div className='info-item'>שם סוכן:{agent.call_sign}</div>
                     <div className="info-item">יחידה: {agent.unit}</div>
-                    <div className="info-item">קוד יחידה: {agent.unit_code}</div>
+                    <div className="info-item">פלטפורמה ID: {agent.platformId}</div>
                     <div className="info-item">ציד ID: {agent.zayad_id}</div>
                   </div>
                 </div>
