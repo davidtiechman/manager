@@ -48,6 +48,7 @@ const statuses = ['online', 'warning', 'offline'];
 const linkTypes = ['satcom', 'lte', 'rf'];
 const schedulerModes = ['auto', 'manual'];
 const defaultIntervalMs = Number(process.env.SYNC_INTERVAL_MS || '15000');
+const serviceStartedAt = new Date();
 const defaultConfig = {
     schedulerMode: 'auto',
     selectedLink: 'satcom',
@@ -99,6 +100,10 @@ function createPayload() {
     const linkType = configuredLink || linkTypes[randomInt(0, linkTypes.length - 1)];
     const status = getStatus();
     const linkAvailable = status !== 'offline';
+    const messagesInQueue = randomInt(0, 30);
+    const nextDeliveryTime = new Date(now.getTime() + randomInt(5000, 20000)).toISOString();
+    const schedulerMode = agentConfig.schedulerMode || schedulerModes[randomInt(0, schedulerModes.length - 1)];
+    const createdMinutes = Math.floor((now.getTime() - serviceStartedAt.getTime()) / 60000);
 
     return {
         id: identity.agentId,
@@ -110,7 +115,7 @@ function createPayload() {
         call_sign: identity.callSign,
         platformId: identity.platformId,
         platformName: identity.platformName,
-        messagesInQueue: randomInt(0, 30),
+        messagesInQueue,
         linkType,
         linkAvailable,
         linkQuality: randomFloat(0.5, 1.0),
@@ -118,10 +123,32 @@ function createPayload() {
         reliability: randomFloat(0.5, 1.0),
         linkTimestamp: now.toISOString(),
         lastSeen: now.toISOString(),
-        nextDeliveryTime: new Date(now.getTime() + randomInt(5000, 20000)).toISOString(),
+        nextDeliveryTime,
         serverLut: now.toISOString(),
-        schedulerMode: agentConfig.schedulerMode || schedulerModes[randomInt(0, schedulerModes.length - 1)],
+        schedulerMode,
         config: agentConfig,
+
+        session_time: Math.floor(process.uptime()),
+        scheduler_mode: schedulerMode,
+        messages_in_queue: messagesInQueue,
+        last_delivery_time: now.toISOString(),
+        geo_data: process.env.GEO_DATA || '',
+        server_id: process.env.SERVER_ID || managerUrl,
+
+        platform_id_unit_code: `${identity.platformId}-${identity.unitCode}`,
+        platform_id: identity.platformId,
+        platform: identity.platformName,
+        created_id: identity.agentId,
+
+        created_min: createdMinutes,
+        scheduler_type: schedulerMode,
+        interval_ms: Number(agentConfig.intervalMs || defaultIntervalMs),
+        max_retries: Number(agentConfig.maxRetries || defaultConfig.maxRetries),
+        sync_tries_on: Number(agentConfig.maxRetries || defaultConfig.maxRetries) > 0,
+        base_url: agentConfig.sparkProxyUrl || '',
+        batch_size: Number(agentConfig.batchSize || defaultConfig.batchSize),
+        is_manual_mode: Boolean(agentConfig.isManualMode),
+        created_at: serviceStartedAt.toISOString(),
     };
 }
 
@@ -149,14 +176,17 @@ async function sendSync() {
             });
         }
         console.log(`Agent ${payload.id} synced`, result);
+        return Number(result.config?.intervalMs || payload.interval_ms || defaultIntervalMs);
     } catch (error) {
         console.error(`Agent ${payload.id} error sending sync:`, error);
     }
+
+    return Number(payload.interval_ms || defaultIntervalMs);
 }
 
 async function runLoop() {
-    await sendSync();
-    setTimeout(runLoop, defaultIntervalMs);
+    const nextIntervalMs = await sendSync();
+    setTimeout(runLoop, nextIntervalMs);
 }
 
 console.log(`Agent service starting. Manager: ${managerUrl}. Sync interval: ${defaultIntervalMs}ms`);
