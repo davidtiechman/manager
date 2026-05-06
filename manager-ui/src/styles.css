@@ -192,11 +192,14 @@
 .details-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .details-table td {
+  width: 50%;
   border: 1px solid #ddd;
   padding: 10px;
+  overflow-wrap: anywhere;
 }
 
 .config-panel {
