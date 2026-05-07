@@ -4,6 +4,7 @@ import {socket} from '../socket';
 import Details from './AgentDetails';
 import { ApiService } from '../api';
 import TankIcon from '../components/TankIcon';
+import AgentDetails from './AgentDetails';
 
 type ViewMode = 'icon' | 'list';
 

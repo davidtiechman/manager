@@ -1,4 +1,4 @@
-import type { AgentStatus } from '../types';
+import type { AgentStatus ,AgentConfig} from '../types';
 import ConfigurationTable from './agent-details/ConfigurationTable';
 import LinkQualityTable from './agent-details/LinkQualityTable';
 import PlatformTable from './agent-details/PlatformTable';

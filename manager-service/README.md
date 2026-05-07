@@ -25,3 +25,5 @@ REDIS_URL=redis://localhost:6379
 - `GET /api/ui/agents/:id/history` returns agent history.
 - `GET /api/ui/agents/:id/config` reads configuration for the UI.
 - `PUT /api/ui/agents/:id/config` updates configuration from the UI.
+- `GET /api/agents/:id/config` returns configuration for an agent.
+- `PUT /api/agents/:id/config` updates configuration for an agent.

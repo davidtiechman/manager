@@ -1,28 +1,78 @@
 import type { AgentStatus } from '../../types';
+import {useEffect, useState } from 'react';
 import { formatOptionalDate } from './dateFormat';
 
-interface Props {
-  agent: AgentStatus;
-}
+const MANAGER_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
 
-export default function ConfigurationTable({ agent }: Props) {
+export default function ConfigurationTable({ agent }: { agent: AgentStatus }) {
+  const [configuration, setConfiguration] = useState(agent);
+  const [isEdit, setIsEdit] = useState(false);
+  const [message, setMessage] = useState('');
+  // const [isSaving, setIsSaving] = useState(false);
+  
+  useEffect(() => {
+    setConfiguration(agent);
+  }, [agent]);
+
+  const updateConfig = (
+  field: keyof AgentStatus, 
+  value: any
+  ) => {
+  setConfiguration((prev) => ({
+    ...prev,
+    [field]: value,
+  }));
+  setIsEdit(true);
+  };
+
+  const handleSave = async () => {
+  try {
+    const response = await fetch(`${MANAGER_URL}/${agent.id}/config`, 
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          created_min: configuration.created_min,
+          scheduler_type: configuration.scheduler_type,
+          interval_ms: configuration.interval_ms,
+          max_retries: configuration.max_retries,
+          sync_tries_on: configuration.sync_tries_on,
+          base_url: configuration.base_url,
+          batch_size: configuration.batch_size,
+          is_manual_mode: configuration.is_manual_mode,
+        }),
+      }
+    );
+    if (!response.ok) {
+      throw new Error('Failed to save configuration');
+    }
+
+    const updatedConfig = await response.json();
+
+    setConfiguration(updatedConfig);
+    setIsEdit(false);
+      setMessage('Configuration saved successfully');
+  }
+  catch (error) {
+      console.error('Error saving configuration:', error);
+      setMessage('Failed to save configuration');
+  }
+  };
   return (
     <section className="details-section">
       <h3>Configuration</h3>
       <table className="details-table">
-        <tbody>
-          <tr><td>created min</td><td>{agent.created_min}</td></tr>
-          <tr><td>scheduler type</td><td>{agent.scheduler_type}</td></tr>
-          <tr><td>scheduler mode</td><td>{agent.scheduler_mode}</td></tr>
-          <tr><td>interval ms</td><td>{agent.interval_ms}</td></tr>
-          <tr><td>max retries</td><td>{agent.max_retries}</td></tr>
-          <tr><td>sync tries on</td><td>{String(agent.sync_tries_on ?? '')}</td></tr>
-          <tr><td>base url</td><td>{agent.base_url}</td></tr>
-          <tr><td>batch size</td><td>{agent.batch_size}</td></tr>
-          <tr><td>is manual mode</td><td>{String(agent.is_manual_mode ?? '')}</td></tr>
-          <tr><td>created id</td><td>{formatOptionalDate(agent.created_at)}</td></tr>
+      <tbody>
+      <tr><td>created min</td><td><input
+      value={configuration.created_min || ''}
+        onChange={(e) => {return updateConfig('created_min', e.target.value)}}
+      /></td></tr>
         </tbody>
-      </table>
+       </table>
+       <button onClick={handleSave} disabled={!isEdit}>Save</button>
+       <p>{message}</p>
     </section>
   );
 }

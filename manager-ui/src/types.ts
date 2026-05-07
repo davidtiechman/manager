@@ -47,16 +47,15 @@ export interface AgentStatus {
 }
 
 export interface AgentConfig {
-  agentId?: string;
-  schedulerMode: string;
-  selectedLink: string;
-  intervalMs: number;
-  maxRetries: number;
-  sparkProxyUrl: string;
-  token: string;
-  batchSize: number;
-  isManualMode: boolean;
-  updatedAt?: string;
+    created_min?: number;
+  scheduler_type?: string;
+  interval_ms?: number;
+  max_retries?: number;
+  sync_tries_on?: boolean;
+  base_url?: string;
+  batch_size?: number;
+  is_manual_mode?: boolean;
+  created_at?: DateValue;
 }
 
 export interface HistoryPoint {

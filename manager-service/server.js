@@ -118,6 +118,16 @@ async function saveAgentConfig(agentId, config) {
     return nextConfig;
 }
 
+async function updateAgentConfig(req, res) {
+    try {
+        const config = await saveAgentConfig(req.params.id, req.body || {});
+        res.json(config);
+    } catch (error) {
+        console.error('Failed to save agent config:', error);
+        res.status(500).json({ error: 'Failed to save config' });
+    }
+}
+
 function createHistoryPoint() {
     const now = new Date();
     return {
@@ -157,15 +167,7 @@ app.get('/api/ui/agents/:id/config', async (req, res) => {
     }
 });
 
-app.put('/api/ui/agents/:id/config', async (req, res) => {
-    try {
-        const config = await saveAgentConfig(req.params.id, req.body || {});
-        res.json(config);
-    } catch (error) {
-        console.error('Failed to save agent config:', error);
-        res.status(500).json({ error: 'Failed to save config' });
-    }
-});
+app.put('/api/ui/agents/:id/config', updateAgentConfig);
 
 app.get('/api/agents/:id/config', async (req, res) => {
     try {
@@ -176,6 +178,8 @@ app.get('/api/agents/:id/config', async (req, res) => {
         res.status(500).json({ error: 'Failed to load config' });
     }
 });
+
+app.put('/api/agents/:id/config', updateAgentConfig);
 
 app.post('/api/agents/sync', async (req, res) => {
     const payload = req.body;
