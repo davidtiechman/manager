@@ -62,16 +62,16 @@ const agentConfigKey = (agentId) => `agents:${agentId}:config`;
 
 function defaultConfig(agentId) {
     return {
-        agentId,
-        schedulerMode: 'auto',
-        selectedLink: 'satcom',
-        intervalMs: 15000,
-        maxRetries: 3,
-        sparkProxyUrl: '',
+        agent_id: agentId,
+        scheduler_mode: 'auto',
+        selected_link: 1,
+        interval_ms: 15000,
+        max_retries: 3,
+        spark_proxy_url: '',
         token: '',
-        batchSize: 10,
-        isManualMode: false,
-        updatedAt: new Date().toISOString(),
+        batch_size: 10,
+        is_manual_mode: false,
+        created_at: new Date().toISOString(),
     };
 }
 
@@ -88,7 +88,18 @@ async function loadAgents() {
     const values = await redis.mGet(keys);
     return values
         .filter(Boolean)
-        .map((value) => JSON.parse(value));
+        .map((value) => {
+            const agent = JSON.parse(value);
+            return {
+                ...agent,
+                agent_id: agent.agent_id || agent.id,
+                scheduler_mode: agent.scheduler_mode || agent.schedulerMode,
+                selected_link: Number(agent.selected_link ?? agent.scheduler_link ?? 0),
+                messages_in_queue: Number(agent.messages_in_queue ?? agent.messagesInQueue ?? 0),
+                platform_id: agent.platform_id || agent.platformId,
+                platform: agent.platform || agent.platformName,
+            };
+        });
 }
 
 async function getAgentConfig(agentId) {
@@ -106,12 +117,15 @@ async function saveAgentConfig(agentId, config) {
     const nextConfig = {
         ...defaultConfig(agentId),
         ...config,
-        agentId,
-        intervalMs: Number(config.intervalMs || 15000),
-        maxRetries: Number(config.maxRetries || 3),
-        batchSize: Number(config.batchSize || 10),
-        isManualMode: Boolean(config.isManualMode),
-        updatedAt: new Date().toISOString(),
+        agent_id: agentId,
+        scheduler_mode: config.scheduler_mode || config.schedulerMode || 'auto',
+        selected_link: Number(config.selected_link ?? config.scheduler_link ?? 1),
+        interval_ms: Number(config.interval_ms ?? config.intervalMs ?? 15000),
+        max_retries: Number(config.max_retries ?? config.maxRetries ?? 3),
+        spark_proxy_url: config.spark_proxy_url ?? config.sparkProxyUrl ?? '',
+        batch_size: Number(config.batch_size ?? config.batchSize ?? 10),
+        is_manual_mode: Boolean(config.is_manual_mode ?? config.isManualMode),
+        created_at: config.created_at || new Date().toISOString(),
     };
 
     await redis.set(agentConfigKey(agentId), JSON.stringify(nextConfig));
@@ -190,6 +204,12 @@ app.post('/api/agents/sync', async (req, res) => {
     const now = new Date().toISOString();
     const agent = {
         ...payload,
+        agent_id: payload.agent_id || payload.id,
+        scheduler_mode: payload.scheduler_mode || payload.schedulerMode,
+        selected_link: Number(payload.selected_link ?? payload.scheduler_link ?? 0),
+        messages_in_queue: Number(payload.messages_in_queue ?? payload.messagesInQueue ?? 0),
+        platform_id: payload.platform_id || payload.platformId,
+        platform: payload.platform || payload.platformName,
         lastSeen: now,
         serverLut: payload.serverLut || now,
         nextDeliveryTime: payload.nextDeliveryTime || now,

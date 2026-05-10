@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import type { AgentStatus } from '../types';
 import {socket} from '../socket';
 import Details from './AgentDetails';
-import { ApiService } from '../api';
+import { ApiService, normalizeAgentStatus } from '../api';
 import TankIcon from '../components/TankIcon';
-import AgentDetails from './AgentDetails';
 
 type ViewMode = 'icon' | 'list';
 
@@ -29,13 +28,14 @@ export default function HomePage() {
     };
 
     const handleAgentsSnapshot = (updatedAgents: AgentStatus[]) => {
-      setAgents(updatedAgents);
+      const normalizedAgents = updatedAgents.map(normalizeAgentStatus);
+      setAgents(normalizedAgents);
       setSelectedAgent((current) => {
         if (!current) {
           return current;
         }
 
-        return updatedAgents.find((agent) => agent.id === current.id) || current;
+        return normalizedAgents.find((agent) => agent.id === current.id) || current;
       });
       setLoading(false);
     };
@@ -120,7 +120,7 @@ export default function HomePage() {
         <main className="details-pane">
           {selectedAgent ? (
             <Details
-              agent={selectedAgent}
+              agentID={selectedAgent}
               onClose={() => setSelectedAgent(null)}
             />
           ) : (

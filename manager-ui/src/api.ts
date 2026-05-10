@@ -1,4 +1,4 @@
-import type { AgentConfig, AgentStatus } from './types';
+import type { AgentStatus, ConfigurationTableData } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
 
@@ -7,7 +7,7 @@ const MOCK_AGENTS: AgentStatus[] = [
         id: 'ag-101',
         status: 'online',
         schedulerMode: 'auto',
-        selectedLink: 'satcom',
+        selected_link: 1,
         unit: 'North Command',
         unit_code: 'N-001',
         zayad_id: 'Z-101',
@@ -24,12 +24,13 @@ const MOCK_AGENTS: AgentStatus[] = [
         lastSeen: new Date().toISOString(),
         nextDeliveryTime: new Date().toISOString(),
         serverLut: new Date().toISOString(),
+        selectedLink: 0
     },
     {
         id: 'ag-204',
         status: 'warning',
         schedulerMode: 'manual',
-        selectedLink: 'lte',
+        selected_link: 1,
         unit: 'East Relay',
         unit_code: 'E-002',
         zayad_id: 'Z-204',
@@ -46,8 +47,19 @@ const MOCK_AGENTS: AgentStatus[] = [
         lastSeen: new Date().toISOString(),
         nextDeliveryTime: new Date().toISOString(),
         serverLut: new Date().toISOString(),
+        selectedLink: 0
     },
 ];
+
+export function normalizeAgentStatus(agent: AgentStatus): AgentStatus {
+    const selectedLink = agent.selected_link ?? agent.scheduler_link ?? agent.selectedLink;
+
+    return {
+        ...agent,
+        selected_link: selectedLink,
+        selectedLink,
+    };
+}
 
 export class ApiService {
     static async getAgents(): Promise<AgentStatus[]> {
@@ -55,14 +67,14 @@ export class ApiService {
             const response = await fetch(`${API_BASE_URL}/api/ui/agents`);
             if (!response.ok) {
                 console.warn('API returned error, using mock data');
-                return MOCK_AGENTS;
+                return MOCK_AGENTS.map(normalizeAgentStatus);
             }
 
             const data = await response.json();
-            return Array.isArray(data) ? data : MOCK_AGENTS;
+            return Array.isArray(data) ? data.map(normalizeAgentStatus) : MOCK_AGENTS.map(normalizeAgentStatus);
         } catch (error) {
             console.warn('Failed to fetch agents from API, using mock data:', error);
-            return MOCK_AGENTS;
+            return MOCK_AGENTS.map(normalizeAgentStatus);
         }
     }
 
@@ -81,7 +93,7 @@ export class ApiService {
         }
     }
 
-    static async getAgentConfig(agentId: string): Promise<AgentConfig> {
+    static async getAgentConfig(agentId: string): Promise<ConfigurationTableData> {
         const response = await fetch(`${API_BASE_URL}/api/ui/agents/${agentId}/config`);
         if (!response.ok) {
             throw new Error('Failed to load agent config');
@@ -90,7 +102,7 @@ export class ApiService {
         return response.json();
     }
 
-    static async updateAgentConfig(agentId: string, config: AgentConfig): Promise<AgentConfig> {
+    static async updateAgentConfig(agentId: string, config: ConfigurationTableData): Promise<ConfigurationTableData> {
         const response = await fetch(`${API_BASE_URL}/api/ui/agents/${agentId}/config`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
