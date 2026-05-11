@@ -1,23 +1,25 @@
-import type { AgentStatus } from '../../types';
+import type { AgentResponse } from '../../types/agentResponse';
+import { toLinkQualityTable } from '../../types/adapter';
 import { formatDate } from './dateFormat';
 
 interface Props {
-  agentID: AgentStatus;
+  agent: AgentResponse;
   // table: LinkQualityTableData;
 }
 
-export default function LinkQualityTable({ agentID }: Props) {
+export default function LinkQualityTable({ agent }: Props) {
+  const link = toLinkQualityTable(agent);
   return (
     <section className="details-section">
       <h3>Link Quality</h3>
       <table className="details-table">
         <tbody>
-          <tr><td>link type</td><td>{agentID.linkType}</td></tr>
-          <tr><td>available</td><td>{String(agentID.linkAvailable)}</td></tr>
-          <tr><td>quality</td><td>{agentID.linkQuality}</td></tr>
-          <tr><td>latency</td><td>{agentID.latency}</td></tr>
-          <tr><td>reliability</td><td>{agentID.reliability}</td></tr>
-          <tr><td>timestamp</td><td>{formatDate(agentID.linkTimestamp)}</td></tr>
+          <tr><td>link type</td><td>{link.linkType}</td></tr>
+          <tr><td>available</td><td>{String(link.linkAvailable)}</td></tr>
+          <tr><td>quality</td><td>{link.linkQuality}</td></tr>
+          <tr><td>latency</td><td>{link.latency}</td></tr>
+          <tr><td>reliability</td><td>{link.reliability}</td></tr>
+          <tr><td>timestamp</td><td>{formatDate(link.linkTimestamp)}</td></tr>
         </tbody>
       </table>
     </section>

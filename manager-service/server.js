@@ -62,16 +62,105 @@ const agentConfigKey = (agentId) => `agents:${agentId}:config`;
 
 function defaultConfig(agentId) {
     return {
-        agent_id: agentId,
-        scheduler_mode: 'auto',
-        selected_link: 1,
-        interval_ms: 15000,
-        max_retries: 3,
-        spark_proxy_url: '',
+        schedulerMode: 'auto',
+        selectedLink: 'lte',
+        intervalMs: 15000,
+        maxRetries: 3,
+        sparkProxyUrl: '',
         token: '',
-        batch_size: 10,
-        is_manual_mode: false,
-        created_at: new Date().toISOString(),
+        batchSize: 10,
+        isManualMode: false,
+    };
+}
+
+function toNumber(value, fallback = 0) {
+    const numberValue = Number(value);
+    return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
+function toTimestamp(value, fallback = Date.now()) {
+    if (value === undefined || value === null || value === '') {
+        return fallback;
+    }
+
+    if (typeof value === 'number') {
+        return value;
+    }
+
+    const timestamp = Date.parse(value);
+    return Number.isNaN(timestamp) ? fallback : timestamp;
+}
+
+function normalizeStatus(status) {
+    if (status === 'online') {
+        return 'active';
+    }
+
+    if (status === 'active' || status === 'inactive' || status === 'warning' || status === 'offline') {
+        return status;
+    }
+
+    return 'inactive';
+}
+
+function normalizeConfig(agentId, config = {}) {
+    const defaults = defaultConfig(agentId);
+
+    return {
+        schedulerMode: config.schedulerMode || config.scheduler_mode || defaults.schedulerMode,
+        selectedLink: String(config.selectedLink ?? config.selected_link ?? config.scheduler_link ?? defaults.selectedLink),
+        intervalMs: toNumber(config.intervalMs ?? config.interval_ms, defaults.intervalMs),
+        maxRetries: toNumber(config.maxRetries ?? config.max_retries, defaults.maxRetries),
+        sparkProxyUrl: config.sparkProxyUrl ?? config.spark_proxy_url ?? config.base_url ?? defaults.sparkProxyUrl,
+        token: config.token ?? defaults.token,
+        batchSize: toNumber(config.batchSize ?? config.batch_size, defaults.batchSize),
+        isManualMode: Boolean(config.isManualMode ?? config.is_manual_mode ?? defaults.isManualMode),
+    };
+}
+
+function toAgentResponse(payload, config) {
+    const now = Date.now();
+    const agentId = String(payload.id || payload.agent_id || payload.agentId || 'unknown-agent');
+    const details = payload.status?.details || {};
+    const agentData = details.agentData || {};
+    const linkQualities = details.linkQualities || {};
+    const platform = details.platform || {};
+    const normalizedConfig = normalizeConfig(agentId, config || payload.configuration || payload.config);
+
+    return {
+        id: agentId,
+        lastSeen: toTimestamp(payload.lastSeen, now),
+        status: {
+            id: String(payload.status?.id || `status-${agentId}`),
+            status: normalizeStatus(payload.status?.status || payload.status),
+            details: {
+                selectedLink: String(details.selectedLink ?? payload.selectedLink ?? payload.selected_link ?? normalizedConfig.selectedLink),
+                schedulerMode: String(details.schedulerMode ?? payload.schedulerMode ?? payload.scheduler_mode ?? normalizedConfig.schedulerMode),
+                messagesInQueue: toNumber(details.messagesInQueue ?? payload.messagesInQueue ?? payload.messages_in_queue, 0),
+                linkQualities: {
+                    type: String(linkQualities.type ?? payload.linkType ?? payload.link_type ?? normalizedConfig.selectedLink),
+                    available: Boolean(linkQualities.available ?? payload.linkAvailable ?? payload.link_available),
+                    quality: String(linkQualities.quality ?? payload.linkQuality ?? payload.link_quality ?? '0'),
+                    latency: toNumber(linkQualities.latency ?? payload.latency, 0),
+                    reliability: toNumber(linkQualities.reliability ?? payload.reliability, 0),
+                    timestamp: toTimestamp(linkQualities.timestamp ?? payload.linkTimestamp ?? payload.link_timestamp, now),
+                },
+                nextDeliveryTime: String(details.nextDeliveryTime ?? payload.nextDeliveryTime ?? payload.next_delivery_time ?? new Date(now).toISOString()),
+                serverLut: String(details.serverLut ?? payload.serverLut ?? payload.server_lut ?? new Date(now).toISOString()),
+                agentData: {
+                    id: String(agentData.id ?? payload.agentDataId ?? payload.created_id ?? agentId),
+                    unit: String(agentData.unit ?? payload.unit ?? ''),
+                    unit_code: String(agentData.unit_code ?? payload.unit_code ?? ''),
+                    zayad_id: toNumber(agentData.zayad_id ?? payload.zayad_id, 0),
+                    call_sign: String(agentData.call_sign ?? payload.call_sign ?? ''),
+                },
+                platform: {
+                    id: toNumber(platform.id ?? payload.platformId ?? payload.platform_id, 0),
+                    platform: String(platform.platform ?? payload.platformName ?? payload.platform ?? ''),
+                },
+            },
+        },
+        configuration: normalizedConfig,
     };
 }
 
@@ -88,18 +177,7 @@ async function loadAgents() {
     const values = await redis.mGet(keys);
     return values
         .filter(Boolean)
-        .map((value) => {
-            const agent = JSON.parse(value);
-            return {
-                ...agent,
-                agent_id: agent.agent_id || agent.id,
-                scheduler_mode: agent.scheduler_mode || agent.schedulerMode,
-                selected_link: Number(agent.selected_link ?? agent.scheduler_link ?? 0),
-                messages_in_queue: Number(agent.messages_in_queue ?? agent.messagesInQueue ?? 0),
-                platform_id: agent.platform_id || agent.platformId,
-                platform: agent.platform || agent.platformName,
-            };
-        });
+        .map((value) => toAgentResponse(JSON.parse(value)));
 }
 
 async function getAgentConfig(agentId) {
@@ -114,19 +192,7 @@ async function getAgentConfig(agentId) {
 }
 
 async function saveAgentConfig(agentId, config) {
-    const nextConfig = {
-        ...defaultConfig(agentId),
-        ...config,
-        agent_id: agentId,
-        scheduler_mode: config.scheduler_mode || config.schedulerMode || 'auto',
-        selected_link: Number(config.selected_link ?? config.scheduler_link ?? 1),
-        interval_ms: Number(config.interval_ms ?? config.intervalMs ?? 15000),
-        max_retries: Number(config.max_retries ?? config.maxRetries ?? 3),
-        spark_proxy_url: config.spark_proxy_url ?? config.sparkProxyUrl ?? '',
-        batch_size: Number(config.batch_size ?? config.batchSize ?? 10),
-        is_manual_mode: Boolean(config.is_manual_mode ?? config.isManualMode),
-        created_at: config.created_at || new Date().toISOString(),
-    };
+    const nextConfig = normalizeConfig(agentId, config);
 
     await redis.set(agentConfigKey(agentId), JSON.stringify(nextConfig));
     return nextConfig;
@@ -201,26 +267,12 @@ app.post('/api/agents/sync', async (req, res) => {
         return res.status(400).json({ error: 'Missing agent id' });
     }
 
-    const now = new Date().toISOString();
-    const agent = {
-        ...payload,
-        agent_id: payload.agent_id || payload.id,
-        scheduler_mode: payload.scheduler_mode || payload.schedulerMode,
-        selected_link: Number(payload.selected_link ?? payload.scheduler_link ?? 0),
-        messages_in_queue: Number(payload.messages_in_queue ?? payload.messagesInQueue ?? 0),
-        platform_id: payload.platform_id || payload.platformId,
-        platform: payload.platform || payload.platformName,
-        lastSeen: now,
-        serverLut: payload.serverLut || now,
-        nextDeliveryTime: payload.nextDeliveryTime || now,
-        linkTimestamp: payload.linkTimestamp || now,
-    };
-
     try {
+        const config = await getAgentConfig(payload.id);
+        const agent = toAgentResponse(payload, config);
         await saveAgentSync(agent);
         await redis.lPush(agentHistoryKey(payload.id), JSON.stringify(createHistoryPoint()));
         await redis.lTrim(agentHistoryKey(payload.id), 0, 49);
-        const config = await getAgentConfig(payload.id);
         io.emit('agents:snapshot', await loadAgents());
         res.json({ ok: true, config });
     } catch (error) {

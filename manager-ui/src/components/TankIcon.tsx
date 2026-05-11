@@ -1,5 +1,5 @@
 interface Props {
-  status: 'online' | 'warning' | 'offline';
+  status: 'online' | 'warning' | 'offline'| string;
 }
 
 export default function TankIcon({ status }: Props) {

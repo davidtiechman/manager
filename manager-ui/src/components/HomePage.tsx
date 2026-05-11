@@ -1,46 +1,41 @@
 import { useEffect, useState } from 'react';
-import type { AgentStatus } from '../types';
-import {socket} from '../socket';
+import type { AgentResponse } from '../types/agentResponse';
+import type { AgentPreviewData } from '../types/tables';
+import { toAgentPreview } from '../types/adapter';
+import { socket } from '../socket';
 import Details from './AgentDetails';
-import { ApiService, normalizeAgentStatus } from '../api';
+import { ApiService } from '../api';
 import TankIcon from '../components/TankIcon';
 
 type ViewMode = 'icon' | 'list';
 
 export default function HomePage() {
-  const [agents, setAgents] = useState<AgentStatus[]>([]);
+  const [agents, setAgents] = useState<AgentResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAgent, setSelectedAgent] = useState<AgentStatus | null>(null);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('icon');
 
   useEffect(() => {
     const fetchAgents = async () => {
       try {
         setLoading(true);
-        const data = await ApiService.getAgents();
+
+        const data: AgentResponse[] = await ApiService.getAgents();
         setAgents(data);
       } catch (err) {
         console.error('Error fetching agents:', err);
-        // Still show data from ApiService fallback
       } finally {
         setLoading(false);
       }
     };
 
-    const handleAgentsSnapshot = (updatedAgents: AgentStatus[]) => {
-      const normalizedAgents = updatedAgents.map(normalizeAgentStatus);
-      setAgents(normalizedAgents);
-      setSelectedAgent((current) => {
-        if (!current) {
-          return current;
-        }
-
-        return normalizedAgents.find((agent) => agent.id === current.id) || current;
-      });
+    const handleAgentsSnapshot = (updatedAgents: AgentResponse[]) => {
+      setAgents(updatedAgents);
       setLoading(false);
     };
 
     fetchAgents();
+
     socket.on('agents:snapshot', handleAgentsSnapshot);
 
     return () => {
@@ -48,8 +43,10 @@ export default function HomePage() {
     };
   }, []);
 
-  function getAgentLabel(agent: AgentStatus) {
-    return agent.call_sign || agent.zayad_id || agent.unit_code;
+  const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
+
+  function getAgentLabel(agent: AgentPreviewData) {
+    return agent.call_sign || agent.zayad_id || agent.unit_code || agent.id;
   }
 
   if (loading) {
@@ -67,11 +64,13 @@ export default function HomePage() {
     <div className="page">
       <div className="page-header">
         <h1>ניטור סוכנים בזמן אמת</h1>
+
         <p className="muted">
           {viewMode === 'icon'
             ? 'לחץ על אייקון כדי לראות פרטים'
             : 'לחץ על שורה כדי לראות פרטים'}
         </p>
+
         <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
           <button
             type="button"
@@ -80,6 +79,7 @@ export default function HomePage() {
           >
             אייקונים
           </button>
+
           <button
             type="button"
             className={`view-toggle-button ${viewMode === 'list' ? 'active' : ''}`}
@@ -93,35 +93,45 @@ export default function HomePage() {
       <div className="home-layout">
         <aside className="agents-pane">
           <div className={`agents-grid ${viewMode === 'list' ? 'agents-list' : ''}`}>
-            {agents.map((agent) => (
-              <button
-                key={agent.id}
-                type="button"
-                className={`agent-card ${agent.status} ${viewMode === 'list' ? 'list-view' : ''} ${selectedAgent?.id === agent.id ? 'selected' : ''}`}
-                onClick={() => setSelectedAgent(agent)}
-              >
-                <div className="tank-icon">
-                  <TankIcon status={agent.status} />
-                </div>
-                <div className="agent-content">
-                  <div className="agent-label">{getAgentLabel(agent)}</div>
-                  <div className="agent-info">
-                    <div className='info-item'>שם סוכן:{agent.call_sign}</div>
-                    <div className="info-item">יחידה: {agent.unit}</div>
-                    <div className="info-item">פלטפורמה ID: {agent.platformId}</div>
-                    <div className="info-item">ציד ID: {agent.zayad_id}</div>
+            {agents.map((agent) => {
+              const previewAgent = toAgentPreview(agent);
+
+              return (
+                <button
+                  key={previewAgent.id}
+                  type="button"
+                  className={`agent-card ${previewAgent.status} ${
+                    viewMode === 'list' ? 'list-view' : ''
+                  } ${selectedAgentId === previewAgent.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedAgentId(previewAgent.id)}
+                >
+                  <div className="tank-icon">
+                    <TankIcon status={previewAgent.status} />
                   </div>
-                </div>
-              </button>
-            ))}
+
+                  <div className="agent-content">
+                    <div className="agent-label">{getAgentLabel(previewAgent)}</div>
+
+                    <div className="agent-info">
+                      <div className="info-item">שם סוכן: {previewAgent.call_sign}</div>
+                      <div className="info-item">יחידה: {previewAgent.unit}</div>
+                      <div className="info-item">
+                        פלטפורמה ID: {previewAgent.platformId}
+                      </div>
+                      <div className="info-item">ציד ID: {previewAgent.zayad_id}</div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </aside>
 
         <main className="details-pane">
           {selectedAgent ? (
             <Details
-              agentID={selectedAgent}
-              onClose={() => setSelectedAgent(null)}
+              agent={selectedAgent}
+              onClose={() => setSelectedAgentId(null)}
             />
           ) : (
             <div className="empty-details">

@@ -44,7 +44,7 @@ const managerUrl = process.env.MANAGER_URL || 'http://manager:9000';
 const fixedAgentId = process.env.FIXED_AGENT_ID || '';
 const unit = process.env.UNIT || 'פיקוד מרכז';
 
-const statuses = ['online', 'warning', 'offline'];
+const statuses = ['active', 'warning', 'inactive', 'offline'];
 const linkTypes = ['satcom', 'lte', 'rf'];
 const schedulerModes = ['auto', 'manual'];
 const defaultIntervalMs = Number(process.env.SYNC_INTERVAL_MS || '15000');
@@ -84,8 +84,8 @@ function createAgentIdentity() {
         agentId,
         callSign: fixedAgentId && process.env.CALL_SIGN ? process.env.CALL_SIGN : `CALL-${paddedNumber}`,
         unitCode: fixedAgentId && process.env.UNIT_CODE ? process.env.UNIT_CODE : `AGENT-${paddedNumber}`,
-        zayadId: fixedAgentId && process.env.ZAYAD_ID ? process.env.ZAYAD_ID : `Z-${paddedNumber}`,
-        platformId: fixedAgentId && process.env.PLATFORM_ID ? process.env.PLATFORM_ID : `plat-${paddedNumber}`,
+        zayadId: Number(fixedAgentId && process.env.ZAYAD_ID ? process.env.ZAYAD_ID : agentNumber),
+        platformId: Number(fixedAgentId && process.env.PLATFORM_ID ? process.env.PLATFORM_ID : agentNumber),
         platformName: fixedAgentId && process.env.PLATFORM_NAME ? process.env.PLATFORM_NAME : `Platform ${paddedNumber}`,
     };
 }
@@ -103,52 +103,41 @@ function createPayload() {
     const messagesInQueue = randomInt(0, 30);
     const nextDeliveryTime = new Date(now.getTime() + randomInt(5000, 20000)).toISOString();
     const schedulerMode = agentConfig.schedulerMode || schedulerModes[randomInt(0, schedulerModes.length - 1)];
-    const createdMinutes = Math.floor((now.getTime() - serviceStartedAt.getTime()) / 60000);
 
     return {
         id: identity.agentId,
-        status,
-        selectedLink: agentConfig.selectedLink || linkType,
-        unit,
-        unit_code: identity.unitCode,
-        zayad_id: identity.zayadId,
-        call_sign: identity.callSign,
-        platformId: identity.platformId,
-        platformName: identity.platformName,
-        messagesInQueue,
-        linkType,
-        linkAvailable,
-        linkQuality: randomFloat(0.5, 1.0),
-        latency: randomInt(40, 420),
-        reliability: randomFloat(0.5, 1.0),
-        linkTimestamp: now.toISOString(),
-        lastSeen: now.toISOString(),
-        nextDeliveryTime,
-        serverLut: now.toISOString(),
-        schedulerMode,
-        config: agentConfig,
-
-        session_time: Math.floor(process.uptime()),
-        scheduler_mode: schedulerMode,
-        messages_in_queue: messagesInQueue,
-        last_delivery_time: now.toISOString(),
-        geo_data: process.env.GEO_DATA || '',
-        server_id: process.env.SERVER_ID || managerUrl,
-
-        platform_id_unit_code: `${identity.platformId}-${identity.unitCode}`,
-        platform_id: identity.platformId,
-        platform: identity.platformName,
-        created_id: identity.agentId,
-
-        created_min: createdMinutes,
-        scheduler_type: schedulerMode,
-        interval_ms: Number(agentConfig.intervalMs || defaultIntervalMs),
-        max_retries: Number(agentConfig.maxRetries || defaultConfig.maxRetries),
-        sync_tries_on: Number(agentConfig.maxRetries || defaultConfig.maxRetries) > 0,
-        base_url: agentConfig.sparkProxyUrl || '',
-        batch_size: Number(agentConfig.batchSize || defaultConfig.batchSize),
-        is_manual_mode: Boolean(agentConfig.isManualMode),
-        created_at: serviceStartedAt.toISOString(),
+        lastSeen: now.getTime(),
+        status: {
+            id: `status-${identity.agentId}`,
+            status,
+            details: {
+                selectedLink: agentConfig.selectedLink || linkType,
+                schedulerMode,
+                messagesInQueue,
+                linkQualities: {
+                    type: linkType,
+                    available: linkAvailable,
+                    quality: String(randomFloat(0.5, 1.0)),
+                    latency: randomInt(40, 420),
+                    reliability: randomFloat(0.5, 1.0),
+                    timestamp: now.getTime(),
+                },
+                nextDeliveryTime,
+                serverLut: now.toISOString(),
+                agentData: {
+                    id: `agent-data-${identity.agentId}`,
+                    unit,
+                    unit_code: identity.unitCode,
+                    zayad_id: identity.zayadId,
+                    call_sign: identity.callSign,
+                },
+                platform: {
+                    id: identity.platformId,
+                    platform: identity.platformName,
+                },
+            },
+        },
+        configuration: agentConfig,
     };
 }
 
@@ -176,12 +165,12 @@ async function sendSync() {
             });
         }
         console.log(`Agent ${payload.id} synced`, result);
-        return Number(result.config?.intervalMs || payload.interval_ms || defaultIntervalMs);
+        return Number(result.config?.intervalMs || payload.configuration.intervalMs || defaultIntervalMs);
     } catch (error) {
         console.error(`Agent ${payload.id} error sending sync:`, error);
     }
 
-    return Number(payload.interval_ms || defaultIntervalMs);
+    return Number(payload.configuration.intervalMs || defaultIntervalMs);
 }
 
 async function runLoop() {
