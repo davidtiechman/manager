@@ -9,6 +9,7 @@ export class ApiService {
   static async getAgents(): Promise<AgentResponse[]> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/ui/agents`);
+
       if (!response.ok) {
         console.warn('API returned error, using mock data');
         return MOCK_AGENTS;

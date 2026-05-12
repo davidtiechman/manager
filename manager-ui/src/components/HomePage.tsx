@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { AgentResponse } from '../types/agentResponse';
-import type { AgentPreviewData } from '../types/tables';
+import type { AgentPreviewData, ConfigurationTableData } from '../types/tables';
 import { toAgentPreview } from '../types/adapter';
-import { socket } from '../socket';
 import Details from './AgentDetails';
 import { ApiService } from '../api';
 import TankIcon from '../components/TankIcon';
+
+const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
 
 type ViewMode = 'icon' | 'list';
 
@@ -14,36 +15,72 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('icon');
+  const [isConfigurationEditing, setIsConfigurationEditing] = useState(false);
+  const [configurationMessage, setConfigurationMessage] = useState('');
+  const isConfigurationEditingRef = useRef(isConfigurationEditing);
+
+  useEffect(() => {
+    isConfigurationEditingRef.current = isConfigurationEditing;
+  }, [isConfigurationEditing]);
 
   useEffect(() => {
     const fetchAgents = async () => {
       try {
-        setLoading(true);
 
         const data: AgentResponse[] = await ApiService.getAgents();
+        if (isConfigurationEditingRef.current) {
+          return;
+        }
+
         setAgents(data);
       } catch (err) {
         console.error('Error fetching agents:', err);
       } finally {
-        setLoading(false);
+        if (!isConfigurationEditingRef.current) {
+          setLoading(false);
+        }
       }
     };
 
-    const handleAgentsSnapshot = (updatedAgents: AgentResponse[]) => {
-      setAgents(updatedAgents);
-      setLoading(false);
-    };
+    if (isConfigurationEditing) {
+      return;
+    }
 
     fetchAgents();
 
-    socket.on('agents:snapshot', handleAgentsSnapshot);
-
+    const intervalId = setInterval(fetchAgents, intervalFetchManager);
     return () => {
-      socket.off('agents:snapshot', handleAgentsSnapshot);
+      clearInterval(intervalId);
     };
-  }, []);
+    }, [isConfigurationEditing]);
 
   const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
+
+  const updateAgentConfiguration = (
+    agentId: string,
+    configuration: ConfigurationTableData
+  ) => {
+    setAgents((currentAgents) =>
+      currentAgents.map((agent) => {
+        if (agent.id !== agentId) {
+          return agent;
+        }
+
+        return {
+          ...agent,
+          status: {
+            ...agent.status,
+            details: {
+              ...agent.status.details,
+              selectedLink: configuration.selectedLink,
+              schedulerMode: configuration.schedulerMode,
+            },
+          },
+          configuration,
+        };
+      })
+    );
+  };
 
   function getAgentLabel(agent: AgentPreviewData) {
     return agent.call_sign || agent.zayad_id || agent.unit_code || agent.id;
@@ -103,7 +140,10 @@ export default function HomePage() {
                   className={`agent-card ${previewAgent.status} ${
                     viewMode === 'list' ? 'list-view' : ''
                   } ${selectedAgentId === previewAgent.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedAgentId(previewAgent.id)}
+                  onClick={() => {
+                    setSelectedAgentId(previewAgent.id);
+                    setConfigurationMessage('');
+                  }}
                 >
                   <div className="tank-icon">
                     <TankIcon status={previewAgent.status} />
@@ -131,7 +171,15 @@ export default function HomePage() {
           {selectedAgent ? (
             <Details
               agent={selectedAgent}
-              onClose={() => setSelectedAgentId(null)}
+              onClose={() => {
+                setSelectedAgentId(null);
+                setIsConfigurationEditing(false);
+                setConfigurationMessage('');
+              }}
+              onConfigurationEditChange={setIsConfigurationEditing}
+              onConfigurationSaved={updateAgentConfiguration}
+              configurationMessage={configurationMessage}
+              onConfigurationMessageChange={setConfigurationMessage}
             />
           ) : (
             <div className="empty-details">

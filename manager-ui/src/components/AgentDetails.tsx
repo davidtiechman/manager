@@ -1,4 +1,5 @@
 import type { AgentResponse } from '../types/agentResponse';
+import type { ConfigurationTableData } from '../types/tables';
 import ConfigurationTable from './agent-details/ConfigurationTable';
 import LinkQualityTable from './agent-details/LinkQualityTable';
 import PlatformTable from './agent-details/PlatformTable';
@@ -7,9 +8,23 @@ import SyncDetailsTable from './agent-details/SyncDetailsTable';
 interface Props {
   agent: AgentResponse;
   onClose: () => void;
+  onConfigurationEditChange: (isEditing: boolean) => void;
+  onConfigurationSaved: (
+    agentId: string,
+    configuration: ConfigurationTableData
+  ) => void;
+  configurationMessage: string;
+  onConfigurationMessageChange: (message: string) => void;
 }
 
-export default function Details({ agent, onClose }: Props) {
+export default function Details({
+  agent,
+  onClose,
+  onConfigurationEditChange,
+  onConfigurationSaved,
+  configurationMessage,
+  onConfigurationMessageChange,
+}: Props) {
   return (
     <div className="details-panel">
       <div className="details-header">
@@ -21,7 +36,14 @@ export default function Details({ agent, onClose }: Props) {
         <LinkQualityTable agent={agent} />
         <SyncDetailsTable agent={agent} />
         <PlatformTable agent={agent} />
-        <ConfigurationTable agent={agent} />
+        <ConfigurationTable
+          key={agent.id}
+          agent={agent}
+          onEditChange={onConfigurationEditChange}
+          onConfigSaved={onConfigurationSaved}
+          message={configurationMessage}
+          onMessageChange={onConfigurationMessageChange}
+        />
       </div>
     </div>
   );

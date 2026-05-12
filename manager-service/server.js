@@ -4,9 +4,6 @@ const { createClient } = require('redis');
 const fs = require('fs');
 const app = express();
 const path = require('path');
-const http = require('http');
-const { Server } = require('socket.io');
-const server = http.createServer(app);
 
 function loadEnvFile(filePath) {
     if (!fs.existsSync(filePath)) {
@@ -38,12 +35,6 @@ loadEnvFile(path.resolve(__dirname, '.env'));
 
 const managerUiUrl = process.env.MANAGER_UI_URL || 'http://localhost:5173';
 const allowedOrigins = managerUiUrl.split(',').map((origin) => origin.trim()).filter(Boolean);
-const io = new Server(server, {
-    cors: {
-        origin: allowedOrigins,
-        methods: ['GET', 'POST', 'PUT'],
-    },
-});
 
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
@@ -175,9 +166,16 @@ async function loadAgents() {
     }
 
     const values = await redis.mGet(keys);
-    return values
-        .filter(Boolean)
-        .map((value) => toAgentResponse(JSON.parse(value)));
+    return Promise.all(
+        values
+            .filter(Boolean)
+            .map(async (value) => {
+                const payload = JSON.parse(value);
+                const agentId = String(payload.id || payload.agent_id || payload.agentId || 'unknown-agent');
+                const config = await getAgentConfig(agentId);
+                return toAgentResponse(payload, config);
+            })
+    );
 }
 
 async function getAgentConfig(agentId) {
@@ -198,9 +196,20 @@ async function saveAgentConfig(agentId, config) {
     return nextConfig;
 }
 
+async function updateAgentStatusConfig(agentId, config) {
+    const value = await redis.get(agentStatusKey(agentId));
+    if (!value) {
+        return;
+    }
+
+    const agent = toAgentResponse(JSON.parse(value), config);
+    await saveAgentSync(agent);
+}
+
 async function updateAgentConfig(req, res) {
     try {
         const config = await saveAgentConfig(req.params.id, req.body || {});
+        await updateAgentStatusConfig(req.params.id, config);
         res.json(config);
     } catch (error) {
         console.error('Failed to save agent config:', error);
@@ -273,7 +282,6 @@ app.post('/api/agents/sync', async (req, res) => {
         await saveAgentSync(agent);
         await redis.lPush(agentHistoryKey(payload.id), JSON.stringify(createHistoryPoint()));
         await redis.lTrim(agentHistoryKey(payload.id), 0, 49);
-        io.emit('agents:snapshot', await loadAgents());
         res.json({ ok: true, config });
     } catch (error) {
         console.error('Failed to save agent sync:', error);
@@ -283,19 +291,11 @@ app.post('/api/agents/sync', async (req, res) => {
 
 app.get('/health', (req, res) => res.send('ok'));
 
-io.on('connection', async (socket) => {
-    try {
-        socket.emit('agents:snapshot', await loadAgents());
-    } catch (error) {
-        console.error('Failed to send initial agents snapshot:', error);
-    }
-});
-
 const port = process.env.MANAGER_PORT || 9000;
 async function startServer() {
     try {
         await redis.connect();
-        server.listen(port, () => {
+        app.listen(port, () => {
             console.log(`Manager service listening on port ${port}`);
         });
     } catch (error) {

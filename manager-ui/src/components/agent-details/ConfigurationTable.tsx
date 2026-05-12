@@ -1,11 +1,18 @@
 import type { AgentResponse } from '../../types/agentResponse';
 import type { ConfigurationTableData } from '../../types/tables';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ApiService } from '../../api';
 import { toConfigurationTable } from '../../types/adapter';
 
 interface Props {
   agent: AgentResponse;
+  onEditChange: (isEditing: boolean) => void;
+  onConfigSaved: (
+    agentId: string,
+    configuration: ConfigurationTableData
+  ) => void;
+  message: string;
+  onMessageChange: (message: string) => void;
 }
 
 const fields = [
@@ -19,22 +26,49 @@ const fields = [
   ['isManualMode', 'is manual mode', 'checkbox'],
 ] as const;
 
-export default function ConfigurationTable({ agent }: Props) {
+const isSameConfiguration = (
+  left: ConfigurationTableData,
+  right: ConfigurationTableData
+) => fields.every(([field]) => left[field] === right[field]);
+
+export default function ConfigurationTable({
+  agent,
+  onEditChange,
+  onConfigSaved,
+  message,
+  onMessageChange,
+}: Props) {
   const [configuration, setConfiguration] = useState<ConfigurationTableData>(
     toConfigurationTable(agent)
   );
   const [isEdit, setIsEdit] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [message, setMessage] = useState('');
+  const lastSavedConfigRef = useRef<ConfigurationTableData | null>(null);
 
   useEffect(() => {
-    setConfiguration(toConfigurationTable(agent));
-    setIsEdit(false);
-    setIsDirty(false);
+    onEditChange(isEdit);
+
+    return () => {
+      onEditChange(false);
+    };
+  }, [isEdit, onEditChange]);
+
+  useEffect(() => {
+    if (isEdit || isDirty) {
+      return;
+    }
+
+    const agentConfiguration = toConfigurationTable(agent);
+    const lastSavedConfig = lastSavedConfigRef.current;
+    if (lastSavedConfig && !isSameConfiguration(agentConfiguration, lastSavedConfig)) {
+      return;
+    }
+
+    lastSavedConfigRef.current = null;
+    setConfiguration(agentConfiguration);
     setIsMenuOpen(false);
-    setMessage('');
-  }, [agent]);
+  }, [agent, isEdit, isDirty]);
 
   const updateConfig = (
     field: keyof ConfigurationTableData,
@@ -48,16 +82,18 @@ export default function ConfigurationTable({ agent }: Props) {
   };
 
   const openEdit = () => {
+    lastSavedConfigRef.current = null;
     setIsEdit(true);
     setIsMenuOpen(false);
-    setMessage('');
+    onMessageChange('');
   };
 
   const cancelEdit = () => {
+    lastSavedConfigRef.current = null;
     setConfiguration(toConfigurationTable(agent));
     setIsEdit(false);
     setIsDirty(false);
-    setMessage('');
+    onMessageChange('');
   };
 
   const handleSave = async () => {
@@ -67,13 +103,22 @@ export default function ConfigurationTable({ agent }: Props) {
         configuration
       );
 
+      lastSavedConfigRef.current = updatedConfig;
       setConfiguration(updatedConfig);
+      onConfigSaved(agent.id, updatedConfig);
       setIsDirty(false);
       setIsEdit(false);
-      setMessage('Configuration saved successfully');
+      setIsMenuOpen(false);
+      onMessageChange('Configuration saved successfully');
+      setTimeout(() => {
+        onMessageChange('');
+      }, 2000);
     } catch (error) {
       console.error('Error saving configuration:', error);
-      setMessage('Failed to save configuration');
+      onMessageChange('Failed to save configuration');
+      setTimeout(() => {
+        
+      }, 2000);
     }
   };
 
