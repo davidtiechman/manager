@@ -113,11 +113,11 @@ export default function HomePage() {
                     <div className="agent-label">{getAgentLabel(previewAgent)}</div>
 
                     <div className="agent-info">
+                      <div className="info-item">ID: {previewAgent.id}</div>
+                      <div className="info-item">סטטוס: {previewAgent.status}</div>
                       <div className="info-item">שם סוכן: {previewAgent.call_sign}</div>
                       <div className="info-item">יחידה: {previewAgent.unit}</div>
-                      <div className="info-item">
-                        פלטפורמה ID: {previewAgent.platformId}
-                      </div>
+                      <div className="info-item"> פלטפורמה ID: {previewAgent.platformId}</div>
                       <div className="info-item">ציד ID: {previewAgent.zayad_id}</div>
                     </div>
                   </div>
