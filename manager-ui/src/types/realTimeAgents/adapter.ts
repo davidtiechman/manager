@@ -1,12 +1,12 @@
-import type { AgentResponse } from '../types/agentResponse';
+import type { AgentResponse } from './agentResponse';
 
 import type {
-    AgentPreviewData,
-    LinkQualityTableData,
-    PlatformTableData,
-    SyncDetailsTableData,
-    ConfigurationTableData,
-} from '../types/tables';
+  AgentPreviewData,
+  LinkQualityTableData,
+  PlatformTableData,
+  SyncDetailsTableData,
+  ConfigurationTableData,
+} from './tables';
 
 export function toAgentPreview(
   agent: AgentResponse

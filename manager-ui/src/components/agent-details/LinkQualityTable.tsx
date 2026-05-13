@@ -1,5 +1,5 @@
-import type { AgentResponse } from '../../types/agentResponse';
-import { toLinkQualityTable } from '../../types/adapter';
+import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
+import { toLinkQualityTable } from '../../types/realTimeAgents/adapter';
 import { formatDate } from './dateFormat';
 
 interface Props {

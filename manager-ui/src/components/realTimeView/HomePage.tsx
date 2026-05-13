@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import type { AgentResponse } from '../types/agentResponse';
-import type { AgentPreviewData, ConfigurationTableData } from '../types/tables';
-import { toAgentPreview } from '../types/adapter';
+import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
+import type { AgentPreviewData, ConfigurationTableData } from '../../types/realTimeAgents/tables';
+import { toAgentPreview } from '../../types/realTimeAgents/adapter';
 import Details from './AgentDetails';
-import { ApiService } from '../api';
-import TankIcon from '../components/TankIcon';
+import { ApiService } from '../../api';
+import TankIcon from '../TankIcon';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
 
@@ -52,7 +52,7 @@ export default function HomePage() {
     return () => {
       clearInterval(intervalId);
     };
-    }, [isConfigurationEditing]);
+  }, [isConfigurationEditing]);
 
   const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
 
@@ -137,9 +137,8 @@ export default function HomePage() {
                 <button
                   key={previewAgent.id}
                   type="button"
-                  className={`agent-card ${previewAgent.status} ${
-                    viewMode === 'list' ? 'list-view' : ''
-                  } ${selectedAgentId === previewAgent.id ? 'selected' : ''}`}
+                  className={`agent-card ${previewAgent.status} ${viewMode === 'list' ? 'list-view' : ''
+                    } ${selectedAgentId === previewAgent.id ? 'selected' : ''}`}
                   onClick={() => {
                     setSelectedAgentId(previewAgent.id);
                     setConfigurationMessage('');

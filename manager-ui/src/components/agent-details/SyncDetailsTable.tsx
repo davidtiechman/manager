@@ -1,5 +1,5 @@
-import type { AgentResponse } from '../../types/agentResponse';
-import { toSyncDetailsTable } from '../../types/adapter';
+import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
+import { toSyncDetailsTable } from '../../types/realTimeAgents/adapter';
 import { formatOptionalDate } from './dateFormat';
 
 interface Props {

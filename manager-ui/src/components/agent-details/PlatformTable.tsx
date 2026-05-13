@@ -1,5 +1,5 @@
-import type { AgentResponse } from '../../types/agentResponse';
-import { toPlatformTable } from '../../types/adapter';
+import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
+import { toPlatformTable } from '../../types/realTimeAgents/adapter';
 
 interface Props {
   agent: AgentResponse;

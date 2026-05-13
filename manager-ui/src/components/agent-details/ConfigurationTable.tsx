@@ -1,8 +1,8 @@
-import type { AgentResponse } from '../../types/agentResponse';
-import type { ConfigurationTableData } from '../../types/tables';
+import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
+import type { ConfigurationTableData } from '../../types/realTimeAgents/tables';
 import { useEffect, useRef, useState } from 'react';
 import { ApiService } from '../../api';
-import { toConfigurationTable } from '../../types/adapter';
+import { toConfigurationTable } from '../../types/realTimeAgents/adapter';
 
 interface Props {
   agent: AgentResponse;
@@ -117,7 +117,7 @@ export default function ConfigurationTable({
       console.error('Error saving configuration:', error);
       onMessageChange('Failed to save configuration');
       setTimeout(() => {
-        
+
       }, 2000);
     }
   };

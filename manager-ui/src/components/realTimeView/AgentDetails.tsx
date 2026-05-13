@@ -1,9 +1,9 @@
-import type { AgentResponse } from '../types/agentResponse';
-import type { ConfigurationTableData } from '../types/tables';
-import ConfigurationTable from './agent-details/ConfigurationTable';
-import LinkQualityTable from './agent-details/LinkQualityTable';
-import PlatformTable from './agent-details/PlatformTable';
-import SyncDetailsTable from './agent-details/SyncDetailsTable';
+import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
+import type { ConfigurationTableData } from '../../types/realTimeAgents/tables';
+import ConfigurationTable from '../agent-details/ConfigurationTable';
+import LinkQualityTable from '../agent-details/LinkQualityTable';
+import PlatformTable from '../agent-details/PlatformTable';
+import SyncDetailsTable from '../agent-details/SyncDetailsTable';
 
 interface Props {
   agent: AgentResponse;

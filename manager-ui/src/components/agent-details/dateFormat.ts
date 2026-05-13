@@ -1,4 +1,4 @@
-import type { DateValue } from '../../types/agentResponse';
+import type { DateValue } from '../../types/realTimeAgents/agentResponse';
 
 export function formatDate(value: DateValue) {
   return new Date(value).toLocaleString('he-IL');
