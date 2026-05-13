@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { createClient } = require('redis');
+const { Pool } = require('pg');
 const fs = require('fs');
 const app = express();
 const path = require('path');
@@ -43,6 +44,10 @@ const redis = createClient({
     url: process.env.REDIS_URL || 'redis://localhost:6379',
 });
 
+const historyDb = new Pool({
+    connectionString: process.env.DATABASE_URL || 'postgres://manager:manager@localhost:5432/manager_history',
+});
+
 redis.on('error', (error) => {
     console.error('Redis error:', error);
 });
@@ -50,6 +55,44 @@ redis.on('error', (error) => {
 const agentStatusKey = (agentId) => `agents:${agentId}:status`;
 const agentHistoryKey = (agentId) => `agents:${agentId}:history`;
 const agentConfigKey = (agentId) => `agents:${agentId}:config`;
+
+async function initHistoryDb() {
+    await historyDb.query(`
+        CREATE TABLE IF NOT EXISTS history_agents (
+            id TEXT PRIMARY KEY,
+            call_sign TEXT,
+            unit TEXT,
+            unit_code TEXT,
+            zayad_id INTEGER,
+            platform_id INTEGER,
+            platform TEXT,
+            first_seen_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+            last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+
+        CREATE TABLE IF NOT EXISTS agent_syncs (
+            id BIGSERIAL PRIMARY KEY,
+            agent_id TEXT NOT NULL REFERENCES history_agents(id),
+            status TEXT NOT NULL,
+            selected_link TEXT,
+            scheduler_mode TEXT,
+            messages_in_queue INTEGER,
+            next_delivery_time TEXT,
+            geo_data TEXT,
+            server_lut TEXT,
+            link_type TEXT,
+            link_available BOOLEAN,
+            link_quality TEXT,
+            latency INTEGER,
+            reliability NUMERIC,
+            link_timestamp BIGINT,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+
+        CREATE INDEX IF NOT EXISTS agent_syncs_agent_created_idx
+        ON agent_syncs (agent_id, created_at DESC);
+    `);
+}
 
 function defaultConfig(agentId) {
     return {
@@ -155,6 +198,89 @@ function toAgentResponse(payload, config) {
     };
 }
 
+async function saveHistorySync(agent) {
+    const details = agent.status.details;
+    const agentData = details.agentData;
+    const platform = details.platform;
+    const linkQuality = details.linkQualities;
+    const lastSeen = new Date(agent.lastSeen || Date.now()).toISOString();
+
+    await historyDb.query(
+        `
+        INSERT INTO history_agents (
+            id,
+            call_sign,
+            unit,
+            unit_code,
+            zayad_id,
+            platform_id,
+            platform,
+            first_seen_at,
+            last_seen_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8)
+        ON CONFLICT (id) DO UPDATE SET
+            call_sign = EXCLUDED.call_sign,
+            unit = EXCLUDED.unit,
+            unit_code = EXCLUDED.unit_code,
+            zayad_id = EXCLUDED.zayad_id,
+            platform_id = EXCLUDED.platform_id,
+            platform = EXCLUDED.platform,
+            last_seen_at = EXCLUDED.last_seen_at
+        `,
+        [
+            agent.id,
+            agentData.call_sign,
+            agentData.unit,
+            agentData.unit_code,
+            agentData.zayad_id,
+            platform.id,
+            platform.platform,
+            lastSeen,
+        ]
+    );
+
+    await historyDb.query(
+        `
+        INSERT INTO agent_syncs (
+            agent_id,
+            status,
+            selected_link,
+            scheduler_mode,
+            messages_in_queue,
+            next_delivery_time,
+            geo_data,
+            server_lut,
+            link_type,
+            link_available,
+            link_quality,
+            latency,
+            reliability,
+            link_timestamp,
+            created_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        `,
+        [
+            agent.id,
+            agent.status.status,
+            details.selectedLink,
+            details.schedulerMode,
+            details.messagesInQueue,
+            details.nextDeliveryTime,
+            details.geoData ?? null,
+            details.serverLut,
+            linkQuality.type,
+            linkQuality.available,
+            linkQuality.quality,
+            linkQuality.latency,
+            linkQuality.reliability,
+            linkQuality.timestamp,
+            lastSeen,
+        ]
+    );
+}
+
 async function saveAgentSync(agent) {
     await redis.set(agentStatusKey(agent.id), JSON.stringify(agent));
 }
@@ -246,6 +372,76 @@ app.get('/api/ui/agents/:id/history', async (req, res) => {
     }
 });
 
+app.get('/api/history/agents', async (req, res) => {
+    try {
+        const result = await historyDb.query(`
+            SELECT
+                id,
+                call_sign AS "callSign",
+                unit,
+                unit_code AS "unitCode",
+                zayad_id AS "zayadId",
+                platform_id AS "platformId",
+                platform,
+                first_seen_at AS "firstSeenAt",
+                last_seen_at AS "lastSeenAt"
+            FROM history_agents
+            ORDER BY last_seen_at DESC
+        `);
+
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Failed to load history agents from Postgres:', error);
+        res.status(500).json({ error: 'Failed to load history agents' });
+    }
+});
+
+app.get('/api/history/agents/:id/syncs', async (req, res) => {
+    try {
+        const requestedLimit = Number(req.query.limit || 100);
+        const limit = Number.isFinite(requestedLimit)
+            ? Math.min(Math.max(requestedLimit, 1), 500)
+            : 100;
+        const result = await historyDb.query(
+            `
+            SELECT
+                id,
+                agent_id AS "agentId",
+                status,
+                created_at AS "createdAt",
+                json_build_object(
+                    'id', id,
+                    'selectedLink', selected_link,
+                    'schedulerMode', scheduler_mode,
+                    'messagesInQueue', messages_in_queue,
+                    'nextDeliveryTime', next_delivery_time,
+                    'geoData', geo_data,
+                    'serverLut', server_lut
+                ) AS details,
+                json_build_object(
+                    'id', id,
+                    'type', link_type,
+                    'available', link_available,
+                    'quality', link_quality,
+                    'latency', latency,
+                    'reliability', reliability,
+                    'timestamp', link_timestamp
+                ) AS link_quality
+            FROM agent_syncs
+            WHERE agent_id = $1
+            ORDER BY created_at DESC
+            LIMIT $2
+            `,
+            [req.params.id, limit]
+        );
+
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Failed to load agent sync history from Postgres:', error);
+        res.status(500).json({ error: 'Failed to load agent sync history' });
+    }
+});
+
 app.get('/api/ui/agents/:id/config', async (req, res) => {
     try {
         const config = await getAgentConfig(req.params.id);
@@ -280,6 +476,7 @@ app.post('/api/agents/sync', async (req, res) => {
         const config = await getAgentConfig(payload.id);
         const agent = toAgentResponse(payload, config);
         await saveAgentSync(agent);
+        await saveHistorySync(agent);
         await redis.lPush(agentHistoryKey(payload.id), JSON.stringify(createHistoryPoint()));
         await redis.lTrim(agentHistoryKey(payload.id), 0, 49);
         res.json({ ok: true, config });
@@ -295,6 +492,7 @@ const port = process.env.MANAGER_PORT || 9000;
 async function startServer() {
     try {
         await redis.connect();
+        await initHistoryDb();
         app.listen(port, () => {
             console.log(`Manager service listening on port ${port}`);
         });

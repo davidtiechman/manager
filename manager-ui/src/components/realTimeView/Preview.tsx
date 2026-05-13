@@ -1,16 +1,17 @@
+import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
 import type { AgentPreviewData, ConfigurationTableData } from '../../types/realTimeAgents/tables';
 import { toAgentPreview } from '../../types/realTimeAgents/adapter';
 import Details from './AgentDetails';
 import { ApiService } from '../../api';
-import TankIcon from '../TankIcon';
+import TankIcon from '../agent-details/TankIcon';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
 
 type ViewMode = 'icon' | 'list';
 
-export default function HomePage() {
+export default function Preview() {
   const [agents, setAgents] = useState<AgentResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
@@ -88,9 +89,14 @@ export default function HomePage() {
 
   if (loading) {
     return (
+      
       <div className="page">
         <div className="page-header">
           <h1>ניטור סוכנים בזמן אמת</h1>
+
+        <Link to="/history" className="nav-button">
+            היסטוריה
+          </Link>
           <p className="muted">טוען נתונים...</p>
         </div>
       </div>
@@ -107,7 +113,11 @@ export default function HomePage() {
             ? 'לחץ על אייקון כדי לראות פרטים'
             : 'לחץ על שורה כדי לראות פרטים'}
         </p>
-
+        <div className='nav-buttun'>
+          <Link to="/history" className="nav-button">
+            היסטוריה
+          </Link>
+        </div>
         <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
           <button
             type="button"

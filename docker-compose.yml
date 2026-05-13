@@ -8,8 +8,11 @@ services:
     environment:
       - MANAGER_PORT=${MANAGER_PORT:-9000}
       - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgres://manager:manager@postgres:5432/manager_history
     depends_on:
       redis:
+        condition: service_healthy
+      postgres:
         condition: service_healthy
 
   redis:
@@ -20,6 +23,22 @@ services:
       - manager-redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=manager_history
+      - POSTGRES_USER=manager
+      - POSTGRES_PASSWORD=manager
+    volumes:
+      - manager-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U manager -d manager_history"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -48,3 +67,4 @@ services:
 
 volumes:
   manager-redis-data:
+  manager-postgres-data:
