@@ -1,0 +1,102 @@
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.agents-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-card {
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  background: #1e293b;
+  color: white;
+  text-align: center;
+}
+
+.agent-card.selected {
+  outline: 3px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+.agent-card.list-view {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+}
+
+.agent-card.active {
+  border: 2px solid #22c55e;
+}
+
+.agent-card.warning {
+  border: 2px solid #f59e0b;
+}
+
+.agent-card.inactive {
+  border: 2px solid #ef4444;
+}
+
+.tank-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.list-view .tank-icon {
+  margin-bottom: 0;
+}
+
+.agent-content {
+  flex: 1;
+}
+
+.agent-label {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.agent-info {
+  font-size: 12px;
+  text-align: left;
+}
+
+.list-view .agent-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 6px 12px;
+}
+
+.info-item {
+  margin-bottom: 2px;
+  color: #e2e8f0;
+}
+
+.tank-svg {
+  width: 50px;
+  height: 50px;
+  transition: 0.3s;
+}
+
+.tank-svg.active {
+  fill: #22c55e;
+}
+
+.tank-svg.warning {
+  fill: #f59e0b;
+}
+
+.tank-svg.inactive {
+  fill: #ef4444;
+}
+
+.agent-card:hover .tank-svg {
+  transform: scale(1.15);
+}

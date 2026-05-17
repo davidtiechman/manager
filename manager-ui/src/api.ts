@@ -8,6 +8,41 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000
 
 type AgentDataSource = 'real-time' | 'history';
 
+function extractAgentHistoryRecords(data: unknown): AgentHistoryRecord[] {
+  if (Array.isArray(data)) {
+    return data as AgentHistoryRecord[];
+  }
+
+  if (!data || typeof data !== 'object') {
+    return [];
+  }
+
+  const payload = data as {
+    syncs?: unknown;
+    records?: unknown;
+    history?: unknown;
+    data?: unknown;
+  };
+
+  if (Array.isArray(payload.syncs)) {
+    return payload.syncs as AgentHistoryRecord[];
+  }
+
+  if (Array.isArray(payload.records)) {
+    return payload.records as AgentHistoryRecord[];
+  }
+
+  if (Array.isArray(payload.history)) {
+    return payload.history as AgentHistoryRecord[];
+  }
+
+  if (Array.isArray(payload.data)) {
+    return payload.data as AgentHistoryRecord[];
+  }
+
+  return [];
+}
+
 export class ApiService {
   static async getAgents(source?: 'real-time'): Promise<AgentResponse[]>;
   static async getAgents(source: 'history'): Promise<HistoryAgent[]>;
@@ -56,7 +91,8 @@ export class ApiService {
       throw new Error('Failed to load agent sync history');
     }
 
-    return response.json();
+    const data: unknown = await response.json();
+    return extractAgentHistoryRecords(data);
   }
 
   static async getAgentConfig(

@@ -1,11 +1,12 @@
-import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
 import type { AgentPreviewData, ConfigurationTableData } from '../../types/realTimeAgents/tables';
 import { toAgentPreview } from '../../types/realTimeAgents/adapter';
 import Details from './AgentDetails';
 import { ApiService } from '../../api';
 import TankIcon from '../agent-details/TankIcon';
+import ModeNavigationLink from '../ModeNavigationLink';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
 
@@ -19,10 +20,18 @@ export default function Preview() {
   const [isConfigurationEditing, setIsConfigurationEditing] = useState(false);
   const [configurationMessage, setConfigurationMessage] = useState('');
   const isConfigurationEditingRef = useRef(isConfigurationEditing);
+  const { agentId: routeAgentId } = useParams<{ agentId: string }>();
+  const navigate = useNavigate();
 
   useEffect(() => {
     isConfigurationEditingRef.current = isConfigurationEditing;
   }, [isConfigurationEditing]);
+
+  useEffect(() => {
+    if (routeAgentId) {
+      setSelectedAgentId(routeAgentId);
+    }
+  }, [routeAgentId]);
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -89,14 +98,10 @@ export default function Preview() {
 
   if (loading) {
     return (
-      
       <div className="page">
         <div className="page-header">
+          <ModeNavigationLink to="/history" label="למעבר להיסטוריה" variant="history" />
           <h1>ניטור סוכנים בזמן אמת</h1>
-
-        <Link to="/history" className="nav-button">
-            היסטוריה
-          </Link>
           <p className="muted">טוען נתונים...</p>
         </div>
       </div>
@@ -106,6 +111,7 @@ export default function Preview() {
   return (
     <div className="page">
       <div className="page-header">
+        <ModeNavigationLink to="/history" label="למעבר להיסטוריה" variant="history" />
         <h1>ניטור סוכנים בזמן אמת</h1>
 
         <p className="muted">
@@ -113,11 +119,6 @@ export default function Preview() {
             ? 'לחץ על אייקון כדי לראות פרטים'
             : 'לחץ על שורה כדי לראות פרטים'}
         </p>
-        <div className='nav-buttun'>
-          <Link to="/history" className="nav-button">
-            היסטוריה
-          </Link>
-        </div>
         <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
           <button
             type="button"
@@ -152,6 +153,7 @@ export default function Preview() {
                   onClick={() => {
                     setSelectedAgentId(previewAgent.id);
                     setConfigurationMessage('');
+                    navigate(`/agents/${previewAgent.id}`);
                   }}
                 >
                   <div className="tank-icon">
@@ -184,6 +186,7 @@ export default function Preview() {
                 setSelectedAgentId(null);
                 setIsConfigurationEditing(false);
                 setConfigurationMessage('');
+                navigate('/');
               }}
               onConfigurationEditChange={setIsConfigurationEditing}
               onConfigurationSaved={updateAgentConfiguration}

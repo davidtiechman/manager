@@ -4,7 +4,7 @@ import ConfigurationTable from '../agent-details/ConfigurationTable';
 import LinkQualityTable from '../agent-details/LinkQualityTable';
 import PlatformTable from '../agent-details/PlatformTable';
 import SyncDetailsTable from '../agent-details/SyncDetailsTable';
-import {Link} from 'react-router-dom'
+import { Link } from 'react-router-dom';
 
 interface Props {
   agent: AgentResponse;
@@ -29,11 +29,20 @@ export default function AgentDetails({
   return (
     <div className="details-panel">
       <div className="details-header">
-        <h2>Agent Details</h2>
-        <button onClick={onClose}>Close</button>
-        <Link to={`history/${agent.id}`} className="nav-button">
-          היסטוריה
-        </Link>
+        <div className="details-title-block">
+          <h2>Agent Details</h2>
+        </div>
+        <div className="details-header-actions details-header-actions-left">
+          <Link to={`/history/${agent.id}`} className="details-history-button">
+            History
+          </Link>
+          <p className="details-agent-id">Agent ID: {agent.id}</p>
+        </div>
+        <div className="details-header-actions details-header-actions-right">
+          <button type="button" className="details-close-button" onClick={onClose}>
+            Close
+          </button>
+        </div>
       </div>
 
       <div className="details-tables-grid">

@@ -1,0 +1,42 @@
+.page {
+  padding: 24px;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.muted {
+  color: #777;
+}
+
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.agents-pane,
+.details-pane {
+  min-width: 0;
+}
+
+.agents-pane {
+  max-height: calc(100vh - 170px);
+  overflow: auto;
+  padding: 6px;
+}
+
+.details-pane {
+  position: sticky;
+  top: 24px;
+}
+
+.empty-details {
+  min-height: 240px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  background: #f8fafc;
+}

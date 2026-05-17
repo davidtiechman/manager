@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { ApiService } from '../../api';
 import { HistoryAgent } from '../../types/history/historyAgent';
-import { Link } from 'react-router-dom';
 import AgentSyncsList from './AgentSyncsList';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import ModeNavigationLink from '../ModeNavigationLink';
 
 export default function AgentHistoryList() {
   const [agents, setAgents] = useState<HistoryAgent[]>([]);
@@ -12,6 +12,7 @@ export default function AgentHistoryList() {
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
 
   const { agentId: routeAgentId } = useParams<{ agentId: string }>();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchHistoryAgents = async () => {
@@ -40,6 +41,7 @@ export default function AgentHistoryList() {
     return (
       <div className="page">
         <div className="page-header">
+          <ModeNavigationLink to="/" label="למעבר לניטור זמן אמת" variant="real-time" />
           <h1>תצוגת היסטוריה סוכנים</h1>
           <p className="muted">טוען נתונים...</p>
         </div>
@@ -50,6 +52,7 @@ export default function AgentHistoryList() {
   return (
     <div className="page">
       <div className="page-header">
+        <ModeNavigationLink to="/" label="למעבר לניטור זמן אמת" variant="real-time" />
         <h1>תצוגת היסטוריה סוכנים</h1>
 
         <p className="menu">
@@ -58,27 +61,23 @@ export default function AgentHistoryList() {
             : 'לחץ על שורה כדי לראות היסטוריית syncs'}
         </p>
 
-        <Link to="/" className="nav-button">
-          חזרה לניטור בזמן אמת
-        </Link>
-      </div>
+        <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
+          <button
+            type="button"
+            className={`view-toggle-button ${viewMode === 'icon' ? 'active' : ''}`}
+            onClick={() => setViewMode('icon')}
+          >
+            אייקונים
+          </button>
 
-      <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
-        <button
-          type="button"
-          className={`view-toggle-button ${viewMode === 'icon' ? 'active' : ''}`}
-          onClick={() => setViewMode('icon')}
-        >
-          אייקונים
-        </button>
-
-        <button
-          type="button"
-          className={`view-toggle-button ${viewMode === 'list' ? 'active' : ''}`}
-          onClick={() => setViewMode('list')}
-        >
-          רשימה
-        </button>
+          <button
+            type="button"
+            className={`view-toggle-button ${viewMode === 'list' ? 'active' : ''}`}
+            onClick={() => setViewMode('list')}
+          >
+            רשימה
+          </button>
+        </div>
       </div>
 
       <div className="home-layout">
@@ -91,7 +90,10 @@ export default function AgentHistoryList() {
                 className={`agent-card ${
                   viewMode === 'icon' ? 'icon-view' : 'list-view'
                 } ${selectedAgentId === agent.id ? 'selected' : ''}`}
-                onClick={() => setSelectedAgentId(agent.id)}
+                onClick={() => {
+                  setSelectedAgentId(agent.id);
+                  navigate(`/history/${agent.id}`);
+                }}
               >
                 <div className="agent-content">
                   <div className="agent-label">
@@ -112,7 +114,13 @@ export default function AgentHistoryList() {
 
         <main className="details-pane">
           {selectedAgent ? (
-            <AgentSyncsList agentId={selectedAgent.id} />
+            <AgentSyncsList
+              agentId={selectedAgent.id}
+              onClose={() => {
+                setSelectedAgentId(null);
+                navigate('/history');
+              }}
+            />
           ) : (
             <div className="empty-details">
               <h2>Sync History</h2>

@@ -1,0 +1,26 @@
+@media (max-width: 520px) {
+  .home-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .agents-pane {
+    max-height: none;
+  }
+
+  .details-pane {
+    position: static;
+  }
+
+  .agent-card.list-view {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .list-view .agent-info {
+    grid-template-columns: 1fr;
+  }
+
+  .details-tables-grid {
+    grid-template-columns: 1fr;
+  }
+}

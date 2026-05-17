@@ -1,0 +1,155 @@
+.config-panel {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #ddd;
+}
+
+.config-panel h3 {
+  margin: 0 0 12px;
+}
+
+.config-form {
+  display: grid;
+  gap: 12px;
+}
+
+.config-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.config-form input,
+.config-form select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.config-form button {
+  border: 0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: #0f766e;
+  color: white;
+  font-weight: 700;
+}
+
+.config-form button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-label input {
+  width: auto;
+}
+
+.config-message {
+  margin: 0;
+  color: #0f766e;
+  font-size: 13px;
+}
+
+.input-fields {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.table-menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #334155;
+  cursor: pointer;
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.menu-button:hover,
+.menu-button:focus-visible {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: 28px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 6px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  z-index: 10;
+}
+
+.menu-dropdown button {
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #0f172a;
+  cursor: pointer;
+  font: inherit;
+  padding: 8px 14px;
+  width: 100%;
+  text-align: left;
+}
+
+.menu-dropdown button:hover,
+.menu-dropdown button:focus-visible {
+  background: #e2e8f0;
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.edit-actions button {
+  border: 0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  background: #0f172a;
+  color: white;
+  font: inherit;
+  font-weight: 700;
+}
+
+.edit-actions button:last-child {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.edit-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
