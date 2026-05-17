@@ -4,6 +4,7 @@ import ConfigurationTable from '../agent-details/ConfigurationTable';
 import LinkQualityTable from '../agent-details/LinkQualityTable';
 import PlatformTable from '../agent-details/PlatformTable';
 import SyncDetailsTable from '../agent-details/SyncDetailsTable';
+import {Link} from 'react-router-dom'
 
 interface Props {
   agent: AgentResponse;
@@ -17,7 +18,7 @@ interface Props {
   onConfigurationMessageChange: (message: string) => void;
 }
 
-export default function Details({
+export default function AgentDetails({
   agent,
   onClose,
   onConfigurationEditChange,
@@ -30,6 +31,9 @@ export default function Details({
       <div className="details-header">
         <h2>Agent Details</h2>
         <button onClick={onClose}>Close</button>
+        <Link to={`history/${agent.id}`} className="nav-button">
+          היסטוריה
+        </Link>
       </div>
 
       <div className="details-tables-grid">

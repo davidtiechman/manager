@@ -1,63 +1,46 @@
-
-import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { HistoryAgent } from '../../types/history/historyAgent';
-import { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
 import { ApiService } from '../../api';
+import { HistoryAgent } from '../../types/history/historyAgent';
+import { Link } from 'react-router-dom';
+import AgentSyncsList from './AgentSyncsList';
+import { useParams } from 'react-router-dom';
 
-export default function HistoryView() {
+export default function AgentHistoryList() {
   const [agents, setAgents] = useState<HistoryAgent[]>([]);
-  const [records, setRecords] = useState<AgentHistoryRecord[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [recordsLoading, setRecordsLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<'icon' | 'list'>('icon');
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+
+  const { agentId: routeAgentId } = useParams<{ agentId: string }>();
 
   useEffect(() => {
     const fetchHistoryAgents = async () => {
       try {
         const data: HistoryAgent[] = await ApiService.getHistoryAgents();
         setAgents(data);
-      }
-      catch (error) {
+      } catch (error) {
         console.error('Error fetching history agents:', error);
       } finally {
         setLoading(false);
       }
     };
+
     fetchHistoryAgents();
   }, []);
 
   useEffect(() => {
-    if (!selectedAgentId) {
-      setRecords([]);
-      return;
+    if (routeAgentId) {
+      setSelectedAgentId(routeAgentId);
     }
+  }, [routeAgentId]);
 
-    const fetchAgentHistory = async () => {
-      try {
-        setRecordsLoading(true);
-        const data = await ApiService.getAgentHistory(selectedAgentId);
-        setRecords(data);
-      } catch (error) {
-        console.error('Error fetching agent history:', error);
-        setRecords([]);
-      } finally {
-        setRecordsLoading(false);
-      }
-    };
-
-    fetchAgentHistory();
-  }, [selectedAgentId]);
+  const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
 
   if (loading) {
     return (
       <div className="page">
         <div className="page-header">
           <h1>תצוגת היסטוריה סוכנים</h1>
-
-          <Link to="/" className="nav-button">
-            חזרה לניטור בזמן אמת
-          </Link>
           <p className="muted">טוען נתונים...</p>
         </div>
       </div>
@@ -69,19 +52,45 @@ export default function HistoryView() {
       <div className="page-header">
         <h1>תצוגת היסטוריה סוכנים</h1>
 
+        <p className="menu">
+          {viewMode === 'icon'
+            ? 'לחץ על אייקון כדי לראות היסטוריית syncs'
+            : 'לחץ על שורה כדי לראות היסטוריית syncs'}
+        </p>
+
         <Link to="/" className="nav-button">
           חזרה לניטור בזמן אמת
         </Link>
       </div>
 
+      <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
+        <button
+          type="button"
+          className={`view-toggle-button ${viewMode === 'icon' ? 'active' : ''}`}
+          onClick={() => setViewMode('icon')}
+        >
+          אייקונים
+        </button>
+
+        <button
+          type="button"
+          className={`view-toggle-button ${viewMode === 'list' ? 'active' : ''}`}
+          onClick={() => setViewMode('list')}
+        >
+          רשימה
+        </button>
+      </div>
+
       <div className="home-layout">
         <aside className="agents-pane">
-          <div className="agents-grid agents-list">
+          <div className={`agents-grid ${viewMode === 'list' ? 'agents-list' : ''}`}>
             {agents.map((agent) => (
               <button
                 key={agent.id}
                 type="button"
-                className={`agent-card list-view ${selectedAgentId === agent.id ? 'selected' : ''}`}
+                className={`agent-card ${
+                  viewMode === 'icon' ? 'icon-view' : 'list-view'
+                } ${selectedAgentId === agent.id ? 'selected' : ''}`}
                 onClick={() => setSelectedAgentId(agent.id)}
               >
                 <div className="agent-content">
@@ -102,33 +111,12 @@ export default function HistoryView() {
         </aside>
 
         <main className="details-pane">
-          {selectedAgentId ? (
-            <div className="details-panel">
-              <div className="details-header">
-                <h2>Agent History</h2>
-              </div>
-
-              {recordsLoading ? (
-                <p className="muted">טוען רשומות...</p>
-              ) : (
-                <table className="details-table">
-                  <tbody>
-                    {records.map((record) => (
-                      <tr key={record.id}>
-                        <td>{record.createdAt}</td>
-                        <td>{record.status}</td>
-                        <td>{record.details.selectedLink}</td>
-                        <td>{record.link_quality.quality}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
+          {selectedAgent ? (
+            <AgentSyncsList agentId={selectedAgent.id} />
           ) : (
             <div className="empty-details">
-              <h2>Agent History</h2>
-              <p className="muted">Select an agent to view sync records.</p>
+              <h2>Sync History</h2>
+              <p className="muted">בחר סוכן כדי לראות היסטוריה</p>
             </div>
           )}
         </main>
