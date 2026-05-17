@@ -144,8 +144,19 @@
   overflow-x: auto;
 }
 
+.history-syncs-top-scroll {
+  height: 16px;
+  margin-bottom: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.history-syncs-top-scroll-content {
+  height: 1px;
+}
+
 .history-syncs-table {
-  min-width: 1800px;
+  min-width: 1300px;
   table-layout: auto;
 }
 
@@ -155,8 +166,93 @@
   white-space: nowrap;
 }
 
+.history-syncs-table th {
+  text-align: center;
+}
+
 .history-syncs-table td {
   background: white;
+}
+
+.history-syncs-table .history-syncs-id-column {
+  max-width: 44px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-syncs-table .history-syncs-id-column span,
+.history-syncs-table .history-syncs-compact-column span,
+.history-syncs-table .history-syncs-selected-link-column span,
+.history-syncs-table .history-syncs-mode-column span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-syncs-table .history-syncs-compact-column {
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-syncs-table .history-syncs-selected-link-column {
+  max-width: 52px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-syncs-table .history-syncs-mode-column {
+  max-width: 34px;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+
+.history-syncs-table .history-syncs-availability-column {
+  max-width: 54px;
+  min-width: 48px;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+}
+
+.history-syncs-table .history-syncs-status-column {
+  max-width: 56px;
+  min-width: 44px;
+  text-align: center;
+}
+
+.history-syncs-table .history-syncs-number-column {
+  max-width: 64px;
+  min-width: 44px;
+  text-align: center;
+  white-space: normal;
+}
+
+.history-syncs-table th.history-syncs-number-column {
+  line-height: 1.2;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.history-syncs-status {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.history-syncs-status-active {
+  background: #16a34a;
+}
+
+.history-syncs-status-inactive {
+  background: #dc2626;
+}
+
+.history-syncs-status-warning {
+  background: #f59e0b;
 }
 
 .details-section-header {

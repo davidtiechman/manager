@@ -33,7 +33,9 @@ export default function AgentDetails({
           <h2>Agent Details</h2>
         </div>
         <div className="details-header-actions details-header-actions-left">
-          <Link to={`/history/${agent.id}`} className="details-history-button">
+          <Link to={`/history/${agent.id}`}
+            state={{backTo: `/agents/${agent.id}`}}
+           className="details-history-button">
             History
           </Link>
           <p className="details-agent-id">Agent ID: {agent.id}</p>

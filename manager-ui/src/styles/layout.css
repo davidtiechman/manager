@@ -17,6 +17,15 @@
   align-items: start;
 }
 
+.history-layout {
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+}
+
+.history-layout .agents-pane {
+  max-height: none;
+  overflow: visible;
+}
+
 .agents-pane,
 .details-pane {
   min-width: 0;

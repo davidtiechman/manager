@@ -80,9 +80,9 @@ export default function AgentHistoryList() {
         </div>
       </div>
 
-      <div className="home-layout">
+      <div className="home-layout history-layout">
         <aside className="agents-pane">
-          <div className={`agents-grid ${viewMode === 'list' ? 'agents-list' : ''}`}>
+          <div className={`agents-grid history-agents-grid ${viewMode === 'list' ? 'agents-list' : ''}`}>
             {agents.map((agent) => (
               <button
                 key={agent.id}
@@ -102,9 +102,10 @@ export default function AgentHistoryList() {
 
                   <div className="agent-info">
                     <div className="info-item">ID: {agent.id}</div>
-                    <div className="info-item">יחידה: {agent.unit}</div>
-                    <div className="info-item">פלטפורמה: {agent.platform}</div>
-                    <div className="info-item">נראה לאחרונה: {agent.lastSeenAt}</div>
+                    <div className='info-item'>Created at: {agent.createdAt}</div>
+                    {/* <div className="info-item">יחידה: {agent.unit}</div> */}
+                    {/* <div className="info-item">פלטפורמה: {agent.platform}</div> */}
+                    {/* <div className="info-item">נראה לאחרונה: {agent.lastSeenAt}</div> */}
                   </div>
                 </div>
               </button>

@@ -100,3 +100,21 @@
 .agent-card:hover .tank-svg {
   transform: scale(1.15);
 }
+
+.history-agents-grid {
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 10px;
+}
+
+.history-agents-grid .agent-card {
+  padding: 10px;
+}
+
+.history-agents-grid .agent-label {
+  margin-bottom: 6px;
+  overflow-wrap: anywhere;
+}
+
+.history-agents-grid .agent-info {
+  font-size: 11px;
+}
