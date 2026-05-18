@@ -2,11 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
 import type { AgentPreviewData, ConfigurationTableData } from '../../types/realTimeAgents/tables';
-import { toAgentPreview } from '../../types/realTimeAgents/adapter';
+import {toAgentPreview, toPlatformTable } from '../../types/realTimeAgents/adapter';
 import Details from './AgentDetails';
 import { ApiService } from '../../api';
 import TankIcon from '../agent-details/TankIcon';
 import ModeNavigationLink from '../ModeNavigationLink';
+import type {PlatformSearchState } from '../../types/realTimeAgents/PlatformSearchField';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
 
@@ -15,13 +16,37 @@ type ViewMode = 'icon' | 'list';
 export default function Preview() {
   const [agents, setAgents] = useState<AgentResponse[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('icon');
   const [isConfigurationEditing, setIsConfigurationEditing] = useState(false);
   const [configurationMessage, setConfigurationMessage] = useState('');
   const isConfigurationEditingRef = useRef(isConfigurationEditing);
   const { agentId: routeAgentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [search, setSearch] = useState<PlatformSearchState>({
+  field: 'free',
+  text: '',
+});
+  const filteredAgents = agents.filter((agent) => {
+    const searchText = search.text.toLowerCase();
+
+  if (searchText === '') {
+    return true;
+  }
+  const platformFields = toPlatformTable(agent);
+  
+  if (search.field === 'free') {
+    return JSON.stringify(agent)
+      .toLowerCase()
+      .includes(searchText);
+  }
+
+  return String(platformFields[search.field] || '')
+    .toLowerCase()
+    .includes(searchText);
+});
+
+  
 
   useEffect(() => {
     isConfigurationEditingRef.current = isConfigurationEditing;
@@ -140,8 +165,39 @@ export default function Preview() {
 
       <div className="home-layout">
         <aside className="agents-pane">
+          <div className="filters-box">
+  <select
+    value={search.field}
+    onChange={(e) =>
+      setSearch((prev) => ({
+        ...prev,
+        field: e.target.value as PlatformSearchState['field'],
+      }))
+    }
+  >
+    <option value="free">חיפוש חופשי</option>
+    <option value="platformId">Platform ID</option>
+    <option value="platformName">Platform Name</option>
+    <option value="unit">Unit</option>
+    <option value="unit_code">Unit Code</option>
+    <option value="zayad_id">Zayad ID</option>
+    <option value="call_sign">Call Sign</option>
+  </select>
+
+  <input
+    type="text"
+    placeholder="חיפוש לפי השדה שנבחר"
+    value={search.text}
+    onChange={(e) =>
+      setSearch((prev) => ({
+        ...prev,
+        text: e.target.value,
+      }))
+    }
+  />
+</div>
           <div className={`agents-grid ${viewMode === 'list' ? 'agents-list' : ''}`}>
-            {agents.map((agent) => {
+            {filteredAgents.map((agent) => {
               const previewAgent = toAgentPreview(agent);
 
               return (
