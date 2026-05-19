@@ -40,9 +40,12 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
   const [records, setRecords] = useState<AgentHistoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [topScrollWidth, setTopScrollWidth] = useState(0);
-  const [columnWidths, setColumnWidths] = useState(syncColumnDefaults);
   const topScrollRef = useRef<HTMLDivElement>(null);
+  const topScrollContentRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
+  const syncTableRef = useRef<HTMLTableElement>(null);
+  const columnRefs = useRef<(HTMLTableColElement | null)[]>([]);
+  const columnWidthsRef = useRef([...syncColumnDefaults]);
   const resizingColumnRef = useRef<{
     index: number;
     startX: number;
@@ -131,7 +134,7 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
     resizingColumnRef.current = {
       index,
       startX: event.clientX,
-      startWidth: columnWidths[index],
+      startWidth: columnWidthsRef.current[index],
     };
   }
 
@@ -188,12 +191,24 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
         syncColumnMinWidth,
         resizingColumn.startWidth + event.clientX - resizingColumn.startX
       );
+      const nextWidths = [...columnWidthsRef.current];
+      nextWidths[resizingColumn.index] = nextWidth;
+      columnWidthsRef.current = nextWidths;
 
-      setColumnWidths((currentWidths) =>
-        currentWidths.map((width, index) =>
-          index === resizingColumn.index ? nextWidth : width
-        )
-      );
+      const tableWidth = nextWidths.reduce((total, width) => total + width, 0);
+      const column = columnRefs.current[resizingColumn.index];
+
+      if (column) {
+        column.style.width = `${nextWidth}px`;
+      }
+
+      if (syncTableRef.current) {
+        syncTableRef.current.style.width = `${tableWidth}px`;
+      }
+
+      if (topScrollContentRef.current) {
+        topScrollContentRef.current.style.width = `${tableWidth}px`;
+      }
     }
 
     function handleMouseUp() {
@@ -290,7 +305,7 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
     );
   }
 
-  const syncTableWidth = columnWidths.reduce((total, width) => total + width, 0);
+  const syncTableWidth = syncColumnDefaults.reduce((total, width) => total + width, 0);
 
   const detailsContent = (
     <div className="details-panel">
@@ -311,6 +326,7 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
           >
             <div
               className="history-syncs-top-scroll-content"
+              ref={topScrollContentRef}
               style={{ width: topScrollWidth }}
             />
           </div>
@@ -320,10 +336,20 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
             ref={tableScrollRef}
             onScroll={() => syncHorizontalScroll('table')}
           >
-            <table className="details-table history-syncs-table" style={{ width: syncTableWidth }}>
+            <table
+              className="details-table history-syncs-table"
+              ref={syncTableRef}
+              style={{ width: syncTableWidth }}
+            >
               <colgroup>
-                {columnWidths.map((width, index) => (
-                  <col key={index} style={{ width }} />
+                {syncColumnDefaults.map((width, index) => (
+                  <col
+                    key={index}
+                    ref={(element) => {
+                      columnRefs.current[index] = element;
+                    }}
+                    style={{ width }}
+                  />
                 ))}
               </colgroup>
               <thead>
