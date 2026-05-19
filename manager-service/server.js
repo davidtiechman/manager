@@ -352,16 +352,16 @@ function createHistoryPoint() {
     };
 }
 
-app.get('/api/ui/agents', async (req, res) => {
+async function handleLoadAgents(req, res) {
     try {
         res.json(await loadAgents());
     } catch (error) {
         console.error('Failed to load agents from Redis:', error);
         res.status(500).json({ error: 'Failed to load agents' });
     }
-});
+}
 
-app.get('/api/ui/agents/:id/history', async (req, res) => {
+async function handleLoadAgentHistory(req, res) {
     try {
         const limit = Number(req.query.limit || 20);
         const values = await redis.lRange(agentHistoryKey(req.params.id), 0, limit - 1);
@@ -370,9 +370,9 @@ app.get('/api/ui/agents/:id/history', async (req, res) => {
         console.error('Failed to load agent history from Redis:', error);
         res.status(500).json({ error: 'Failed to load history' });
     }
-});
+}
 
-app.get('/api/history/agents', async (req, res) => {
+async function handleLoadHistoryAgents(req, res) {
     try {
         const result = await historyDb.query(`
             SELECT
@@ -394,9 +394,9 @@ app.get('/api/history/agents', async (req, res) => {
         console.error('Failed to load history agents from Postgres:', error);
         res.status(500).json({ error: 'Failed to load history agents' });
     }
-});
+}
 
-app.get('/api/history/agents/:id/syncs', async (req, res) => {
+async function handleLoadHistoryAgentSyncs(req, res) {
     try {
         const requestedLimit = Number(req.query.limit || 100);
         const limit = Number.isFinite(requestedLimit)
@@ -440,9 +440,9 @@ app.get('/api/history/agents/:id/syncs', async (req, res) => {
         console.error('Failed to load agent sync history from Postgres:', error);
         res.status(500).json({ error: 'Failed to load agent sync history' });
     }
-});
+}
 
-app.get('/api/ui/agents/:id/config', async (req, res) => {
+async function handleLoadAgentConfig(req, res) {
     try {
         const config = await getAgentConfig(req.params.id);
         res.json(config);
@@ -450,9 +450,24 @@ app.get('/api/ui/agents/:id/config', async (req, res) => {
         console.error('Failed to load agent config:', error);
         res.status(500).json({ error: 'Failed to load config' });
     }
-});
+}
+
+app.get('/api/ui/agents', handleLoadAgents);
+app.get('/manager/agents', handleLoadAgents);
+
+app.get('/api/ui/agents/:id/history', handleLoadAgentHistory);
+
+app.get('/api/history/agents', handleLoadHistoryAgents);
+app.get('/agents-history', handleLoadHistoryAgents);
+
+app.get('/api/history/agents/:id/syncs', handleLoadHistoryAgentSyncs);
+app.get('/agent/:id/syncs', handleLoadHistoryAgentSyncs);
+
+app.get('/api/ui/agents/:id/config', handleLoadAgentConfig);
+app.get('/manager/agents/:id/config', handleLoadAgentConfig);
 
 app.put('/api/ui/agents/:id/config', updateAgentConfig);
+app.put('/agents/:id/configuration', updateAgentConfig);
 
 app.get('/api/agents/:id/config', async (req, res) => {
     try {
