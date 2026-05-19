@@ -4,6 +4,7 @@ import type { HistoryAgent } from './types/history/historyAgent';
 import type { ConfigurationTableData } from './types/realTimeAgents/tables';
 import { MOCK_AGENTS } from './MOCK_AGENT';
 
+const VITE_API_TOKEN = import.meta.env.VITE_API_TOKEN || 'test';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
 
 type AgentDataSource = 'real-time' | 'history';
@@ -54,7 +55,11 @@ export class ApiService {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/ui/agents`);
+      const response = await fetch(`${API_BASE_URL}/manager/agents`, {
+        headers:{
+          'Authorization': `Bearer ${VITE_API_TOKEN}`
+        },
+      });
 
       if (!response.ok) {
         console.warn('API returned error, using mock data');
@@ -71,7 +76,11 @@ export class ApiService {
   }
 
   static async getHistoryAgents(): Promise<HistoryAgent[]> {
-    const response = await fetch(`${API_BASE_URL}/api/history/agents`);
+    const response = await fetch(`${API_BASE_URL}/agents-history`,{
+        headers:{
+          'Authorization': `Bearer ${VITE_API_TOKEN}`
+        },
+      });
 
     if (!response.ok) {
       throw new Error('Failed to load history agents');
@@ -84,7 +93,12 @@ export class ApiService {
     agentId: string
   ): Promise<AgentHistoryRecord[]> {
     const response = await fetch(
-      `${API_BASE_URL}/api/history/agents/${agentId}/syncs`
+      `${API_BASE_URL}/agent/${agentId}/syncs`
+      ,{
+        headers:{
+          'Authorization': `Bearer ${VITE_API_TOKEN}`
+        },
+      }
     );
 
     if (!response.ok) {
@@ -98,7 +112,11 @@ export class ApiService {
   static async getAgentConfig(
     agentId: string
   ): Promise<ConfigurationTableData> {
-    const response = await fetch(`${API_BASE_URL}/api/ui/agents/${agentId}/config`);
+    const response = await fetch(`${API_BASE_URL}/manager/agents/${agentId}/config`,{
+        headers:{
+          'Authorization': `Bearer ${VITE_API_TOKEN}`
+        },
+      });
 
     if (!response.ok) {
       throw new Error('Failed to load agent config');
@@ -111,9 +129,12 @@ export class ApiService {
     agentId: string,
     config: ConfigurationTableData
   ): Promise<ConfigurationTableData> {
-    const response = await fetch(`${API_BASE_URL}/api/ui/agents/${agentId}/config`, {
+    const response = await fetch(`${API_BASE_URL}/agents/${agentId}/configuration`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${VITE_API_TOKEN}`
+      },
       body: JSON.stringify(config),
     });
 
