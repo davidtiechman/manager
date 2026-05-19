@@ -156,17 +156,18 @@
 }
 
 .history-syncs-table {
-  min-width: 1300px;
-  table-layout: auto;
+  min-width: 100%;
+  table-layout: fixed;
 }
 
 .history-syncs-table th,
 .history-syncs-table td {
-  width: auto;
+  position: relative;
   white-space: nowrap;
 }
 
 .history-syncs-table th {
+  user-select: none;
   text-align: center;
 }
 
@@ -174,8 +175,44 @@
   background: white;
 }
 
+.history-syncs-table td,
+.history-syncs-header-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-syncs-header-content {
+  display: block;
+  padding-right: 8px;
+}
+
+.history-syncs-column-resizer {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  z-index: 2;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.history-syncs-column-resizer::after {
+  position: absolute;
+  top: 8px;
+  right: 3px;
+  bottom: 8px;
+  width: 2px;
+  background: transparent;
+  content: '';
+}
+
+.history-syncs-column-resizer:hover::after,
+.history-syncs-column-resizer:focus-visible::after {
+  background: #2563eb;
+}
+
 .history-syncs-table .history-syncs-id-column {
-  max-width: 44px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -190,26 +227,22 @@
 }
 
 .history-syncs-table .history-syncs-compact-column {
-  max-width: 96px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .history-syncs-table .history-syncs-selected-link-column {
-  max-width: 52px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .history-syncs-table .history-syncs-mode-column {
-  max-width: 34px;
   overflow: hidden;
   text-align: center;
   text-overflow: ellipsis;
 }
 
 .history-syncs-table .history-syncs-availability-column {
-  max-width: 54px;
   min-width: 48px;
   overflow: hidden;
   text-align: center;
@@ -223,7 +256,6 @@
 }
 
 .history-syncs-table .history-syncs-number-column {
-  max-width: 64px;
   min-width: 44px;
   text-align: center;
   white-space: normal;

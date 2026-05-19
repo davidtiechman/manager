@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import {useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ApiService } from '../../api';
 import { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
@@ -8,6 +9,26 @@ interface AgentSyncsListProps {
   agentId?: string;
   onClose?: () => void;
 }
+
+const syncColumnDefaults = [
+  72,
+  92,
+  180,
+  112,
+  112,
+  112,
+  180,
+  140,
+  180,
+  96,
+  112,
+  96,
+  96,
+  112,
+  180,
+];
+
+const syncColumnMinWidth = 48;
 
 export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentSyncsListProps) {
   const { agentId: routeAgentId } = useParams<{ agentId: string }>();
@@ -19,8 +40,14 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
   const [records, setRecords] = useState<AgentHistoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [topScrollWidth, setTopScrollWidth] = useState(0);
+  const [columnWidths, setColumnWidths] = useState(syncColumnDefaults);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
+  const resizingColumnRef = useRef<{
+    index: number;
+    startX: number;
+    startWidth: number;
+  } | null>(null);
 
   const navigate = useNavigate();
 
@@ -94,6 +121,40 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
     topScroll.scrollLeft = tableScroll.scrollLeft;
   }
 
+  function startColumnResize(
+    index: number,
+    event: ReactMouseEvent<HTMLSpanElement>
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    resizingColumnRef.current = {
+      index,
+      startX: event.clientX,
+      startWidth: columnWidths[index],
+    };
+  }
+
+  function renderResizableHeader(
+    index: number,
+    content: ReactNode,
+    className?: string,
+    title?: string
+  ) {
+    return (
+      <th className={className} title={title}>
+        <span className="history-syncs-header-content">{content}</span>
+        <span
+          className="history-syncs-column-resizer"
+          onMouseDown={(event) => startColumnResize(index, event)}
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize column"
+        />
+      </th>
+    );
+  }
+
   useEffect(() => {
     const tableScroll = tableScrollRef.current;
 
@@ -114,6 +175,39 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
       resizeObserver.disconnect();
     };
   }, [records]);
+
+  useEffect(() => {
+    function handleMouseMove(event: MouseEvent) {
+      const resizingColumn = resizingColumnRef.current;
+
+      if (!resizingColumn) {
+        return;
+      }
+
+      const nextWidth = Math.max(
+        syncColumnMinWidth,
+        resizingColumn.startWidth + event.clientX - resizingColumn.startX
+      );
+
+      setColumnWidths((currentWidths) =>
+        currentWidths.map((width, index) =>
+          index === resizingColumn.index ? nextWidth : width
+        )
+      );
+    }
+
+    function handleMouseUp() {
+      resizingColumnRef.current = null;
+    }
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, []);
 
   useEffect(() => {
     if (!agentId) {
@@ -196,6 +290,8 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
     );
   }
 
+  const syncTableWidth = columnWidths.reduce((total, width) => total + width, 0);
+
   const detailsContent = (
     <div className="details-panel">
       {renderDetailsHeader('Sync History')}
@@ -224,31 +320,30 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
             ref={tableScrollRef}
             onScroll={() => syncHorizontalScroll('table')}
           >
-            <table className="details-table history-syncs-table">
+            <table className="details-table history-syncs-table" style={{ width: syncTableWidth }}>
+              <colgroup>
+                {columnWidths.map((width, index) => (
+                  <col key={index} style={{ width }} />
+                ))}
+              </colgroup>
               <thead>
                 <tr>
-                  <th className="history-syncs-id-column">ID</th>
-                  <th>Status</th>
-                  <th>Created At</th>
-                  <th className="history-syncs-selected-link-column">Scheduled
-                    <br />Link
-                  </th>
-                  <th className="history-syncs-mode-column" title="Scheduler Mode">scheduler
-                    <br />
-                    Mode</th>
-                  <th className="history-syncs-number-column">Message
-                    In
-                    Queue</th>
-                  <th>Next Delivery Time</th>
-                  <th>Geo Data</th>
-                  <th>Server LUT</th>
+                  {renderResizableHeader(0, 'ID', 'history-syncs-id-column')}
+                  {renderResizableHeader(1, 'Status')}
+                  {renderResizableHeader(2, 'Created At')}
+                  {renderResizableHeader(3, <>Scheduled<br />Link</>, 'history-syncs-selected-link-column')}
+                  {renderResizableHeader(4, <>scheduler<br />Mode</>, 'history-syncs-mode-column', 'Scheduler Mode')}
+                  {renderResizableHeader(5, <>Message<br />In<br />Queue</>, 'history-syncs-number-column')}
+                  {renderResizableHeader(6, 'Next Delivery Time')}
+                  {renderResizableHeader(7, 'Geo Data')}
+                  {renderResizableHeader(8, 'Server LUT')}
                   {/* <th className="history-syncs-id-column">Link Quality ID</th> */}
-                  <th>Type</th>
-                  <th className="history-syncs-availability-column">Availability</th>
-                  <th className="history-syncs-number-column">Quality</th>
-                  <th className="history-syncs-number-column">Latency</th>
-                  <th className="history-syncs-number-column">Reliability</th>
-                  <th>Timestamp</th>
+                  {renderResizableHeader(9, 'Type')}
+                  {renderResizableHeader(10, 'Availability', 'history-syncs-availability-column')}
+                  {renderResizableHeader(11, 'Quality', 'history-syncs-number-column')}
+                  {renderResizableHeader(12, 'Latency', 'history-syncs-number-column')}
+                  {renderResizableHeader(13, 'Reliability', 'history-syncs-number-column')}
+                  {renderResizableHeader(14, 'Timestamp')}
                 </tr>
               </thead>
 
