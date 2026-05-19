@@ -5,7 +5,7 @@ import type { ConfigurationTableData } from './types/realTimeAgents/tables';
 import { MOCK_AGENTS } from './MOCK_AGENT';
 
 const VITE_API_TOKEN = import.meta.env.VITE_API_TOKEN || 'test';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:9000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9000';
 
 type AgentDataSource = 'real-time' | 'history';
 
