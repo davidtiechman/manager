@@ -24,3 +24,7 @@ export interface AgentHistoryRecord {
     timestamp: number;
   };
 }
+export interface AgentHistoryResponse {
+  items: AgentHistoryRecord[];
+  total: number;
+}

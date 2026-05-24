@@ -398,10 +398,26 @@ async function handleLoadHistoryAgents(req, res) {
 
 async function handleLoadHistoryAgentSyncs(req, res) {
     try {
-        const requestedLimit = Number(req.query.limit || 100);
+        const requestedLimit = Number(req.query.limit || 50);
+        const requestedOffset = Number(req.query.offset || 0);
+
         const limit = Number.isFinite(requestedLimit)
             ? Math.min(Math.max(requestedLimit, 1), 500)
-            : 100;
+            : 50;
+
+        const offset = Number.isFinite(requestedOffset)
+            ? Math.max(requestedOffset, 0)
+            : 0;
+
+        const countResult = await historyDb.query(
+            `
+            SELECT COUNT(*)::int AS total
+            FROM agent_syncs
+            WHERE agent_id = $1
+            `,
+            [req.params.id]
+        );
+
         const result = await historyDb.query(
             `
             SELECT
@@ -430,12 +446,15 @@ async function handleLoadHistoryAgentSyncs(req, res) {
             FROM agent_syncs
             WHERE agent_id = $1
             ORDER BY created_at DESC
-            LIMIT $2
+            LIMIT $2 OFFSET $3
             `,
-            [req.params.id, limit]
+            [req.params.id, limit, offset]
         );
 
-        res.json(result.rows);
+        res.json({
+            items: result.rows,
+            total: Number(countResult.rows[0]?.total || 0),
+        });
     } catch (error) {
         console.error('Failed to load agent sync history from Postgres:', error);
         res.status(500).json({ error: 'Failed to load agent sync history' });

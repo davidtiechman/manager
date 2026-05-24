@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-The UI reads the manager API from `VITE_API_BASE_URL`. For local development:
+The UI reads the manager API from `VITE_API_URL`. For local development:
 
 ```bash
 cp .env.example .env

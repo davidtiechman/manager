@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
-import {useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ApiService } from '../../api';
-import { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
+import type {
+  AgentHistoryRecord,
+  AgentHistoryResponse,
+} from '../../types/history/agentHistoryRecord';
 import ModeNavigationLink from '../ModeNavigationLink';
 
 interface AgentSyncsListProps {
   agentId?: string;
   onClose?: () => void;
 }
-
+const VITE_LIMIT_SYNCS_HISTORY =
+  Number(import.meta.env.VITE_LIMIT_SYNCS_HISTORY) || 50;
 const syncColumnDefaults = [
   72,
   92,
@@ -39,6 +43,9 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
 
   const [records, setRecords] = useState<AgentHistoryRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const limit = VITE_LIMIT_SYNCS_HISTORY;
+  const [total, setTotal] = useState(0);
   const [topScrollWidth, setTopScrollWidth] = useState(0);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const topScrollContentRef = useRef<HTMLDivElement>(null);
@@ -53,6 +60,8 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
   } | null>(null);
 
   const navigate = useNavigate();
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const currentPage = Math.min(totalPages, Math.floor(offset / limit) + 1);
 
   function displayValue(value: string | number | boolean | null | undefined) {
     if (value === null || value === undefined || value === '') {
@@ -233,18 +242,24 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
     const fetchAgentHistory = async () => {
       try {
         setLoading(true);
-        const data: AgentHistoryRecord[] = await ApiService.getAgentHistory(agentId);
-        setRecords(data);
+        const response: AgentHistoryResponse = await ApiService.getHistorySyncs(
+          agentId,
+          offset,
+          limit
+        );
+        setRecords(response.items);
+        setTotal(response.total);
       } catch (error) {
         console.error('Error fetching agent history:', error);
         setRecords([]);
+        setTotal(0);
       } finally {
         setLoading(false);
       }
     };
 
     fetchAgentHistory();
-  }, [agentId]);
+  }, [agentId, limit, offset]);
 
   const renderDetailsHeader = (title: string) => (
     <div className="details-header">
@@ -402,6 +417,25 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="pagination">
+            <button
+              disabled={offset === 0}
+              onClick={() => setOffset((prev) => Math.max(0, prev - limit))}
+            >
+              Previous
+            </button>
+
+            <span>
+              Page {currentPage} / {totalPages}
+            </span>
+
+            <button
+              disabled={offset + limit >= total}
+              onClick={() => setOffset((prev) => prev + limit)}
+            >
+              Next
+            </button>
           </div>
         </>
       )}

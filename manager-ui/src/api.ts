@@ -1,5 +1,5 @@
 import type { AgentResponse } from './types/realTimeAgents/agentResponse';
-import type { AgentHistoryRecord } from './types/history/agentHistoryRecord';
+import type { AgentHistoryRecord, AgentHistoryResponse } from './types/history/agentHistoryRecord';
 import type { HistoryAgent } from './types/history/historyAgent';
 import type { ConfigurationTableData } from './types/realTimeAgents/tables';
 import { MOCK_AGENTS } from './MOCK_AGENT';
@@ -9,39 +9,34 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9000';
 
 type AgentDataSource = 'real-time' | 'history';
 
-function extractAgentHistoryRecords(data: unknown): AgentHistoryRecord[] {
+function normalizeAgentHistoryResponse(data: unknown): AgentHistoryResponse {
   if (Array.isArray(data)) {
-    return data as AgentHistoryRecord[];
+    return {
+      items: data as AgentHistoryRecord[],
+      total: data.length,
+    };
   }
 
   if (!data || typeof data !== 'object') {
-    return [];
+    return {
+      items: [],
+      total: 0,
+    };
   }
 
   const payload = data as {
-    syncs?: unknown;
-    records?: unknown;
-    history?: unknown;
-    data?: unknown;
+    items?: unknown;
+    total?: unknown;
   };
+  const items = Array.isArray(payload.items)
+    ? (payload.items as AgentHistoryRecord[])
+    : [];
+  const total = Number(payload.total);
 
-  if (Array.isArray(payload.syncs)) {
-    return payload.syncs as AgentHistoryRecord[];
-  }
-
-  if (Array.isArray(payload.records)) {
-    return payload.records as AgentHistoryRecord[];
-  }
-
-  if (Array.isArray(payload.history)) {
-    return payload.history as AgentHistoryRecord[];
-  }
-
-  if (Array.isArray(payload.data)) {
-    return payload.data as AgentHistoryRecord[];
-  }
-
-  return [];
+  return {
+    items,
+    total: Number.isFinite(total) ? total : items.length,
+  };
 }
 
 export class ApiService {
@@ -89,13 +84,20 @@ export class ApiService {
     return response.json();
   }
 
-  static async getAgentHistory(
-    agentId: string
-  ): Promise<AgentHistoryRecord[]> {
+  static async getHistorySyncs(
+    agentId: string,
+    offset = 0,
+    limit = 50
+  ): Promise<AgentHistoryResponse> {
+    const query = new URLSearchParams({
+      offset: String(offset),
+      limit: String(limit),
+    });
+
     const response = await fetch(
-      `${API_BASE_URL}/agent/${agentId}/syncs`
-      ,{
-        headers:{
+      `${API_BASE_URL}/agent/${encodeURIComponent(agentId)}/syncs?${query}`,
+      {
+        headers: {
           'Authorization': `Bearer ${VITE_API_TOKEN}`
         },
       }
@@ -106,7 +108,7 @@ export class ApiService {
     }
 
     const data: unknown = await response.json();
-    return extractAgentHistoryRecords(data);
+    return normalizeAgentHistoryResponse(data);
   }
 
   static async getAgentConfig(
