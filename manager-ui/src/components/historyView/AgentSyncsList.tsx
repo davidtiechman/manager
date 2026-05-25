@@ -1,10 +1,16 @@
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AgGridReact } from 'ag-grid-react';
+import {
+  ModuleRegistry,
+  InfiniteRowModelModule,
+  CommunityFeaturesModule,
+} from 'ag-grid-community';
 import type {
   ColDef,
   IDatasource,
   IGetRowsParams,
+  GridReadyEvent,
   ICellRendererParams,
 } from 'ag-grid-community';
 
@@ -15,6 +21,9 @@ import '../../styles/syncs-grid.css';
 import { ApiService } from '../../api';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
 import ModeNavigationLink from '../ModeNavigationLink';
+
+// Register required modules for AG Grid v32
+ModuleRegistry.registerModules([InfiniteRowModelModule, CommunityFeaturesModule]);
 
 const BLOCK_SIZE = 100;
 
@@ -36,21 +45,27 @@ function AvailabilityCell({ value }: ICellRendererParams) {
   const isYes = value === true || value === 'true';
   return (
     <span className={`snc-avail snc-avail--${isYes ? 'yes' : 'no'}`}>
-      {isYes ? '✓ Yes' : '✗ No'}
+      {isYes ? '✓  Yes' : '✗  No'}
     </span>
   );
 }
 
 function DateCell({ value }: ICellRendererParams) {
   if (value == null || value === '') return <span className="snc-null">—</span>;
-  const raw = typeof value === 'number' && value < 1_000_000_000_000 ? value * 1000 : value;
+  const raw =
+    typeof value === 'number' && value < 1_000_000_000_000 ? value * 1000 : value;
   const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) return <span title={String(value)}>{String(value)}</span>;
+  if (Number.isNaN(date.getTime()))
+    return <span title={String(value)}>{String(value)}</span>;
   const formatted = new Intl.DateTimeFormat('he-IL', {
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   }).format(date);
-  return <span className="snc-date" title={date.toISOString()}>{formatted}</span>;
+  return (
+    <span className="snc-date" title={date.toISOString()}>
+      {formatted}
+    </span>
+  );
 }
 
 function NumericCell({ value }: ICellRendererParams) {
@@ -60,7 +75,11 @@ function NumericCell({ value }: ICellRendererParams) {
 
 function TextCell({ value }: ICellRendererParams) {
   if (value == null || value === '') return <span className="snc-null">—</span>;
-  return <span className="snc-text" title={String(value)}>{String(value)}</span>;
+  return (
+    <span className="snc-text" title={String(value)}>
+      {String(value)}
+    </span>
+  );
 }
 
 // ── Column definitions ──────────────────────────────────────────────
@@ -71,7 +90,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       field: 'createdAt',
       headerName: 'Created At',
       pinned: 'left',
-      width: 175,
+      width: 170,
       minWidth: 150,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -80,8 +99,8 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       field: 'id',
       headerName: 'ID',
-      width: 85,
-      minWidth: 65,
+      width: 80,
+      minWidth: 60,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
     },
@@ -125,7 +144,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       colId: 'nextDeliveryTime',
       headerName: 'Next Delivery',
       valueGetter: (p) => p.data?.details?.nextDeliveryTime,
-      width: 175,
+      width: 170,
       minWidth: 140,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -134,7 +153,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       colId: 'geoData',
       headerName: 'Geo Data',
       valueGetter: (p) => p.data?.details?.geoData,
-      width: 130,
+      width: 125,
       minWidth: 90,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
@@ -143,7 +162,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       colId: 'serverLut',
       headerName: 'Server LUT',
       valueGetter: (p) => p.data?.details?.serverLut,
-      width: 175,
+      width: 170,
       minWidth: 140,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -180,7 +199,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Latency (ms)',
       valueGetter: (p) => p.data?.link_quality?.latency,
       width: 115,
-      minWidth: 85,
+      minWidth: 90,
       type: 'numericColumn',
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
@@ -199,7 +218,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       colId: 'linkTimestamp',
       headerName: 'Link Timestamp',
       valueGetter: (p) => p.data?.link_quality?.timestamp,
-      width: 175,
+      width: 170,
       minWidth: 140,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -209,7 +228,10 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
 
 // ── Component ───────────────────────────────────────────────────────
 
-export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentSyncsListProps) {
+export default function AgentSyncsList({
+  agentId: agentIdProp,
+  onClose,
+}: AgentSyncsListProps) {
   const { agentId: routeAgentId } = useParams<{ agentId: string }>();
   const agentId = agentIdProp ?? routeAgentId;
   const isEmbedded = Boolean(agentIdProp);
@@ -220,36 +242,54 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
   const gridRef = useRef<AgGridReact<AgentHistoryRecord>>(null);
   const columnDefs = useMemo(() => buildColumnDefs(), []);
 
-  const defaultColDef = useMemo<ColDef>(() => ({
-    sortable: true,
-    resizable: true,
-    floatingFilter: true,
-    suppressMovable: false,
-    autoHeaderHeight: false,
-  }), []);
+  const defaultColDef = useMemo<ColDef>(
+    () => ({
+      sortable: true,
+      resizable: true,
+      floatingFilter: true,
+      suppressMovable: false,
+    }),
+    []
+  );
 
-  // Pass datasource directly as prop — this is the correct React pattern for AG Grid v32
-  const datasource = useMemo<IDatasource>(() => ({
+  // Build datasource — re-created only when agentId changes
+  const buildDatasource = useCallback((): IDatasource => ({
     getRows(params: IGetRowsParams) {
       if (!agentId) {
         params.successCallback([], 0);
         return;
       }
       ApiService.getHistorySyncsIrm(agentId, {
-        startRow:    params.startRow,
-        endRow:      params.endRow,
-        sortModel:   params.sortModel as Array<{ colId: string; sort: 'asc' | 'desc' }>,
+        startRow: params.startRow,
+        endRow: params.endRow,
+        sortModel: params.sortModel as Array<{
+          colId: string;
+          sort: 'asc' | 'desc';
+        }>,
         filterModel: params.filterModel as Record<string, unknown>,
       })
         .then(({ rows, lastRow }) => {
-          params.successCallback(rows, lastRow ?? undefined);
+          // lastRow: set only when we know the end; -1 = unknown
+          const knownEnd =
+            rows.length < params.endRow - params.startRow
+              ? params.startRow + rows.length
+              : -1;
+          params.successCallback(rows, lastRow ?? knownEnd);
         })
         .catch((err) => {
-          console.error('[SyncHistory] Failed to load rows:', err);
+          console.error('[SyncHistory] getRows failed:', err);
           params.failCallback();
         });
     },
   }), [agentId]);
+
+  // Set datasource when grid is ready (most reliable approach for v32)
+  const onGridReady = useCallback(
+    (event: GridReadyEvent) => {
+      event.api.updateGridOptions({ datasource: buildDatasource() });
+    },
+    [buildDatasource]
+  );
 
   // ── No agentId guard ────────────────────────────────────────────────
 
@@ -261,7 +301,7 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
     );
   }
 
-  // ── Shared grid element ─────────────────────────────────────────────
+  // ── Shared grid ─────────────────────────────────────────────────────
 
   const gridEl = (
     <div className="snc-grid-wrapper ag-theme-quartz">
@@ -270,11 +310,10 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
         columnDefs={columnDefs}
         defaultColDef={defaultColDef}
         rowModelType="infinite"
-        datasource={datasource}
         cacheBlockSize={BLOCK_SIZE}
         cacheOverflowSize={2}
         maxConcurrentDatasourceRequests={2}
-        infiniteInitialRowCount={BLOCK_SIZE}
+        onGridReady={onGridReady}
         suppressCellFocus={false}
         enableCellTextSelection
         tooltipShowDelay={400}
@@ -283,21 +322,36 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
     </div>
   );
 
-  // ── Embedded mode ──────────────────────────────────────────────────
+  // ── Embedded ────────────────────────────────────────────────────────
 
   if (isEmbedded) {
     return (
       <div className="details-panel">
         <div className="details-header">
-          <div className="details-title-block"><h2>Sync History</h2></div>
+          <div className="details-title-block">
+            <h2>Sync History</h2>
+          </div>
           <div className="details-header-actions details-header-actions-left">
-            <button type="button" className="details-back-button"
-              onClick={() => navigate(backTo ?? '/history')}>Back</button>
-            {agentId && <p className="details-agent-id">Agent ID: {agentId}</p>}
+            <button
+              type="button"
+              className="details-back-button"
+              onClick={() => navigate(backTo ?? '/history')}
+            >
+              Back
+            </button>
+            {agentId && (
+              <p className="details-agent-id">Agent ID: {agentId}</p>
+            )}
           </div>
           {onClose && (
             <div className="details-header-actions details-header-actions-right">
-              <button type="button" className="details-close-button" onClick={onClose}>Close</button>
+              <button
+                type="button"
+                className="details-close-button"
+                onClick={onClose}
+              >
+                Close
+              </button>
             </div>
           )}
         </div>
@@ -308,41 +362,45 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
     );
   }
 
-  // ── Full-page mode ─────────────────────────────────────────────────
+  // ── Full-page ───────────────────────────────────────────────────────
 
   return (
     <div className="snc-page">
+      {/* Top bar */}
+      <header className="snc-header">
+        <div className="snc-header-start">
+          <button
+            type="button"
+            className="snc-back"
+            onClick={() => navigate(backTo ?? '/history')}
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path
+                d="M9 2L4 7L9 12"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            History
+          </button>
 
-      {/* ── Top navigation bar ── */}
-      <nav className="snc-nav">
-        <button type="button" className="snc-nav-back" onClick={() => navigate(backTo ?? '/history')}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M10 3L5 8L10 13" stroke="currentColor" strokeWidth="2"
-              strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          History
-        </button>
-        <div className="snc-nav-spacer" />
-        <ModeNavigationLink to="/" label="ניטור זמן אמת" variant="real-time" />
-      </nav>
+          <div className="snc-header-divider" aria-hidden="true" />
 
-      {/* ── Agent hero ── */}
-      <header className="snc-hero">
-        <div className="snc-hero-inner">
-          <span className="snc-hero-eyebrow">Sync History</span>
-          <h1 className="snc-hero-agent">{agentId}</h1>
+          <div className="snc-title-block">
+            <span className="snc-title-label">Sync History</span>
+            <h1 className="snc-title-agent">{agentId}</h1>
+          </div>
         </div>
-        <div className="snc-hero-badge">
-          <span className="snc-hero-badge-dot" />
-          Live feed
+
+        <div className="snc-header-end">
+          <ModeNavigationLink to="/" label="ניטור זמן אמת" variant="real-time" />
         </div>
       </header>
 
-      {/* ── Grid ── */}
-      <div className="snc-grid-outer">
-        {gridEl}
-      </div>
-
+      {/* Grid */}
+      <div className="snc-grid-outer">{gridEl}</div>
     </div>
   );
 }
