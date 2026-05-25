@@ -162,8 +162,8 @@
   /* Rows */
   --ag-background-color: #ffffff;
   --ag-odd-row-background-color: #fafbfc;
-  --ag-row-hover-color: #eff6ff;
-  --ag-selected-row-background-color: #dbeafe;
+  --ag-row-hover-color: #f1f5f9;
+  --ag-selected-row-background-color: #e9f0f7;
 
   /* Borders */
   --ag-border-color: #e2e8f0;
@@ -171,11 +171,11 @@
   --ag-cell-horizontal-border: solid #f1f5f9;
   --ag-wrapper-border-radius: 0;
 
-  /* Accent */
-  --ag-accent-color: #2563eb;
-  --ag-input-focus-border-color: #3b82f6;
-  --ag-checkbox-checked-color: #2563eb;
-  --ag-range-selection-border-color: #2563eb;
+  /* Accent — sky-blue, lighter and less saturated than royal blue */
+  --ag-accent-color: #0ea5e9;
+  --ag-input-focus-border-color: #38bdf8;
+  --ag-checkbox-checked-color: #0ea5e9;
+  --ag-range-selection-border-color: #0ea5e9;
 
   /* Secondary */
   --ag-secondary-foreground-color: #64748b;
@@ -198,9 +198,29 @@
   color: #f1f5f9;
 }
 
-/* Sort icon */
+/* Sort icon — bright so it's visible on the dark header */
 .snc-grid-wrapper .ag-sort-indicator-icon {
-  color: #60a5fa;
+  color: #e2e8f0;
+  opacity: 0.9;
+}
+
+/* ── Sorted column header — unmistakable active state ───────── */
+.snc-grid-wrapper .ag-header-cell-sorted-asc,
+.snc-grid-wrapper .ag-header-cell-sorted-desc {
+  background: rgba(255, 255, 255, 0.07) !important;
+  box-shadow: inset 0 -3px 0 0 #38bdf8 !important; /* sky underline */
+}
+
+.snc-grid-wrapper .ag-header-cell-sorted-asc .ag-header-cell-text,
+.snc-grid-wrapper .ag-header-cell-sorted-desc .ag-header-cell-text {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.snc-grid-wrapper .ag-header-cell-sorted-asc .ag-sort-indicator-icon,
+.snc-grid-wrapper .ag-header-cell-sorted-desc .ag-sort-indicator-icon {
+  color: #38bdf8 !important;
+  opacity: 1;
 }
 
 /* ── Floating filter row — light so filters are immediately obvious ─ */
@@ -224,8 +244,8 @@
 
 .snc-grid-wrapper .ag-floating-filter-input:focus {
   background: #ffffff;
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.12);
   outline: none;
 }
 
@@ -312,11 +332,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Numeric — tabular */
+/* Numeric — tabular, neutral dark (no heavy color) */
 .snc-num {
   font-variant-numeric: tabular-nums;
   font-weight: 600;
-  color: #1d4ed8;
+  color: #334155;
   font-size: 13px;
 }
 
