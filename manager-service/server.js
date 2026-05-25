@@ -396,27 +396,145 @@ async function handleLoadHistoryAgents(req, res) {
     }
 }
 
+// Allowed columns for sort/filter — whitelist prevents SQL injection
+const SYNCS_SORTABLE_COLUMNS = new Map([
+    ['id',                  'id'],
+    ['status',              'status'],
+    ['createdAt',           'created_at'],
+    ['selectedLink',        'selected_link'],
+    ['schedulerMode',       'scheduler_mode'],
+    ['messagesInQueue',     'messages_in_queue'],
+    ['nextDeliveryTime',    'next_delivery_time'],
+    ['geoData',             'geo_data'],
+    ['serverLut',           'server_lut'],
+    ['linkType',            'link_type'],
+    ['linkAvailable',       'link_available'],
+    ['linkQuality',         'link_quality'],
+    ['latency',             'latency'],
+    ['reliability',         'reliability'],
+    ['linkTimestamp',       'link_timestamp'],
+]);
+
+function buildSyncsOrderBy(sortModel) {
+    if (!Array.isArray(sortModel) || sortModel.length === 0) {
+        return 'ORDER BY created_at DESC';
+    }
+
+    const parts = sortModel
+        .filter((s) => SYNCS_SORTABLE_COLUMNS.has(s.colId))
+        .map((s) => {
+            const col = SYNCS_SORTABLE_COLUMNS.get(s.colId);
+            const dir = s.sort === 'asc' ? 'ASC' : 'DESC';
+            return `${col} ${dir}`;
+        });
+
+    return parts.length > 0 ? `ORDER BY ${parts.join(', ')}` : 'ORDER BY created_at DESC';
+}
+
+function buildSyncsWhere(agentId, filterModel, params) {
+    // params already has agentId at $1
+    const conditions = ['agent_id = $1'];
+
+    if (!filterModel || typeof filterModel !== 'object') {
+        return conditions.join(' AND ');
+    }
+
+    for (const [fieldId, filter] of Object.entries(filterModel)) {
+        const col = SYNCS_SORTABLE_COLUMNS.get(fieldId);
+        if (!col || !filter || typeof filter !== 'object') continue;
+
+        const { filterType, type, filter: value, filterTo, dateFrom, dateTo } = filter;
+
+        if (filterType === 'text') {
+            if (type === 'equals') {
+                params.push(value);
+                conditions.push(`${col} = $${params.length}`);
+            } else if (type === 'contains') {
+                params.push(`%${value}%`);
+                conditions.push(`${col} ILIKE $${params.length}`);
+            } else if (type === 'startsWith') {
+                params.push(`${value}%`);
+                conditions.push(`${col} ILIKE $${params.length}`);
+            } else if (type === 'endsWith') {
+                params.push(`%${value}`);
+                conditions.push(`${col} ILIKE $${params.length}`);
+            } else if (type === 'notContains') {
+                params.push(`%${value}%`);
+                conditions.push(`${col} NOT ILIKE $${params.length}`);
+            }
+        } else if (filterType === 'number') {
+            const num = Number(value);
+            if (!Number.isFinite(num)) continue;
+            if (type === 'equals') {
+                params.push(num);
+                conditions.push(`${col} = $${params.length}`);
+            } else if (type === 'greaterThan') {
+                params.push(num);
+                conditions.push(`${col} > $${params.length}`);
+            } else if (type === 'greaterThanOrEqual') {
+                params.push(num);
+                conditions.push(`${col} >= $${params.length}`);
+            } else if (type === 'lessThan') {
+                params.push(num);
+                conditions.push(`${col} < $${params.length}`);
+            } else if (type === 'lessThanOrEqual') {
+                params.push(num);
+                conditions.push(`${col} <= $${params.length}`);
+            } else if (type === 'inRange') {
+                const numTo = Number(filterTo);
+                if (Number.isFinite(numTo)) {
+                    params.push(num, numTo);
+                    conditions.push(`${col} BETWEEN $${params.length - 1} AND $${params.length}`);
+                }
+            }
+        } else if (filterType === 'date') {
+            if (dateFrom) {
+                params.push(new Date(dateFrom).toISOString());
+                conditions.push(`${col} >= $${params.length}`);
+            }
+            if (dateTo) {
+                params.push(new Date(dateTo).toISOString());
+                conditions.push(`${col} <= $${params.length}`);
+            }
+        } else if (filterType === 'boolean' || col === 'link_available') {
+            const bool = value === 'true' || value === true;
+            params.push(bool);
+            conditions.push(`${col} = $${params.length}`);
+        }
+    }
+
+    return conditions.join(' AND ');
+}
+
 async function handleLoadHistoryAgentSyncs(req, res) {
     try {
-        const requestedLimit = Number(req.query.limit || 50);
-        const requestedOffset = Number(req.query.offset || 0);
+        // Support both IRM params (startRow/endRow) and legacy params (offset/limit)
+        const useIrm = req.query.startRow !== undefined;
 
-        const limit = Number.isFinite(requestedLimit)
-            ? Math.min(Math.max(requestedLimit, 1), 500)
-            : 50;
+        let startRow, blockSize;
+        if (useIrm) {
+            startRow  = Math.max(0, Number(req.query.startRow)  || 0);
+            const endRow = Math.max(1, Number(req.query.endRow) || 100);
+            blockSize = Math.min(endRow - startRow, 500);
+        } else {
+            const legacyOffset = Math.max(0, Number(req.query.offset) || 0);
+            const legacyLimit  = Math.min(Math.max(Number(req.query.limit) || 50, 1), 500);
+            startRow  = legacyOffset;
+            blockSize = legacyLimit;
+        }
 
-        const offset = Number.isFinite(requestedOffset)
-            ? Math.max(requestedOffset, 0)
-            : 0;
+        // Parse AG Grid sort/filter models sent as JSON strings
+        let sortModel  = [];
+        let filterModel = {};
+        try { sortModel  = JSON.parse(req.query.sortModel  || '[]'); } catch { sortModel  = []; }
+        try { filterModel = JSON.parse(req.query.filterModel || '{}'); } catch { filterModel = {}; }
 
-        const countResult = await historyDb.query(
-            `
-            SELECT COUNT(*)::int AS total
-            FROM agent_syncs
-            WHERE agent_id = $1
-            `,
-            [req.params.id]
-        );
+        const params = [req.params.id];
+        const whereClause = buildSyncsWhere(req.params.id, filterModel, params);
+        const orderBy     = buildSyncsOrderBy(sortModel);
+
+        const offsetIdx   = params.length + 1;
+        const limitIdx    = params.length + 2;
 
         const result = await historyDb.query(
             `
@@ -427,34 +545,40 @@ async function handleLoadHistoryAgentSyncs(req, res) {
                 created_at AS "createdAt",
                 json_build_object(
                     'id', id,
-                    'selectedLink', selected_link,
-                    'schedulerMode', scheduler_mode,
-                    'messagesInQueue', messages_in_queue,
+                    'selectedLink',     selected_link,
+                    'schedulerMode',    scheduler_mode,
+                    'messagesInQueue',  messages_in_queue,
                     'nextDeliveryTime', next_delivery_time,
-                    'geoData', geo_data,
-                    'serverLut', server_lut
+                    'geoData',          geo_data,
+                    'serverLut',        server_lut
                 ) AS details,
                 json_build_object(
-                    'id', id,
-                    'type', link_type,
-                    'available', link_available,
-                    'quality', link_quality,
-                    'latency', latency,
+                    'id',          id,
+                    'type',        link_type,
+                    'available',   link_available,
+                    'quality',     link_quality,
+                    'latency',     latency,
                     'reliability', reliability,
-                    'timestamp', link_timestamp
+                    'timestamp',   link_timestamp
                 ) AS link_quality
             FROM agent_syncs
-            WHERE agent_id = $1
-            ORDER BY created_at DESC
-            LIMIT $2 OFFSET $3
+            WHERE ${whereClause}
+            ${orderBy}
+            LIMIT $${limitIdx} OFFSET $${offsetIdx}
             `,
-            [req.params.id, limit, offset]
+            [...params, startRow, blockSize]
         );
 
-        res.json({
-            items: result.rows,
-            total: Number(countResult.rows[0]?.total || 0),
-        });
+        const rows = result.rows;
+
+        if (useIrm) {
+            // IRM response: lastRow is set only when we know we've hit the end
+            const lastRow = rows.length < blockSize ? startRow + rows.length : null;
+            res.json({ rows, lastRow });
+        } else {
+            // Legacy response: keep { items, total } shape so nothing else breaks
+            res.json({ items: rows, total: rows.length });
+        }
     } catch (error) {
         console.error('Failed to load agent sync history from Postgres:', error);
         res.status(500).json({ error: 'Failed to load agent sync history' });

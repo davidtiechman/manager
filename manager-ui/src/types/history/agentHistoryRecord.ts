@@ -1,7 +1,7 @@
 export interface AgentHistoryRecord {
   id: number;
   agentId: string;
-  status: 'active' | 'inactive' | 'warning'| string ;
+  status: 'active' | 'inactive' | 'slow' | string;
   createdAt: string;
 
   details: {
@@ -23,8 +23,4 @@ export interface AgentHistoryRecord {
     reliability: number;
     timestamp: number;
   };
-}
-export interface AgentHistoryResponse {
-  items: AgentHistoryRecord[];
-  total: number;
 }
