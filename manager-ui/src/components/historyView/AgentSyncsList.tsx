@@ -431,7 +431,6 @@ export default function AgentSyncsList({
 
         <div className="snc-header-center">
           <p className="snc-header-entity">{agentId}</p>
-          <p className="snc-header-subtitle">Sync History</p>
         </div>
 
         <div className="snc-header-end">
