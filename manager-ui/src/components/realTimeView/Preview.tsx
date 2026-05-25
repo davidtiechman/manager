@@ -30,18 +30,36 @@ const platformSearchFields: { label: string; value: KnownSearchField }[] = [
   { label: 'Call Sign', value: 'call_sign' },
 ];
 
-function getNestedValue(source: unknown, path: string): unknown {
+type SearchValueMatch = {
+  exists: boolean;
+  value: unknown;
+};
+
+function getNestedEntry(source: unknown, path: string): SearchValueMatch {
   if (!source || typeof source !== 'object') {
-    return undefined;
+    return { exists: false, value: undefined };
   }
 
-  return path.split('.').reduce<unknown>((current, key) => {
-    if (!current || typeof current !== 'object') {
-      return undefined;
+  return path.split('.').reduce<SearchValueMatch>((current, key) => {
+    if (!current.exists) {
+      return current;
     }
 
-    return (current as Record<string, unknown>)[key];
-  }, source);
+    const value = current.value;
+
+    if (!value || typeof value !== 'object') {
+      return { exists: false, value: undefined };
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(value, key)) {
+      return { exists: false, value: undefined };
+    }
+
+    return {
+      exists: true,
+      value: (value as Record<string, unknown>)[key],
+    };
+  }, { exists: true, value: source });
 }
 
 function flattenValues(
@@ -68,6 +86,51 @@ function flattenValues(
   );
 }
 
+function findCustomSearchEntry(
+  agent: AgentResponse,
+  field: string
+): SearchValueMatch {
+  const normalizedField = field.trim().toLowerCase();
+
+  if (normalizedField === '') {
+    return { exists: false, value: undefined };
+  }
+
+  const platformFields = toPlatformTable(agent);
+  const platformField = Object.keys(platformFields).find(
+    (key) => key.toLowerCase() === normalizedField
+  );
+
+  if (platformField) {
+    return {
+      exists: true,
+      value: platformFields[platformField as keyof typeof platformFields],
+    };
+  }
+
+  const pathEntry = getNestedEntry(agent, field);
+  if (pathEntry.exists) {
+    return pathEntry;
+  }
+
+  const flattenedEntry = flattenValues(agent).find(({ key }) => {
+    const normalizedKey = key.toLowerCase();
+    return (
+      normalizedKey === normalizedField ||
+      normalizedKey.split('.').pop() === normalizedField
+    );
+  });
+
+  if (flattenedEntry) {
+    return {
+      exists: true,
+      value: flattenedEntry.value,
+    };
+  }
+
+  return { exists: false, value: undefined };
+}
+
 function stringifySearchValue(value: unknown) {
   if (value === null || value === undefined) {
     return '';
@@ -78,28 +141,6 @@ function stringifySearchValue(value: unknown) {
   }
 
   return String(value);
-}
-
-function getCustomSearchValue(agent: AgentResponse, field: string) {
-  const platformFields = toPlatformTable(agent);
-
-  if (field in platformFields) {
-    return platformFields[field as keyof typeof platformFields];
-  }
-
-  const pathValue = getNestedValue(agent, field);
-  if (pathValue !== undefined) {
-    return pathValue;
-  }
-
-  const normalizedField = field.toLowerCase();
-  return flattenValues(agent).find(({ key }) => {
-    const normalizedKey = key.toLowerCase();
-    return (
-      normalizedKey === normalizedField ||
-      normalizedKey.split('.').pop() === normalizedField
-    );
-  })?.value;
 }
 
 export default function Preview() {
@@ -117,24 +158,39 @@ export default function Preview() {
   const isConfigurationEditingRef = useRef(isConfigurationEditing);
   const { agentId: routeAgentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
+  const customSearchField = search.customField.trim();
+  const isCustomSearchFieldMissing =
+    search.field === 'other' &&
+    customSearchField !== '' &&
+    agents.length > 0 &&
+    !agents.some((agent) =>
+      findCustomSearchEntry(agent, customSearchField).exists
+    );
 
   const filteredAgents = agents.filter((agent) => {
     const searchText = search.text.trim().toLowerCase();
 
-    if (searchText === '') {
-      return true;
-    }
-
     if (search.field === 'other') {
-      const customField = search.customField.trim();
-
-      if (customField === '') {
+      if (customSearchField === '') {
         return true;
       }
 
-      return stringifySearchValue(getCustomSearchValue(agent, customField))
+      const customSearchEntry = findCustomSearchEntry(agent, customSearchField);
+      if (!customSearchEntry.exists) {
+        return false;
+      }
+
+      if (searchText === '') {
+        return true;
+      }
+
+      return stringifySearchValue(customSearchEntry.value)
         .toLowerCase()
         .includes(searchText);
+    }
+
+    if (searchText === '') {
+      return true;
     }
 
     const platformFields = toPlatformTable(agent);
@@ -320,6 +376,12 @@ export default function Preview() {
               />
             </label>
           </div>
+
+          {isCustomSearchFieldMissing && (
+            <p className="filter-message" role="alert">
+              העמודה "{customSearchField}" לא קיימת.
+            </p>
+          )}
 
           <div className={`agents-grid ${viewMode === 'list' ? 'agents-list' : ''}`}>
             {filteredAgents.map((agent) => {

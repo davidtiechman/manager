@@ -41,6 +41,13 @@
   min-width: 0;
 }
 
+.filter-message {
+  margin: -4px 0 12px;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .agent-card {
   width: 100%;
   border: 1px solid #ccc;
