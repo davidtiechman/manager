@@ -1,38 +1,221 @@
-import { useEffect, useRef, useState } from 'react';
-import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ApiService } from '../../api';
+import { AgGridReact } from 'ag-grid-react';
 import type {
-  AgentHistoryRecord,
-  AgentHistoryResponse,
-} from '../../types/history/agentHistoryRecord';
+  ColDef,
+  IDatasource,
+  IGetRowsParams,
+  GridReadyEvent,
+  ICellRendererParams,
+} from 'ag-grid-community';
+
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-quartz.css';
+import '../../styles/syncs-grid.css';
+
+import { ApiService } from '../../api';
+import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
 import ModeNavigationLink from '../ModeNavigationLink';
+
+const BLOCK_SIZE = 100;
 
 interface AgentSyncsListProps {
   agentId?: string;
   onClose?: () => void;
 }
-const VITE_LIMIT_SYNCS_HISTORY =
-  Number(import.meta.env.VITE_LIMIT_SYNCS_HISTORY) || 50;
-const syncColumnDefaults = [
-  72,
-  92,
-  180,
-  112,
-  112,
-  112,
-  180,
-  140,
-  180,
-  96,
-  112,
-  96,
-  96,
-  112,
-  180,
-];
 
-const syncColumnMinWidth = 48;
+// ── Cell renderers ──────────────────────────────────────────────────
+
+function StatusCell({ value }: ICellRendererParams) {
+  if (value == null || value === '') {
+    return <span className="syncs-null">—</span>;
+  }
+  const key = String(value).toLowerCase();
+  return <span className={`syncs-status-badge syncs-status-badge--${key}`}>{value}</span>;
+}
+
+function AvailabilityCell({ value }: ICellRendererParams) {
+  if (value == null) return <span className="syncs-null">—</span>;
+  const isYes = value === true || value === 'true' || value === 'Yes';
+  return (
+    <span className={`syncs-avail-badge syncs-avail-badge--${isYes ? 'yes' : 'no'}`}>
+      {isYes ? 'Yes' : 'No'}
+    </span>
+  );
+}
+
+function DateCell({ value }: ICellRendererParams) {
+  if (value == null || value === '') return <span className="syncs-null">—</span>;
+  const raw = typeof value === 'number' && value < 1_000_000_000_000 ? value * 1000 : value;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return <span title={String(value)}>{String(value)}</span>;
+  const formatted = new Intl.DateTimeFormat('he-IL', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).format(date);
+  return (
+    <span className="syncs-date" title={String(value)}>
+      {formatted}
+    </span>
+  );
+}
+
+function NullableCell({ value }: ICellRendererParams) {
+  if (value == null || value === '') return <span className="syncs-null">—</span>;
+  return <span title={String(value)}>{String(value)}</span>;
+}
+
+// ── Column definitions ──────────────────────────────────────────────
+
+function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
+  return [
+    {
+      field: 'createdAt',
+      headerName: 'Created At',
+      pinned: 'left',
+      width: 180,
+      minWidth: 160,
+      cellRenderer: DateCell,
+      filter: 'agDateColumnFilter',
+      filterParams: { browserDatePicker: true },
+      sort: 'desc',
+    },
+    {
+      field: 'id',
+      headerName: 'ID',
+      width: 80,
+      minWidth: 60,
+      filter: 'agNumberColumnFilter',
+      cellRenderer: NullableCell,
+    },
+    {
+      field: 'status',
+      headerName: 'Status',
+      width: 110,
+      minWidth: 90,
+      cellRenderer: StatusCell,
+      filter: 'agTextColumnFilter',
+    },
+    {
+      colId: 'selectedLink',
+      headerName: 'Selected Link',
+      valueGetter: (p) => p.data?.details?.selectedLink,
+      width: 130,
+      minWidth: 90,
+      cellRenderer: NullableCell,
+      filter: 'agTextColumnFilter',
+    },
+    {
+      colId: 'schedulerMode',
+      headerName: 'Scheduler Mode',
+      valueGetter: (p) => p.data?.details?.schedulerMode,
+      width: 140,
+      minWidth: 100,
+      cellRenderer: NullableCell,
+      filter: 'agTextColumnFilter',
+    },
+    {
+      colId: 'messagesInQueue',
+      headerName: 'Msgs In Queue',
+      valueGetter: (p) => p.data?.details?.messagesInQueue,
+      width: 120,
+      minWidth: 90,
+      type: 'numericColumn',
+      filter: 'agNumberColumnFilter',
+      cellRenderer: NullableCell,
+    },
+    {
+      colId: 'nextDeliveryTime',
+      headerName: 'Next Delivery',
+      valueGetter: (p) => p.data?.details?.nextDeliveryTime,
+      width: 180,
+      minWidth: 140,
+      cellRenderer: DateCell,
+      filter: 'agDateColumnFilter',
+    },
+    {
+      colId: 'geoData',
+      headerName: 'Geo Data',
+      valueGetter: (p) => p.data?.details?.geoData,
+      width: 140,
+      minWidth: 90,
+      cellRenderer: NullableCell,
+      filter: 'agTextColumnFilter',
+    },
+    {
+      colId: 'serverLut',
+      headerName: 'Server LUT',
+      valueGetter: (p) => p.data?.details?.serverLut,
+      width: 180,
+      minWidth: 140,
+      cellRenderer: DateCell,
+      filter: 'agDateColumnFilter',
+    },
+    {
+      colId: 'linkType',
+      headerName: 'Link Type',
+      valueGetter: (p) => p.data?.link_quality?.type,
+      width: 100,
+      minWidth: 80,
+      cellRenderer: NullableCell,
+      filter: 'agTextColumnFilter',
+    },
+    {
+      colId: 'linkAvailable',
+      headerName: 'Available',
+      valueGetter: (p) => p.data?.link_quality?.available,
+      width: 100,
+      minWidth: 80,
+      cellRenderer: AvailabilityCell,
+      filter: 'agTextColumnFilter',
+      filterParams: { filterOptions: ['equals'], textMatcher: ({ value, filterText }: { value: string; filterText: string }) => {
+        const v = String(value ?? '').toLowerCase();
+        const f = String(filterText ?? '').toLowerCase();
+        return v.includes(f);
+      }},
+    },
+    {
+      colId: 'linkQuality',
+      headerName: 'Quality',
+      valueGetter: (p) => p.data?.link_quality?.quality,
+      width: 90,
+      minWidth: 70,
+      cellRenderer: NullableCell,
+      filter: 'agTextColumnFilter',
+    },
+    {
+      colId: 'latency',
+      headerName: 'Latency',
+      valueGetter: (p) => p.data?.link_quality?.latency,
+      width: 90,
+      minWidth: 70,
+      type: 'numericColumn',
+      filter: 'agNumberColumnFilter',
+      cellRenderer: NullableCell,
+    },
+    {
+      colId: 'reliability',
+      headerName: 'Reliability',
+      valueGetter: (p) => p.data?.link_quality?.reliability,
+      width: 100,
+      minWidth: 70,
+      type: 'numericColumn',
+      filter: 'agNumberColumnFilter',
+      cellRenderer: NullableCell,
+    },
+    {
+      colId: 'linkTimestamp',
+      headerName: 'Link Timestamp',
+      valueGetter: (p) => p.data?.link_quality?.timestamp,
+      width: 180,
+      minWidth: 140,
+      cellRenderer: DateCell,
+      filter: 'agDateColumnFilter',
+    },
+  ];
+}
+
+// ── Component ───────────────────────────────────────────────────────
 
 export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentSyncsListProps) {
   const { agentId: routeAgentId } = useParams<{ agentId: string }>();
@@ -40,243 +223,65 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
   const isEmbedded = Boolean(agentIdProp);
   const location = useLocation();
   const backTo = location.state?.backTo ?? '/history';
-
-  const [records, setRecords] = useState<AgentHistoryRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [offset, setOffset] = useState(0);
-  const limit = VITE_LIMIT_SYNCS_HISTORY;
-  const [total, setTotal] = useState(0);
-  const [topScrollWidth, setTopScrollWidth] = useState(0);
-  const topScrollRef = useRef<HTMLDivElement>(null);
-  const topScrollContentRef = useRef<HTMLDivElement>(null);
-  const tableScrollRef = useRef<HTMLDivElement>(null);
-  const syncTableRef = useRef<HTMLTableElement>(null);
-  const columnRefs = useRef<(HTMLTableColElement | null)[]>([]);
-  const columnWidthsRef = useRef([...syncColumnDefaults]);
-  const resizingColumnRef = useRef<{
-    index: number;
-    startX: number;
-    startWidth: number;
-  } | null>(null);
-
   const navigate = useNavigate();
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const currentPage = Math.min(totalPages, Math.floor(offset / limit) + 1);
 
-  function displayValue(value: string | number | boolean | null | undefined) {
-    if (value === null || value === undefined || value === '') {
-      return '-';
-    }
+  const gridRef = useRef<AgGridReact<AgentHistoryRecord>>(null);
+  const columnDefs = useMemo(() => buildColumnDefs(), []);
 
-    if (typeof value === 'boolean') {
-      return value ? 'Yes' : 'No';
-    }
+  const defaultColDef = useMemo<ColDef>(() => ({
+    sortable: true,
+    resizable: true,
+    floatingFilter: true,
+    suppressMovable: false,
+  }), []);
 
-    return value;
-  }
+  // AG Grid Infinite Row Model datasource
+  const datasource = useMemo<IDatasource>(() => {
+    return {
+      getRows(params: IGetRowsParams) {
+        if (!agentId) {
+          params.successCallback([], 0);
+          return;
+        }
 
-  function formatDateTime(value: string | number | null | undefined) {
-    if (value === null || value === undefined || value === '') {
-      return '-';
-    }
-
-    const dateValue = typeof value === 'number' && value < 1_000_000_000_000 ? value * 1000 : value;
-    const date = new Date(dateValue);
-
-    if (Number.isNaN(date.getTime())) {
-      return value;
-    }
-
-    return new Intl.DateTimeFormat('he-IL', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    }).format(date);
-  }
-
-  function renderAvailability(value: boolean | null | undefined) {
-    return displayValue(value);
-  }
-
-  function renderDateTime(value: string | number | null | undefined) {
-    return (
-      <span title={value === null || value === undefined ? undefined : String(value)}>
-        {formatDateTime(value)}
-      </span>
-    );
-  }
-
-  function renderCompactValue(value: string | number | null | undefined) {
-    return (
-      <span title={value === null || value === undefined ? undefined : String(value)}>
-        {displayValue(value)}
-      </span>
-    );
-  }
-
-  function syncHorizontalScroll(source: 'top' | 'table') {
-    const topScroll = topScrollRef.current;
-    const tableScroll = tableScrollRef.current;
-
-    if (!topScroll || !tableScroll) {
-      return;
-    }
-
-    if (source === 'top') {
-      tableScroll.scrollLeft = topScroll.scrollLeft;
-      return;
-    }
-
-    topScroll.scrollLeft = tableScroll.scrollLeft;
-  }
-
-  function startColumnResize(
-    index: number,
-    event: ReactMouseEvent<HTMLSpanElement>
-  ) {
-    event.preventDefault();
-    event.stopPropagation();
-
-    resizingColumnRef.current = {
-      index,
-      startX: event.clientX,
-      startWidth: columnWidthsRef.current[index],
+        ApiService.getHistorySyncsIrm(agentId, {
+          startRow:    params.startRow,
+          endRow:      params.endRow,
+          sortModel:   params.sortModel as Array<{ colId: string; sort: 'asc' | 'desc' }>,
+          filterModel: params.filterModel as Record<string, unknown>,
+        })
+          .then(({ rows, lastRow }) => {
+            params.successCallback(rows, lastRow ?? undefined);
+          })
+          .catch((err) => {
+            console.error('Failed to load syncs:', err);
+            params.failCallback();
+          });
+      },
     };
-  }
+  }, [agentId]);
 
-  function renderResizableHeader(
-    index: number,
-    content: ReactNode,
-    className?: string,
-    title?: string
-  ) {
-    return (
-      <th className={className} title={title}>
-        <span className="history-syncs-header-content">{content}</span>
-        <span
-          className="history-syncs-column-resizer"
-          onMouseDown={(event) => startColumnResize(index, event)}
-          role="separator"
-          aria-orientation="vertical"
-          aria-label="Resize column"
-        />
-      </th>
-    );
-  }
+  const onGridReady = useCallback((event: GridReadyEvent) => {
+    event.api.setGridOption('datasource', datasource);
+  }, [datasource]);
 
-  useEffect(() => {
-    const tableScroll = tableScrollRef.current;
+  // ── Header ─────────────────────────────────────────────────────────
 
-    if (!tableScroll || records.length === 0) {
-      return;
-    }
-
-    const updateTopScrollWidth = () => {
-      setTopScrollWidth(tableScroll.scrollWidth);
-    };
-
-    updateTopScrollWidth();
-
-    const resizeObserver = new ResizeObserver(updateTopScrollWidth);
-    resizeObserver.observe(tableScroll);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [records]);
-
-  useEffect(() => {
-    function handleMouseMove(event: MouseEvent) {
-      const resizingColumn = resizingColumnRef.current;
-
-      if (!resizingColumn) {
-        return;
-      }
-
-      const nextWidth = Math.max(
-        syncColumnMinWidth,
-        resizingColumn.startWidth + event.clientX - resizingColumn.startX
-      );
-      const nextWidths = [...columnWidthsRef.current];
-      nextWidths[resizingColumn.index] = nextWidth;
-      columnWidthsRef.current = nextWidths;
-
-      const tableWidth = nextWidths.reduce((total, width) => total + width, 0);
-      const column = columnRefs.current[resizingColumn.index];
-
-      if (column) {
-        column.style.width = `${nextWidth}px`;
-      }
-
-      if (syncTableRef.current) {
-        syncTableRef.current.style.width = `${tableWidth}px`;
-      }
-
-      if (topScrollContentRef.current) {
-        topScrollContentRef.current.style.width = `${tableWidth}px`;
-      }
-    }
-
-    function handleMouseUp() {
-      resizingColumnRef.current = null;
-    }
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!agentId) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchAgentHistory = async () => {
-      try {
-        setLoading(true);
-        const response: AgentHistoryResponse = await ApiService.getHistorySyncs(
-          agentId,
-          offset,
-          limit
-        );
-        setRecords(response.items);
-        setTotal(response.total);
-      } catch (error) {
-        console.error('Error fetching agent history:', error);
-        setRecords([]);
-        setTotal(0);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAgentHistory();
-  }, [agentId, limit, offset]);
-
-  const renderDetailsHeader = (title: string) => (
+  const renderDetailsHeader = () => (
     <div className="details-header">
       <div className="details-title-block">
-        <h2>{title}</h2>
+        <h2>Sync History</h2>
       </div>
-
       <div className="details-header-actions details-header-actions-left">
         <button
           type="button"
           className="details-back-button"
-          onClick={() => navigate(backTo ?? `/history`)}>
+          onClick={() => navigate(backTo ?? '/history')}
+        >
           Back
         </button>
         {agentId && <p className="details-agent-id">Agent ID: {agentId}</p>}
       </div>
-
       {onClose && (
         <div className="details-header-actions details-header-actions-right">
           <button type="button" className="details-close-button" onClick={onClose}>
@@ -286,6 +291,8 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
       )}
     </div>
   );
+
+  // ── No agentId ─────────────────────────────────────────────────────
 
   if (!agentId) {
     return (
@@ -299,160 +306,58 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
     );
   }
 
-  if (loading) {
-    if (isEmbedded) {
-      return (
-        <div className="details-panel">
-          {renderDetailsHeader('Sync History')}
-          <p className="muted">טוען רשומות...</p>
-        </div>
-      );
-    }
+  const grid = (
+    <div className="syncs-grid-wrapper ag-theme-quartz">
+      <AgGridReact<AgentHistoryRecord>
+        ref={gridRef}
+        columnDefs={columnDefs}
+        defaultColDef={defaultColDef}
+        rowModelType="infinite"
+        cacheBlockSize={BLOCK_SIZE}
+        cacheOverflowSize={2}
+        maxConcurrentDatasourceRequests={2}
+        infiniteInitialRowCount={BLOCK_SIZE}
+        onGridReady={onGridReady}
+        suppressCellFocus={false}
+        enableCellTextSelection
+        tooltipShowDelay={300}
+        overlayNoRowsTemplate='<span class="syncs-no-rows">אין רשומות עבור agent זה</span>'
+      />
+    </div>
+  );
 
+  // ── Embedded mode (fixed height, inside a panel) ───────────────────
+  if (isEmbedded) {
     return (
-      <div className="page">
-        <div className="page-header">
-          <ModeNavigationLink to="/" label="למעבר לניטור זמן אמת" variant="real-time" />
-          <h1>Sync History</h1>
-          <p className="muted">טוען רשומות...</p>
+      <div className="details-panel">
+        {renderDetailsHeader()}
+        <div className="syncs-grid-outer syncs-embedded">
+          {grid}
         </div>
       </div>
     );
   }
 
-  const syncTableWidth = syncColumnDefaults.reduce((total, width) => total + width, 0);
-
-  const detailsContent = (
-    <div className="details-panel">
-      {renderDetailsHeader('Sync History')}
-
-      {records.length === 0 ? (
-        <div className="empty-details">
-          <h2>אין רשומות</h2>
-          <p className="muted">לא נמצאו syncs עבור ה-agent הזה.</p>
-        </div>
-      ) : (
-        <>
-          <div
-            className="history-syncs-top-scroll"
-            ref={topScrollRef}
-            onScroll={() => syncHorizontalScroll('top')}
-            aria-hidden="true"
-          >
-            <div
-              className="history-syncs-top-scroll-content"
-              ref={topScrollContentRef}
-              style={{ width: topScrollWidth }}
-            />
-          </div>
-
-          <div
-            className="history-syncs-table-wrapper"
-            ref={tableScrollRef}
-            onScroll={() => syncHorizontalScroll('table')}
-          >
-            <table
-              className="details-table history-syncs-table"
-              ref={syncTableRef}
-              style={{ width: syncTableWidth }}
-            >
-              <colgroup>
-                {syncColumnDefaults.map((width, index) => (
-                  <col
-                    key={index}
-                    ref={(element) => {
-                      columnRefs.current[index] = element;
-                    }}
-                    style={{ width }}
-                  />
-                ))}
-              </colgroup>
-              <thead>
-                <tr>
-                  {renderResizableHeader(0, 'ID', 'history-syncs-id-column')}
-                  {renderResizableHeader(1, 'Status')}
-                  {renderResizableHeader(2, 'Created At')}
-                  {renderResizableHeader(3, <>Scheduled<br />Link</>, 'history-syncs-selected-link-column')}
-                  {renderResizableHeader(4, <>scheduler<br />Mode</>, 'history-syncs-mode-column', 'Scheduler Mode')}
-                  {renderResizableHeader(5, <>Message<br />In<br />Queue</>, 'history-syncs-number-column')}
-                  {renderResizableHeader(6, 'Next Delivery Time')}
-                  {renderResizableHeader(7, 'Geo Data')}
-                  {renderResizableHeader(8, 'Server LUT')}
-                  {/* <th className="history-syncs-id-column">Link Quality ID</th> */}
-                  {renderResizableHeader(9, 'Type')}
-                  {renderResizableHeader(10, 'Availability', 'history-syncs-availability-column')}
-                  {renderResizableHeader(11, 'Quality', 'history-syncs-number-column')}
-                  {renderResizableHeader(12, 'Latency', 'history-syncs-number-column')}
-                  {renderResizableHeader(13, 'Reliability', 'history-syncs-number-column')}
-                  {renderResizableHeader(14, 'Timestamp')}
-                </tr>
-              </thead>
-
-              <tbody>
-                {records.map((record) => (
-                  <tr key={record.id}>
-                    <td className="history-syncs-id-column">{renderCompactValue(record.id)}</td>
-                    <td>{displayValue(record.status)}</td>
-                    <td>{renderDateTime(record.createdAt)}</td>
-                    <td className="history-syncs-selected-link-column">
-                      {renderCompactValue(record.details?.selectedLink)}
-                    </td>
-                    <td className="history-syncs-mode-column">
-                      {renderCompactValue(record.details?.schedulerMode)}
-                    </td>
-                    <td className="history-syncs-number-column">{displayValue(record.details?.messagesInQueue)}</td>
-                    <td>{renderDateTime(record.details?.nextDeliveryTime)}</td>
-                    <td>{displayValue(record.details?.geoData)}</td>
-                    <td>{renderDateTime(record.details?.serverLut)}</td>
-                    {/* <td className="history-syncs-id-column">{displayValue(record.link_quality?.id)}</td> */}
-                    <td>{displayValue(record.link_quality?.type)}</td>
-                    <td className="history-syncs-availability-column">
-                      {renderAvailability(record.link_quality?.available)}
-                    </td>
-                    <td className="history-syncs-number-column">{displayValue(record.link_quality?.quality)}</td>
-                    <td className="history-syncs-number-column">{displayValue(record.link_quality?.latency)}</td>
-                    <td className="history-syncs-number-column">{displayValue(record.link_quality?.reliability)}</td>
-                    <td>{renderDateTime(record.link_quality?.timestamp)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="pagination">
-            <button
-              disabled={offset === 0}
-              onClick={() => setOffset((prev) => Math.max(0, prev - limit))}
-            >
-              Previous
-            </button>
-
-            <span>
-              Page {currentPage} / {totalPages}
-            </span>
-
-            <button
-              disabled={offset + limit >= total}
-              onClick={() => setOffset((prev) => prev + limit)}
-            >
-              Next
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
-
-  if (isEmbedded) {
-    return detailsContent;
-  }
-
+  // ── Full-page mode (fills viewport height) ─────────────────────────
   return (
-    <div className="page">
-      <div className="page-header">
-        <ModeNavigationLink to="/" label="למעבר לניטור זמן אמת" variant="real-time" />
+    <div className="syncs-full-page">
+      <div className="syncs-page-topbar">
+        <button
+          type="button"
+          className="syncs-back-btn"
+          onClick={() => navigate(backTo ?? '/history')}
+        >
+          ← Back
+        </button>
+        <h1 className="syncs-page-title">
+          Sync History
+          {agentId && <span className="syncs-agent-chip"> · {agentId}</span>}
+        </h1>
+        <ModeNavigationLink to="/" label="ניטור זמן אמת" variant="real-time" />
       </div>
-
-      {detailsContent}
+      <div className="syncs-grid-outer">
+        {grid}
+      </div>
     </div>
   );
 }

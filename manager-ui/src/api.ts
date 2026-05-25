@@ -4,6 +4,18 @@ import type { HistoryAgent } from './types/history/historyAgent';
 import type { ConfigurationTableData } from './types/realTimeAgents/tables';
 import { MOCK_AGENTS } from './MOCK_AGENT';
 
+export interface SyncsIrmParams {
+  startRow: number;
+  endRow: number;
+  sortModel?: Array<{ colId: string; sort: 'asc' | 'desc' }>;
+  filterModel?: Record<string, unknown>;
+}
+
+export interface SyncsIrmResponse {
+  rows: AgentHistoryRecord[];
+  lastRow: number | null;
+}
+
 const VITE_API_TOKEN = import.meta.env.VITE_API_TOKEN || 'test';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9000';
 
@@ -109,6 +121,33 @@ export class ApiService {
 
     const data: unknown = await response.json();
     return normalizeAgentHistoryResponse(data);
+  }
+
+  static async getHistorySyncsIrm(
+    agentId: string,
+    params: SyncsIrmParams
+  ): Promise<SyncsIrmResponse> {
+    const query = new URLSearchParams({
+      startRow:    String(params.startRow),
+      endRow:      String(params.endRow),
+      sortModel:   JSON.stringify(params.sortModel   ?? []),
+      filterModel: JSON.stringify(params.filterModel ?? {}),
+    });
+
+    const response = await fetch(
+      `${API_BASE_URL}/agent/${encodeURIComponent(agentId)}/syncs?${query}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${VITE_API_TOKEN}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to load agent sync history');
+    }
+
+    return response.json() as Promise<SyncsIrmResponse>;
   }
 
   static async getAgentConfig(

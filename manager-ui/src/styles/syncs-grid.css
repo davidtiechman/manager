@@ -1,0 +1,282 @@
+/* ── Full-page layout ─────────────────────────────────── */
+.syncs-full-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+/* ── Top header bar ───────────────────────────────────── */
+.syncs-page-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  height: 52px;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  flex-shrink: 0;
+}
+
+.syncs-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.syncs-back-btn:hover,
+.syncs-back-btn:focus-visible {
+  background: #1d4ed8;
+}
+
+.syncs-page-title {
+  flex: 1;
+  margin: 0;
+  color: #f1f5f9;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.syncs-agent-chip {
+  color: #93c5fd;
+  font-weight: 600;
+}
+
+/* ── Toolbar (search + count) ─────────────────────────── */
+.syncs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.syncs-search-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 380px;
+}
+
+.syncs-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.syncs-search-input {
+  width: 100%;
+  height: 34px;
+  padding: 0 12px 0 34px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  background: #fff;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+
+.syncs-search-input::placeholder {
+  color: #94a3b8;
+}
+
+.syncs-search-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.syncs-row-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+  background: #e2e8f0;
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+/* ── Grid containers ──────────────────────────────────── */
+.syncs-grid-outer {
+  flex: 1;
+  min-height: 0;
+}
+
+.syncs-embedded .syncs-grid-outer {
+  height: 520px;
+}
+
+.syncs-grid-wrapper {
+  width: 100%;
+  height: 100%;
+
+  /* AG Grid Quartz theme overrides – match app palette */
+  --ag-font-family: inherit;
+  --ag-font-size: 13px;
+  --ag-line-height: 1.4;
+
+  --ag-row-height: 36px;
+  --ag-header-height: 42px;
+  --ag-floating-filter-height: 32px;
+
+  --ag-header-background-color: #1e293b;
+  --ag-header-foreground-color: #f1f5f9;
+  --ag-header-column-separator-display: block;
+  --ag-header-column-separator-color: rgba(255, 255, 255, 0.12);
+  --ag-header-column-separator-height: 60%;
+  --ag-header-column-resize-handle-display: block;
+  --ag-header-column-resize-handle-color: rgba(255, 255, 255, 0.25);
+
+  --ag-background-color: #ffffff;
+  --ag-odd-row-background-color: #f8fafc;
+  --ag-row-hover-color: #dbeafe;
+  --ag-selected-row-background-color: #bfdbfe;
+
+  --ag-border-color: #e2e8f0;
+  --ag-row-border-color: #e2e8f0;
+  --ag-cell-horizontal-border: solid #f1f5f9;
+
+  --ag-accent-color: #2563eb;
+  --ag-input-focus-border-color: #2563eb;
+  --ag-checkbox-checked-color: #2563eb;
+  --ag-range-selection-border-color: #2563eb;
+
+  --ag-secondary-foreground-color: #475569;
+  --ag-disabled-foreground-color: #94a3b8;
+  --ag-input-border-color: #cbd5e1;
+  --ag-chip-background-color: #dbeafe;
+  --ag-chip-border-color: #bfdbfe;
+
+  --ag-filter-tool-panel-header-height: 32px;
+  --ag-list-item-height: 28px;
+}
+
+/* Floating filter row – slightly lighter than the dark header */
+.syncs-grid-wrapper .ag-floating-filter {
+  background: #253347;
+}
+
+.syncs-grid-wrapper .ag-floating-filter-input {
+  color: #e2e8f0;
+}
+
+.syncs-grid-wrapper .ag-floating-filter-input::placeholder {
+  color: #64748b;
+}
+
+/* Pinned left column separator */
+.syncs-grid-wrapper .ag-pinned-left-header,
+.syncs-grid-wrapper .ag-cell.ag-cell-last-left-pinned {
+  border-right: 2px solid #334155 !important;
+}
+
+/* Sort icons in dark header */
+.syncs-grid-wrapper .ag-header-cell .ag-sort-indicator-icon {
+  color: #93c5fd;
+}
+
+/* Loading skeleton rows */
+.syncs-grid-wrapper .ag-loading-cell-value {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* ── Cell renderers ───────────────────────────────────── */
+.syncs-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.syncs-status-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.syncs-status-badge--active  { background: #dcfce7; color: #166534; }
+.syncs-status-badge--active::before  { background: #16a34a; }
+
+.syncs-status-badge--inactive { background: #f1f5f9; color: #475569; }
+.syncs-status-badge--inactive::before { background: #94a3b8; }
+
+.syncs-status-badge--warning  { background: #fef3c7; color: #92400e; }
+.syncs-status-badge--warning::before  { background: #f59e0b; }
+
+/* Fallback for unknown statuses */
+.syncs-status-badge--unknown,
+.syncs-status-badge-- {
+  background: #f1f5f9;
+  color: #64748b;
+}
+.syncs-status-badge--unknown::before,
+.syncs-status-badge--::before {
+  background: #cbd5e1;
+}
+
+.syncs-avail-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.syncs-avail-badge--yes { background: #dcfce7; color: #166534; }
+.syncs-avail-badge--no  { background: #fee2e2; color: #991b1b; }
+
+.syncs-null {
+  color: #94a3b8;
+}
+
+.syncs-date {
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
+}
+
+.syncs-no-rows {
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* ── ID column ────────────────────────────────────────── */
+.syncs-grid-wrapper .ag-cell[col-id="id"] {
+  font-weight: 600;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+}
