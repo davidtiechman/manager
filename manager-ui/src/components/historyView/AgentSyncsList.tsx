@@ -360,41 +360,41 @@ export default function AgentSyncsList({
 
   return (
     <div className="snc-page">
-      {/* Top bar */}
+
+      {/* 3-column grid: start | centre | end — breadcrumb is truly centred */}
       <header className="snc-header">
+
         <div className="snc-header-start">
           <button
             type="button"
             className="snc-back"
             onClick={() => navigate(backTo ?? '/history')}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path
-                d="M9 2L4 7L9 12"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+              <path d="M8.5 2L3.5 6.5L8.5 11" stroke="currentColor"
+                strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             History
           </button>
-
-          <div className="snc-header-divider" aria-hidden="true" />
-
-          <div className="snc-title-block">
-            <span className="snc-title-label">Sync History</span>
-            <h1 className="snc-title-agent">{agentId}</h1>
-          </div>
         </div>
+
+        <nav className="snc-breadcrumb" aria-label="breadcrumb">
+          <span className="snc-crumb snc-crumb--ancestor">History</span>
+          <span className="snc-crumb-sep" aria-hidden="true">›</span>
+          <span className="snc-crumb snc-crumb--section">Sync History</span>
+          <span className="snc-crumb-sep" aria-hidden="true">›</span>
+          <span className="snc-crumb snc-crumb--current">{agentId}</span>
+        </nav>
 
         <div className="snc-header-end">
           <ModeNavigationLink to="/" label="ניטור זמן אמת" variant="real-time" />
         </div>
+
       </header>
 
       {/* Grid */}
       <div className="snc-grid-outer">{gridEl}</div>
+
     </div>
   );
 }
