@@ -135,6 +135,34 @@
   min-height: 0;
 }
 
+/* Full-page only: side padding + FILTER label in left margin */
+.snc-page .snc-grid-outer {
+  position: relative;
+  padding: 0 24px 24px 56px;
+}
+
+/* "FILTER" label aligned with the floating filter row */
+.snc-page .snc-grid-outer::before {
+  content: 'FILTER';
+  position: absolute;
+  top: 42px;        /* right after the column-names header row (42px) */
+  left: 0;
+  width: 52px;
+  height: 34px;     /* same as --ag-floating-filter-height */
+  line-height: 34px;
+  z-index: 10;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  text-align: center;
+  background: #eaf3fc;
+  border-right: 1px solid #c7dff0;
+  pointer-events: none;
+  user-select: none;
+}
+
 /* ── AG Grid Quartz overrides ───────────────────────────────── */
 .snc-grid-wrapper {
   width: 100%;
@@ -159,11 +187,11 @@
   --ag-header-column-resize-handle-display: block;
   --ag-header-column-resize-handle-color: rgba(255, 255, 255, 0.2);
 
-  /* Rows */
+  /* Rows — slightly warm off-white, easier on the eye */
   --ag-background-color: #ffffff;
-  --ag-odd-row-background-color: #fafbfc;
-  --ag-row-hover-color: #f1f5f9;
-  --ag-selected-row-background-color: #e9f0f7;
+  --ag-odd-row-background-color: #f7f9fb;
+  --ag-row-hover-color: #edf2f7;
+  --ag-selected-row-background-color: #e1ecf7;
 
   /* Borders */
   --ag-border-color: #e2e8f0;
@@ -207,7 +235,7 @@
 /* ── Sorted column header — unmistakable active state ───────── */
 .snc-grid-wrapper .ag-header-cell-sorted-asc,
 .snc-grid-wrapper .ag-header-cell-sorted-desc {
-  background: rgba(255, 255, 255, 0.07) !important;
+  background: rgba(56, 189, 248, 0.18) !important;
   box-shadow: inset 0 -3px 0 0 #38bdf8 !important; /* sky underline */
 }
 
@@ -223,10 +251,10 @@
   opacity: 1;
 }
 
-/* ── Floating filter row — light so filters are immediately obvious ─ */
+/* ── Floating filter row — blue tint signals "input area" ───── */
 .snc-grid-wrapper .ag-floating-filter {
-  background: #f0f4f8;
-  border-top: 1px solid #d1d9e0;
+  background: #eaf3fc;
+  border-top: 1px solid #c7dff0;
 }
 
 .snc-grid-wrapper .ag-floating-filter-input {
@@ -303,6 +331,9 @@
 .snc-status--warning { background: #fef9c3; color: #854d0e; }
 .snc-status--warning::before { background: #eab308; }
 
+.snc-status--offline { background: #fff1f2; color: #9f1239; }
+.snc-status--offline::before { background: #f43f5e; }
+
 .snc-status--unknown,
 .snc-status-- {
   background: #f8fafc;
@@ -311,18 +342,31 @@
 .snc-status--unknown::before,
 .snc-status--::before { background: #d1d5db; }
 
-/* Availability badge */
+/* Availability badge — dot + text, consistent with Status */
 .snc-avail {
-  display: inline-block;
-  padding: 2px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px 2px 7px;
   border-radius: 10px;
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
 
+.snc-avail::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .snc-avail--yes { background: #dcfce7; color: #166534; }
+.snc-avail--yes::before { background: #22c55e; }
+
 .snc-avail--no  { background: #fee2e2; color: #991b1b; }
+.snc-avail--no::before  { background: #f43f5e; }
 
 /* Date — monospace feel, readable */
 .snc-date {

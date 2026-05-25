@@ -37,7 +37,7 @@ function AvailabilityCell({ value }: ICellRendererParams) {
   const isYes = value === true || value === 'true';
   return (
     <span className={`snc-avail snc-avail--${isYes ? 'yes' : 'no'}`}>
-      {isYes ? '✓  Yes' : '✗  No'}
+      {isYes ? 'Yes' : 'No'}
     </span>
   );
 }
