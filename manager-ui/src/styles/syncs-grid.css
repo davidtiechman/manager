@@ -267,28 +267,30 @@
   color: #111827;
 }
 
-/* Sort icon — visible on light header */
-.snc-grid-wrapper .ag-sort-indicator-icon {
-  color: #9ca3af;
+/* Sort affordance — faint icon hints the column is sortable */
+.snc-grid-wrapper .ag-sort-none-icon {
+  color: #d1d5db;
   opacity: 1;
 }
 
-/* ── Sorted column — clear active state on light header ─────── */
+/* Active sort arrows — dark and legible */
+.snc-grid-wrapper .ag-sort-ascending-icon,
+.snc-grid-wrapper .ag-sort-descending-icon {
+  color: #374151;
+  opacity: 1;
+}
+
+/* ── Sorted column — dark underline, no fill ────────────────── */
 .snc-grid-wrapper .ag-header-cell-sorted-asc,
 .snc-grid-wrapper .ag-header-cell-sorted-desc {
-  background: #dbeafe !important;
-  box-shadow: inset 0 -3px 0 0 #0ea5e9 !important;
+  background: transparent !important;
+  box-shadow: inset 0 -2px 0 0 #374151 !important;
 }
 
 .snc-grid-wrapper .ag-header-cell-sorted-asc .ag-header-cell-text,
 .snc-grid-wrapper .ag-header-cell-sorted-desc .ag-header-cell-text {
-  color: #0369a1 !important;
+  color: #111827 !important;
   font-weight: 700 !important;
-}
-
-.snc-grid-wrapper .ag-header-cell-sorted-asc .ag-sort-indicator-icon,
-.snc-grid-wrapper .ag-header-cell-sorted-desc .ag-sort-indicator-icon {
-  color: #0ea5e9 !important;
 }
 
 /* ── Column filter popup (menu) styling ─────────────────────── */

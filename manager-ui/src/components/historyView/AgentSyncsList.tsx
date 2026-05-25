@@ -257,6 +257,7 @@ export default function AgentSyncsList({
       resizable: true,
       floatingFilter: false,
       suppressMovable: false,
+      unSortIcon: true,       // always show a faint icon so columns feel clickable
     }),
     []
   );
