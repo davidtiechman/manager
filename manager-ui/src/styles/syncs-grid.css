@@ -212,7 +212,7 @@
 
   /* Sizing */
   --ag-row-height: 38px;
-  --ag-header-height: 44px;
+  --ag-header-height: 36px; /* minimum; autoHeaderHeight expands when text wraps */
 
   /* Header — LIGHT (Google Sheets style) */
   --ag-header-background-color: #f4f6f8;
@@ -257,6 +257,8 @@
   font-weight: 600;
   letter-spacing: 0.01em;
   color: #4b5563;
+  line-height: 1.35;
+  white-space: normal;  /* allow wrap when wrapHeaderText is active */
 }
 
 .snc-grid-wrapper .ag-header-cell:hover {

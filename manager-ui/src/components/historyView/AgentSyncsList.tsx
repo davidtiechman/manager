@@ -257,7 +257,9 @@ export default function AgentSyncsList({
       resizable: true,
       floatingFilter: false,
       suppressMovable: false,
-      unSortIcon: true,       // always show a faint icon so columns feel clickable
+      unSortIcon: true,
+      wrapHeaderText: true,    // allow header text to wrap to a second line
+      autoHeaderHeight: true,  // header row grows to fit wrapped text
     }),
     []
   );
