@@ -1,147 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
-import type {
-  AgentPreviewData,
-  ConfigurationTableData,
-} from '../../types/realTimeAgents/tables';
-import { toAgentPreview, toPlatformTable } from '../../types/realTimeAgents/adapter';
+import type {AgentPreviewData,ConfigurationTableData,} from '../../types/realTimeAgents/tables';
+import { getFieldValue, toAgentPreview } from '../../types/realTimeAgents/adapter';
 import Details from './AgentDetails';
 import { ApiService } from '../../api';
 import TankIcon from '../agent-details/TankIcon';
 import ModeNavigationLink from '../ModeNavigationLink';
-import type {
-  PlatformSearchField,
-  PlatformSearchState,
-} from '../../types/realTimeAgents/PlatformSearchField';
+import type { PlatformSearchState } from '../../types/realTimeAgents/PlatformSearchField';
+import {filterAgents,getIsCustomSearchFieldMissing,platformSearchFields,
+} from './filterAgents';
 
 const intervalFetchManager =
   Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
 
 type ViewMode = 'icon' | 'list';
-type KnownSearchField = Exclude<PlatformSearchField, 'other'>;
-
-const platformSearchFields: { label: string; value: KnownSearchField }[] = [
-  { label: 'Platform ID', value: 'platformId' },
-  { label: 'Platform Name', value: 'platformName' },
-  { label: 'Unit', value: 'unit' },
-  { label: 'Unit Code', value: 'unit_code' },
-  { label: 'Zayad ID', value: 'zayad_id' },
-  { label: 'Call Sign', value: 'call_sign' },
-];
-
-type SearchValueMatch = {
-  exists: boolean;
-  value: unknown;
-};
-
-function getNestedEntry(source: unknown, path: string): SearchValueMatch {
-  if (!source || typeof source !== 'object') {
-    return { exists: false, value: undefined };
-  }
-
-  return path.split('.').reduce<SearchValueMatch>((current, key) => {
-    if (!current.exists) {
-      return current;
-    }
-
-    const value = current.value;
-
-    if (!value || typeof value !== 'object') {
-      return { exists: false, value: undefined };
-    }
-
-    if (!Object.prototype.hasOwnProperty.call(value, key)) {
-      return { exists: false, value: undefined };
-    }
-
-    return {
-      exists: true,
-      value: (value as Record<string, unknown>)[key],
-    };
-  }, { exists: true, value: source });
-}
-
-function flattenValues(
-  source: unknown,
-  prefix = ''
-): { key: string; value: unknown }[] {
-  if (!source || typeof source !== 'object') {
-    return [];
-  }
-
-  return Object.entries(source as Record<string, unknown>).flatMap(
-    ([key, value]) => {
-      const nextKey = prefix ? `${prefix}.${key}` : key;
-
-      if (value && typeof value === 'object' && !(value instanceof Date)) {
-        return [
-          { key: nextKey, value },
-          ...flattenValues(value, nextKey),
-        ];
-      }
-
-      return [{ key: nextKey, value }];
-    }
-  );
-}
-
-function findCustomSearchEntry(
-  agent: AgentResponse,
-  field: string
-): SearchValueMatch {
-  const normalizedField = field.trim().toLowerCase();
-
-  if (normalizedField === '') {
-    return { exists: false, value: undefined };
-  }
-
-  const platformFields = toPlatformTable(agent);
-  const platformField = Object.keys(platformFields).find(
-    (key) => key.toLowerCase() === normalizedField
-  );
-
-  if (platformField) {
-    return {
-      exists: true,
-      value: platformFields[platformField as keyof typeof platformFields],
-    };
-  }
-
-  const pathEntry = getNestedEntry(agent, field);
-  if (pathEntry.exists) {
-    return pathEntry;
-  }
-
-  const flattenedEntry = flattenValues(agent).find(({ key }) => {
-    const normalizedKey = key.toLowerCase();
-    return (
-      normalizedKey === normalizedField ||
-      normalizedKey.split('.').pop() === normalizedField
-    );
-  });
-
-  if (flattenedEntry) {
-    return {
-      exists: true,
-      value: flattenedEntry.value,
-    };
-  }
-
-  return { exists: false, value: undefined };
-}
-
-function stringifySearchValue(value: unknown) {
-  if (value === null || value === undefined) {
-    return '';
-  }
-
-  if (typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-
-  return String(value);
-}
 
 export default function Preview() {
   const [agents, setAgents] = useState<AgentResponse[]>([]);
@@ -155,49 +28,20 @@ export default function Preview() {
     customField: '',
     text: '',
   });
+
   const isConfigurationEditingRef = useRef(isConfigurationEditing);
   const { agentId: routeAgentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
+
   const customSearchField = search.customField.trim();
-  const isCustomSearchFieldMissing =
-    search.field === 'other' &&
-    customSearchField !== '' &&
-    agents.length > 0 &&
-    !agents.some((agent) =>
-      findCustomSearchEntry(agent, customSearchField).exists
-    );
 
-  const filteredAgents = agents.filter((agent) => {
-    const searchText = search.text.trim().toLowerCase();
+  const filteredAgents = useMemo(() => {
+    return filterAgents(agents, search);
+  }, [agents, search]);
 
-    if (search.field === 'other') {
-      if (customSearchField === '') {
-        return true;
-      }
-
-      const customSearchEntry = findCustomSearchEntry(agent, customSearchField);
-      if (!customSearchEntry.exists) {
-        return false;
-      }
-
-      if (searchText === '') {
-        return true;
-      }
-
-      return stringifySearchValue(customSearchEntry.value)
-        .toLowerCase()
-        .includes(searchText);
-    }
-
-    if (searchText === '') {
-      return true;
-    }
-
-    const platformFields = toPlatformTable(agent);
-    return stringifySearchValue(platformFields[search.field])
-      .toLowerCase()
-      .includes(searchText);
-  });
+  const isCustomSearchFieldMissing = useMemo(() => {
+    return getIsCustomSearchFieldMissing(agents, search);
+  }, [agents, search]);
 
   useEffect(() => {
     isConfigurationEditingRef.current = isConfigurationEditing;
@@ -213,6 +57,7 @@ export default function Preview() {
     const fetchAgents = async () => {
       try {
         const data: AgentResponse[] = await ApiService.getAgents();
+
         if (isConfigurationEditingRef.current) {
           return;
         }
@@ -234,6 +79,7 @@ export default function Preview() {
     fetchAgents();
 
     const intervalId = setInterval(fetchAgents, intervalFetchManager);
+
     return () => {
       clearInterval(intervalId);
     };
@@ -245,6 +91,15 @@ export default function Preview() {
     agentId: string,
     configuration: ConfigurationTableData
   ) => {
+    const selectedLink = getFieldValue<string>(configuration, 'selectedLink');
+    const schedulerMode = getFieldValue<string>(configuration, 'schedulerMode');
+    const intervalMs = getFieldValue<number>(configuration, 'intervalMs');
+    const maxRetries = getFieldValue<number>(configuration, 'maxRetries');
+    const sparkProxyUrl = getFieldValue<string>(configuration, 'sparkProxyUrl');
+    const token = getFieldValue<string>(configuration, 'token');
+    const batchSize = getFieldValue<number>(configuration, 'batchSize');
+    const isManualMode = getFieldValue<boolean>(configuration, 'isManualMode');
+
     setAgents((currentAgents) =>
       currentAgents.map((agent) => {
         if (agent.id !== agentId) {
@@ -257,11 +112,20 @@ export default function Preview() {
             ...agent.status,
             details: {
               ...agent.status.details,
-              selectedLink: configuration.selectedLink,
-              schedulerMode: configuration.schedulerMode,
+              selectedLink,
+              schedulerMode,
             },
           },
-          configuration,
+          configuration: {
+            schedulerMode,
+            selectedLink,
+            intervalMs,
+            maxRetries,
+            sparkProxyUrl,
+            token,
+            batchSize,
+            isManualMode,
+          },
         };
       })
     );
@@ -295,6 +159,7 @@ export default function Preview() {
           label="למעבר להיסטוריה"
           variant="history"
         />
+
         <h1>ניטור סוכנים בזמן אמת</h1>
 
         <p className="muted">
@@ -302,10 +167,13 @@ export default function Preview() {
             ? 'לחץ על אייקון כדי לראות פרטים'
             : 'לחץ על שורה כדי לראות פרטים'}
         </p>
+
         <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
           <button
             type="button"
-            className={`view-toggle-button ${viewMode === 'icon' ? 'active' : ''}`}
+            className={`view-toggle-button ${
+              viewMode === 'icon' ? 'active' : ''
+            }`}
             onClick={() => setViewMode('icon')}
           >
             אייקונים
@@ -313,7 +181,9 @@ export default function Preview() {
 
           <button
             type="button"
-            className={`view-toggle-button ${viewMode === 'list' ? 'active' : ''}`}
+            className={`view-toggle-button ${
+              viewMode === 'list' ? 'active' : ''
+            }`}
             onClick={() => setViewMode('list')}
           >
             רשימה
@@ -326,6 +196,7 @@ export default function Preview() {
           <div className="filters-box">
             <label>
               <span>Search column</span>
+
               <select
                 value={search.field}
                 onChange={(event) =>
@@ -340,6 +211,7 @@ export default function Preview() {
                     {field.label}
                   </option>
                 ))}
+
                 <option value="other">אחר</option>
               </select>
             </label>
@@ -347,9 +219,10 @@ export default function Preview() {
             {search.field === 'other' && (
               <label>
                 <span>Column name</span>
+
                 <input
                   type="text"
-                  placeholder="unit, status.status, selectedLink..."
+                  placeholder="Unit, Platform ID, selectedLink..."
                   value={search.customField}
                   onChange={(event) =>
                     setSearch((prev) => ({
@@ -363,6 +236,7 @@ export default function Preview() {
 
             <label className="agent-free-text-filter">
               <span>Free text</span>
+
               <input
                 type="search"
                 placeholder="Type to filter"
@@ -383,7 +257,11 @@ export default function Preview() {
             </p>
           )}
 
-          <div className={`agents-grid ${viewMode === 'list' ? 'agents-list' : ''}`}>
+          <div
+            className={`agents-grid ${
+              viewMode === 'list' ? 'agents-list' : ''
+            }`}
+          >
             {filteredAgents.map((agent) => {
               const previewAgent = toAgentPreview(agent);
 
@@ -405,17 +283,27 @@ export default function Preview() {
                   </div>
 
                   <div className="agent-content">
-                    <div className="agent-label">{getAgentLabel(previewAgent)}</div>
+                    <div className="agent-label">
+                      {getAgentLabel(previewAgent)}
+                    </div>
 
                     <div className="agent-info">
                       <div className="info-item">ID: {previewAgent.id}</div>
-                      <div className="info-item">סטטוס: {previewAgent.status}</div>
-                      <div className="info-item">שם סוכן: {previewAgent.call_sign}</div>
-                      <div className="info-item">יחידה: {previewAgent.unit}</div>
+                      <div className="info-item">
+                        סטטוס: {previewAgent.status}
+                      </div>
+                      <div className="info-item">
+                        שם סוכן: {previewAgent.call_sign}
+                      </div>
+                      <div className="info-item">
+                        יחידה: {previewAgent.unit}
+                      </div>
                       <div className="info-item">
                         פלטפורמה ID: {previewAgent.platformId}
                       </div>
-                      <div className="info-item">צייד ID: {previewAgent.zayad_id}</div>
+                      <div className="info-item">
+                        צייד ID: {previewAgent.zayad_id}
+                      </div>
                     </div>
                   </div>
                 </button>

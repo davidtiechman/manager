@@ -1,5 +1,5 @@
 interface Props {
-  status: 'active' | 'inactive'| string;
+  status: 'active' | 'inactive'| 'slow' | string;
 }
 
 export default function TankIcon({ status }: Props) {

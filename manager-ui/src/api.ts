@@ -1,7 +1,7 @@
 import type { AgentResponse } from './types/realTimeAgents/agentResponse';
 import type { AgentHistoryRecord, AgentHistoryResponse } from './types/history/agentHistoryRecord';
 import type { HistoryAgent } from './types/history/historyAgent';
-import type { ConfigurationTableData } from './types/realTimeAgents/tables';
+import type { ConfigurationPayload } from './types/realTimeAgents/tables';
 import { MOCK_AGENTS } from './MOCK_AGENT';
 
 const VITE_API_TOKEN = import.meta.env.VITE_API_TOKEN || 'test';
@@ -113,7 +113,7 @@ export class ApiService {
 
   static async getAgentConfig(
     agentId: string
-  ): Promise<ConfigurationTableData> {
+  ): Promise<ConfigurationPayload> {
     const response = await fetch(`${API_BASE_URL}/manager/agents/${agentId}/config`,{
         headers:{
           'Authorization': `Bearer ${VITE_API_TOKEN}`
@@ -129,8 +129,8 @@ export class ApiService {
 
   static async updateAgentConfig(
     agentId: string,
-    config: ConfigurationTableData
-  ): Promise<ConfigurationTableData> {
+    config: ConfigurationPayload
+  ): Promise<ConfigurationPayload> {
     const response = await fetch(`${API_BASE_URL}/agents/${agentId}/configuration`, {
       method: 'PUT',
       headers: { 

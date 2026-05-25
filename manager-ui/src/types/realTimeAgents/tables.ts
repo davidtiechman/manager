@@ -1,6 +1,12 @@
 export type DateValue = string | number | Date;
 
-export interface AgentPreviewData {
+export type TableField<TValue = unknown> = {
+  key: string;
+  label: string;
+  value: TValue;
+};
+
+export type AgentPreviewData = {
   id: string;
   status: string;
   call_sign: string;
@@ -8,38 +14,14 @@ export interface AgentPreviewData {
   unit_code: string;
   zayad_id: number;
   platformId: number;
-}
+};
 
+export type LinkQualityTableData = TableField[];
+export type PlatformTableData = TableField[];
+export type SyncDetailsTableData = TableField[];
+export type ConfigurationTableData = TableField[];
 
-export interface LinkQualityTableData {
-  linkType: string;
-  linkAvailable: boolean;
-  linkQuality: string;
-  latency: number;
-  reliability: number;
-  linkTimestamp: DateValue;
-}
-
-export interface PlatformTableData {
-  unit: string;
-  unit_code: string;
-  zayad_id: number;
-  call_sign: string;
-  platformId: number;
-  platformName: string;
-}
-
-export interface SyncDetailsTableData {
-  status: string;
-  schedulerMode: string;
-  selectedLink: string;
-  messagesInQueue: number;
-  nextDeliveryTime: DateValue;
-  serverLut: DateValue;
-  lastSeen: DateValue;
-}
-
-export interface ConfigurationTableData {
+export type ConfigurationPayload = {
   schedulerMode: string;
   selectedLink: string;
   intervalMs: number;
@@ -48,4 +30,4 @@ export interface ConfigurationTableData {
   token: string;
   batchSize: number;
   isManualMode: boolean;
-}
+};

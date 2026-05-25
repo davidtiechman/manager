@@ -1,8 +1,11 @@
-import type { PlatformTableData } from './tables';
-
 export type PlatformSearchField =
   | 'other'
-  | Extract<keyof PlatformTableData, string>;
+  | 'platformId'
+  | 'platformName'
+  | 'unit'
+  | 'unit_code'
+  | 'zayad_id'
+  | 'call_sign';
 
 export type PlatformSearchState = {
   field: PlatformSearchField;

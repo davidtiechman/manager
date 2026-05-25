@@ -75,7 +75,7 @@
   border: 2px solid #22c55e;
 }
 
-.agent-card.warning {
+.agent-card.slow {
   border: 2px solid #f59e0b;
 }
 
@@ -128,7 +128,7 @@
   fill: #22c55e;
 }
 
-.tank-svg.warning {
+.tank-svg.slow {
   fill: #f59e0b;
 }
 

@@ -1,8 +1,28 @@
-import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
-import type { ConfigurationTableData } from '../../types/realTimeAgents/tables';
 import { useEffect, useRef, useState } from 'react';
+import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
+import type {
+  ConfigurationPayload,
+  ConfigurationTableData,
+  TableField,
+} from '../../types/realTimeAgents/tables';
 import { ApiService } from '../../api';
-import { toConfigurationTable } from '../../types/realTimeAgents/adapter';
+import {
+  getFieldValue,
+  toConfigurationTable,
+} from '../../types/realTimeAgents/adapter';
+
+type FieldType = 'text' | 'number' | 'checkbox';
+
+const fieldTypes: Record<string, FieldType> = {
+  selectedLink: 'text',
+  schedulerMode: 'text',
+  intervalMs: 'number',
+  maxRetries: 'number',
+  sparkProxyUrl: 'text',
+  token: 'text',
+  batchSize: 'number',
+  isManualMode: 'checkbox',
+};
 
 interface Props {
   agent: AgentResponse;
@@ -15,21 +35,45 @@ interface Props {
   onMessageChange: (message: string) => void;
 }
 
-const fields = [
-  ['selectedLink', 'selected link', 'text'],
-  ['schedulerMode', 'scheduler mode', 'text'],
-  ['intervalMs', 'interval ms', 'number'],
-  ['maxRetries', 'max retries', 'number'],
-  ['sparkProxyUrl', 'spark proxy url', 'text'],
-  ['token', 'token', 'text'],
-  ['batchSize', 'batch size', 'number'],
-  ['isManualMode', 'is manual mode', 'checkbox'],
-] as const;
-
-const isSameConfiguration = (
+function isSameConfiguration(
   left: ConfigurationTableData,
   right: ConfigurationTableData
-) => fields.every(([field]) => left[field] === right[field]);
+) {
+  return left.every((leftField) => {
+    const rightValue = getFieldValue<unknown>(right, leftField.key);
+    return leftField.value === rightValue;
+  });
+}
+
+function updateFieldValue(
+  fields: ConfigurationTableData,
+  key: string,
+  value: unknown
+): ConfigurationTableData {
+  return fields.map((field) =>
+    field.key === key
+      ? {
+          ...field,
+          value,
+        }
+      : field
+  );
+}
+
+function toApiConfiguration(
+  configuration: ConfigurationTableData
+): ConfigurationPayload {
+  return {
+    schedulerMode: getFieldValue<string>(configuration, 'schedulerMode'),
+    selectedLink: getFieldValue<string>(configuration, 'selectedLink'),
+    intervalMs: getFieldValue<number>(configuration, 'intervalMs'),
+    maxRetries: getFieldValue<number>(configuration, 'maxRetries'),
+    sparkProxyUrl: getFieldValue<string>(configuration, 'sparkProxyUrl'),
+    token: getFieldValue<string>(configuration, 'token'),
+    batchSize: getFieldValue<number>(configuration, 'batchSize'),
+    isManualMode: getFieldValue<boolean>(configuration, 'isManualMode'),
+  };
+}
 
 export default function ConfigurationTable({
   agent,
@@ -61,7 +105,11 @@ export default function ConfigurationTable({
 
     const agentConfiguration = toConfigurationTable(agent);
     const lastSavedConfig = lastSavedConfigRef.current;
-    if (lastSavedConfig && !isSameConfiguration(agentConfiguration, lastSavedConfig)) {
+
+    if (
+      lastSavedConfig &&
+      !isSameConfiguration(agentConfiguration, lastSavedConfig)
+    ) {
       return;
     }
 
@@ -70,14 +118,8 @@ export default function ConfigurationTable({
     setIsMenuOpen(false);
   }, [agent, isEdit, isDirty]);
 
-  const updateConfig = (
-    field: keyof ConfigurationTableData,
-    value: ConfigurationTableData[keyof ConfigurationTableData]
-  ) => {
-    setConfiguration((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  const updateConfig = (key: string, value: unknown) => {
+    setConfiguration((prev) => updateFieldValue(prev, key, value));
     setIsDirty(true);
   };
 
@@ -98,26 +140,35 @@ export default function ConfigurationTable({
 
   const handleSave = async () => {
     try {
+      const apiConfiguration = toApiConfiguration(configuration);
+
       const updatedConfig = await ApiService.updateAgentConfig(
         agent.id,
-        configuration
+        apiConfiguration
       );
 
-      lastSavedConfigRef.current = updatedConfig;
-      setConfiguration(updatedConfig);
-      onConfigSaved(agent.id, updatedConfig);
+      const updatedTableConfig = toConfigurationTable({
+        ...agent,
+        configuration: updatedConfig,
+      });
+
+      lastSavedConfigRef.current = updatedTableConfig;
+      setConfiguration(updatedTableConfig);
+      onConfigSaved(agent.id, updatedTableConfig);
       setIsDirty(false);
       setIsEdit(false);
       setIsMenuOpen(false);
       onMessageChange('Configuration saved successfully');
+
       setTimeout(() => {
         onMessageChange('');
       }, 2000);
     } catch (error) {
       console.error('Error saving configuration:', error);
       onMessageChange('Failed to save configuration');
-      setTimeout(() => {
 
+      setTimeout(() => {
+        onMessageChange('');
       }, 2000);
     }
   };
@@ -126,6 +177,7 @@ export default function ConfigurationTable({
     <section className="details-section">
       <div className="details-section-header">
         <h3>Configuration</h3>
+
         <div className="table-menu">
           <button
             type="button"
@@ -137,6 +189,7 @@ export default function ConfigurationTable({
           >
             &#8942;
           </button>
+
           {isMenuOpen && (
             <div className="menu-dropdown" role="menu">
               <button type="button" role="menuitem" onClick={openEdit}>
@@ -149,19 +202,22 @@ export default function ConfigurationTable({
 
       <table className="details-table">
         <tbody>
-          {fields.map(([field, label, type]) => {
-            const value = configuration[field];
+          {configuration.map((field: TableField) => {
+            const type = fieldTypes[field.key] ?? 'text';
+            const value = field.value;
 
             return (
-              <tr key={field}>
-                <td>{label}</td>
+              <tr key={field.key}>
+                <td>{field.label}</td>
                 <td>
                   {isEdit ? (
                     <input
                       className="input-fields"
                       type={type}
                       checked={type === 'checkbox' ? Boolean(value) : undefined}
-                      value={type !== 'checkbox' ? String(value ?? '') : undefined}
+                      value={
+                        type !== 'checkbox' ? String(value ?? '') : undefined
+                      }
                       onChange={(e) => {
                         const newValue =
                           type === 'checkbox'
@@ -170,12 +226,14 @@ export default function ConfigurationTable({
                               ? Number(e.target.value)
                               : e.target.value;
 
-                        updateConfig(field, newValue);
+                        updateConfig(field.key, newValue);
                       }}
                     />
                   ) : (
                     <span>
-                      {type === 'checkbox' ? String(value) : String(value ?? '')}
+                      {type === 'checkbox'
+                        ? String(value)
+                        : String(value ?? '')}
                     </span>
                   )}
                 </td>
@@ -190,6 +248,7 @@ export default function ConfigurationTable({
           <button onClick={handleSave} disabled={!isDirty}>
             Save
           </button>
+
           <button type="button" onClick={cancelEdit}>
             Cancel
           </button>
