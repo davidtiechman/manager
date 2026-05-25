@@ -268,12 +268,6 @@
   color: #111827;
 }
 
-/* Sort affordance — faint icon hints the column is sortable */
-.snc-grid-wrapper .ag-sort-none-icon {
-  color: #d1d5db;
-  opacity: 1;
-}
-
 /* Active sort arrows — dark and legible */
 .snc-grid-wrapper .ag-sort-ascending-icon,
 .snc-grid-wrapper .ag-sort-descending-icon {
@@ -446,28 +440,6 @@
   flex-shrink: 0;
 }
 
-/* Restore hidden columns button */
-.snc-restore-cols {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border: 1px solid #D1D5DB;
-  border-radius: 6px;
-  background: #ffffff;
-  color: #374151;
-  font-size: 12px;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition: background 0.12s;
-}
-
-.snc-restore-cols:hover {
-  background: #F3F4F6;
-}
 
 /* ── Header right-click context menu ────────────────────────── */
 .snc-ctx-menu {
@@ -568,5 +540,12 @@
   background: #e0f2fe;
   border-color: #38bdf8;
   color: #0369a1;
+}
+
+/* ── Hide dead scrollbar track under pinned-left column ─────── */
+/* visibility:hidden preserves the spacer's layout contribution  */
+/* so the real horizontal scrollbar still works correctly        */
+.snc-grid-wrapper .ag-horizontal-left-spacer {
+  visibility: hidden;
 }
 

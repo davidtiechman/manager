@@ -112,8 +112,8 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       field: 'id',
       headerName: 'ID',
       headerTooltip: 'ID',
-      width: 60,
-      minWidth: 55,
+      width: 72,
+      minWidth: 62,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
     },
@@ -271,13 +271,6 @@ export default function AgentSyncsList({
       resizable: true,
       floatingFilter: false,
       suppressMovable: false,
-      unSortIcon: true,
-      // cellStyle reads from ref so it always sees the current selection
-      // without the column defs needing to change
-      cellStyle: (params) =>
-        selectedColsRef.current.has(params.column.getColId())
-          ? { backgroundColor: 'rgba(59,130,246,0.09)' }
-          : null,
     }),
     []
   );
@@ -363,7 +356,6 @@ export default function AgentSyncsList({
 
   const [hiddenCols, setHiddenCols] = useState<string[]>([]);
   const [selectedCols, setSelectedCols] = useState<Set<string>>(new Set());
-  const selectedColsRef = useRef<Set<string>>(new Set()); // stable ref for cellStyle callback
   const gridWrapperRef = useRef<HTMLDivElement>(null);
   const stripDragStartRef = useRef<string | null>(null);
   const styleTagRef = useRef<HTMLStyleElement | null>(null);
@@ -375,46 +367,47 @@ export default function AgentSyncsList({
     return () => window.removeEventListener('pointerdown', close);
   }, [ctxMenu]);
 
-  // ── Column-selection highlight ────────────────────────────────────────
-  // Body cells: AG Grid native cellStyle (reads selectedColsRef) + refreshCells
-  // Header:     injected <style> tag (no AG Grid API for header bg)
-  useEffect(() => {
-    // 1. Sync ref so cellStyle callback sees new selection immediately
-    selectedColsRef.current = selectedCols;
+  // Remove injected style tag on unmount
+  useEffect(() => () => { styleTagRef.current?.remove(); }, []);
 
-    // 2. Refresh body cells so AG Grid re-evaluates cellStyle for every cell
-    gridRef.current?.api?.refreshCells({ force: true });
-
-    // 3. Header highlight via injected CSS
+  // ── Single source of truth for selection: updates React state + CSS together ──
+  // Called synchronously from mouse handlers so the highlight follows the cursor
+  // in real-time without waiting for a React re-render / useEffect cycle.
+  const applyColSelection = useCallback((cols: Set<string>) => {
+    setSelectedCols(cols);
     if (!styleTagRef.current) {
       const tag = document.createElement('style');
       document.head.appendChild(tag);
       styleTagRef.current = tag;
     }
     const tag = styleTagRef.current;
-    if (selectedCols.size === 0) {
-      tag.textContent = '';
-      return;
-    }
-    const hdrSel = Array.from(selectedCols)
-      .map((id) => `.snc-grid-wrapper .ag-header-cell[col-id="${id}"]`)
-      .join(',');
-    tag.textContent = `${hdrSel} { background: rgba(59,130,246,0.22) !important; }`;
-  }, [selectedCols]);
+    if (cols.size === 0) { tag.textContent = ''; return; }
+    const ids = Array.from(cols);
+    const hdr  = ids.map((id) => `.snc-grid-wrapper .ag-header-cell[col-id="${id}"]`).join(',');
+    const body = ids.map((id) => `.snc-grid-wrapper .ag-cell[col-id="${id}"]`).join(',');
+    tag.textContent =
+      `${hdr}{background:rgba(59,130,246,0.22)!important}` +
+      `${body}{background:rgba(59,130,246,0.08)!important}`;
+  }, []);
 
-  // Remove the injected style tag when component unmounts
-  useEffect(() => () => { styleTagRef.current?.remove(); }, []);
-
-  // Escape clears column selection (like Excel); clicking elsewhere keeps it alive
-  // so the user can right-click → "Hide selected columns" after dragging.
+  // Any left-click anywhere clears selection.
+  // Right-click (button 2) is exempt so the context menu still sees the selection.
   useEffect(() => {
     if (selectedCols.size === 0) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelectedCols(new Set());
+    const clear = (e: PointerEvent) => {
+      if (e.button === 2) return;
+      const t = e.target as Element;
+      if (t.closest('.snc-col-select-strip') || t.closest('.snc-ctx-menu')) return;
+      applyColSelection(new Set());
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [selectedCols.size]);
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') applyColSelection(new Set()); };
+    window.addEventListener('pointerdown', clear);
+    window.addEventListener('keydown',     onKey);
+    return () => {
+      window.removeEventListener('pointerdown', clear);
+      window.removeEventListener('keydown',     onKey);
+    };
+  }, [selectedCols.size, applyColSelection]);
 
   const handleGridContextMenu = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -444,74 +437,71 @@ export default function AgentSyncsList({
     const ids = Array.from(selectedCols);
     gridRef.current?.api?.setColumnsVisible(ids, false);
     setHiddenCols((prev) => [...prev, ...ids.filter((id) => !prev.includes(id))]);
-    setSelectedCols(new Set());
-  }, [selectedCols]);
+    applyColSelection(new Set());
+  }, [selectedCols, applyColSelection]);
 
-  // Finds which column header sits under the given clientX coordinate
-  const colIdAtClientX = useCallback((x: number): string | null => {
+  // Returns header cells sorted by visual left position (pinned + scrollable mixed)
+  const getSortedHeaderCells = useCallback((): HTMLElement[] => {
     const wrapper = gridWrapperRef.current;
-    if (!wrapper) return null;
-    const cells = wrapper.querySelectorAll<HTMLElement>('.ag-header-cell[col-id]');
-    for (const cell of cells) {
-      const rect = cell.getBoundingClientRect();
-      if (x >= rect.left && x <= rect.right) {
-        return cell.getAttribute('col-id');
-      }
-    }
-    return null;
+    if (!wrapper) return [];
+    return Array.from(wrapper.querySelectorAll<HTMLElement>('.ag-header-cell[col-id]'))
+      .sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
   }, []);
 
-  // Returns all colIds between two colIds (inclusive) in DOM order
+  // Returns the colId under clientX, clamped to first/last column when off-grid
+  const colIdAtClientX = useCallback((x: number): string | null => {
+    const cells = getSortedHeaderCells();
+    if (cells.length === 0) return null;
+    if (x <= cells[0].getBoundingClientRect().right)
+      return cells[0].getAttribute('col-id');
+    if (x >= cells[cells.length - 1].getBoundingClientRect().left)
+      return cells[cells.length - 1].getAttribute('col-id');
+    for (const cell of cells) {
+      const rect = cell.getBoundingClientRect();
+      if (x >= rect.left && x <= rect.right) return cell.getAttribute('col-id');
+    }
+    return null;
+  }, [getSortedHeaderCells]);
+
+  // Returns all colIds between two colIds (inclusive) in visual order
   const colRangeBetween = useCallback((startId: string, endId: string): string[] => {
-    const wrapper = gridWrapperRef.current;
-    if (!wrapper) return [startId];
-    const cells = Array.from(wrapper.querySelectorAll<HTMLElement>('.ag-header-cell[col-id]'));
-    const ids = cells.map((c) => c.getAttribute('col-id')).filter(Boolean) as string[];
+    const ids = getSortedHeaderCells()
+      .map((c) => c.getAttribute('col-id'))
+      .filter(Boolean) as string[];
     const ai = ids.indexOf(startId);
     const bi = ids.indexOf(endId);
     if (ai === -1) return endId ? [endId] : [];
     if (bi === -1) return [startId];
     const [lo, hi] = ai <= bi ? [ai, bi] : [bi, ai];
     return ids.slice(lo, hi + 1);
-  }, []);
+  }, [getSortedHeaderCells]);
 
-  // Native-listener drag: React's event delegation doesn't reliably forward
-  // pointer-capture events; attaching directly to the DOM element does.
-  const onStripPointerDown = useCallback(
-    (e: React.PointerEvent<HTMLDivElement>) => {
+  // Strip mouse-down: start drag-selection via window mousemove.
+  // applyColSelection is called on every move so the highlight is synchronous.
+  const onStripMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
       if (e.button !== 0) return;
       e.preventDefault();
 
       const startId = colIdAtClientX(e.clientX);
       if (!startId) return;
 
-      const el = e.currentTarget;          // the strip DOM element
-      const pid = e.pointerId;
-      el.setPointerCapture(pid);
-
       stripDragStartRef.current = startId;
-      setSelectedCols(new Set([startId]));
+      applyColSelection(new Set([startId]));
 
-      const onMove = (ev: PointerEvent) => {
-        if (!stripDragStartRef.current) return;
-        const id = colIdAtClientX(ev.clientX);
-        if (!id) return;
-        setSelectedCols(new Set(colRangeBetween(stripDragStartRef.current, id)));
+      const onMove = (ev: MouseEvent) => {
+        const cur = colIdAtClientX(ev.clientX);
+        if (!cur || !stripDragStartRef.current) return;
+        applyColSelection(new Set(colRangeBetween(stripDragStartRef.current, cur)));
       };
-
-      const onDone = () => {
-        el.releasePointerCapture(pid);
-        stripDragStartRef.current = null;
-        el.removeEventListener('pointermove', onMove);
-        el.removeEventListener('pointerup',   onDone);
-        el.removeEventListener('pointercancel', onDone);
+      const onUp = () => {
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup',   onUp);
       };
-
-      el.addEventListener('pointermove',   onMove);
-      el.addEventListener('pointerup',     onDone);
-      el.addEventListener('pointercancel', onDone);
+      window.addEventListener('mousemove', onMove);
+      window.addEventListener('mouseup',   onUp);
     },
-    [colIdAtClientX, colRangeBetween]
+    [colIdAtClientX, colRangeBetween, applyColSelection]
   );
 
   // ── No agentId guard ────────────────────────────────────────────────
@@ -533,7 +523,7 @@ export default function AgentSyncsList({
       onContextMenu={handleGridContextMenu}
     >
       {/* Column-selection strip — 8px hover zone at top of header; drag to select range */}
-      <div className="snc-col-select-strip" onPointerDown={onStripPointerDown} />
+      <div className="snc-col-select-strip" onMouseDown={onStripMouseDown} />
       <AgGridReact<AgentHistoryRecord>
         ref={gridRef}
         columnDefs={columnDefs}
