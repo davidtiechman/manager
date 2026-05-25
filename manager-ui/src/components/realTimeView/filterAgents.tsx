@@ -166,3 +166,84 @@ export function filterAgents(
       .includes(searchText);
   });
 }
+type AgentsFilterProps = {
+  search: PlatformSearchState;
+  onSearchChange: React.Dispatch<React.SetStateAction<PlatformSearchState>>;
+  isCustomSearchFieldMissing: boolean;
+};
+
+export function AgentsFilter({
+  search,
+  onSearchChange,
+  isCustomSearchFieldMissing,
+}: AgentsFilterProps) {
+  const customSearchField = search.customField.trim();
+
+  return (
+    <>
+      <div className="filters-box">
+        <label>
+          <span>Search column</span>
+
+          <select
+            value={search.field}
+            onChange={(event) =>
+              onSearchChange((prev) => ({
+                ...prev,
+                field: event.target.value as PlatformSearchState['field'],
+              }))
+            }
+          >
+            {platformSearchFields.map((field) => (
+              <option key={field.value} value={field.value}>
+                {field.label}
+              </option>
+            ))}
+
+            <option value="other">אחר</option>
+          </select>
+        </label>
+
+        {search.field === 'other' && (
+          <label>
+            <span>Column name</span>
+
+            <input
+              type="text"
+              placeholder="Unit, Platform ID, selectedLink..."
+              value={search.customField}
+              onChange={(event) =>
+                onSearchChange((prev) => ({
+                  ...prev,
+                  customField: event.target.value,
+                }))
+              }
+            />
+          </label>
+        )}
+
+        <label className="agent-free-text-filter">
+          <span>Free text</span>
+
+          <input
+            type="search"
+            placeholder="Type to filter"
+            value={search.text}
+            onChange={(event) =>
+              onSearchChange((prev) => ({
+                ...prev,
+                text: event.target.value,
+              }))
+            }
+          />
+        </label>
+      </div>
+
+      {isCustomSearchFieldMissing && (
+        <p className="filter-message" role="alert">
+          העמודה "{customSearchField}" לא קיימת.
+        </p>
+      )}
+    </>
+  );
+}
