@@ -60,94 +60,62 @@
   align-items: center;
 }
 
-/* ── Back button — minimal, text-link style ─────────────────── */
-.snc-back {
-  display: inline-flex;
+/* ── Breadcrumb navigation (left column) ────────────────────── */
+.snc-breadcrumb {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
+  gap: 8px;
+  min-width: 0;
+}
+
+.snc-bc-link {
+  padding: 0;
   border: none;
-  border-radius: 6px;
   background: transparent;
-  color: #7a9ab8;
+  color: #5a8ab0;
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
-  cursor: pointer;
-  transition: color 0.18s, background 0.18s;
-  white-space: nowrap;
-  flex-shrink: 0;
   letter-spacing: 0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s;
+  line-height: 1;
 }
 
-.snc-back:hover,
-.snc-back:focus-visible {
-  color: #cce0f0;
-  background: rgba(255, 255, 255, 0.07);
+.snc-bc-link:hover,
+.snc-bc-link:focus-visible {
+  color: #a8c8e0;
   outline: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-.snc-back svg {
-  opacity: 0.7;
+.snc-bc-sep {
+  color: #2d4a62;
+  font-size: 13px;
+  line-height: 1;
+  user-select: none;
   flex-shrink: 0;
-  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.18s;
-}
-.snc-back:hover svg {
-  transform: translateX(-4px);
-  opacity: 1;
 }
 
-/* Vertical separator between back button and centre content */
-.snc-header-vr {
-  width: 1px;
-  height: 28px;
-  flex-shrink: 0;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgba(255, 255, 255, 0.14),
-    transparent
-  );
+.snc-bc-current {
+  color: #7aa3be;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  line-height: 1;
 }
 
 /* ── Centre block ───────────────────────────────────────────── */
 .snc-header-center {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 5px;
-}
-
-/* Small navigation breadcrumb */
-.snc-header-subnav {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-}
-
-.snc-crumb {
-  font-family: inherit;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  line-height: 1;
-}
-
-.snc-crumb--ancestor {
-  color: #4a6880;
-}
-
-.snc-crumb--section {
-  color: #5c7d99;
-}
-
-.snc-crumb-sep {
-  color: #344f65;
-  font-size: 16px;
-  line-height: 1;
-  user-select: none;
+  justify-content: center;
 }
 
 /* Entity name — clean typography, no box */

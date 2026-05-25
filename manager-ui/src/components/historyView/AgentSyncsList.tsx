@@ -416,26 +416,28 @@ export default function AgentSyncsList({
       <header className="snc-header">
 
         <div className="snc-header-start">
-          <button
-            type="button"
-            className="snc-back"
-            onClick={() => navigate(backTo ?? '/history')}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-              <path d="M9 2.5L4.5 7L9 11.5" stroke="currentColor"
-                strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            History
-          </button>
-          <div className="snc-header-vr" aria-hidden="true" />
+          <nav className="snc-breadcrumb" aria-label="breadcrumb">
+            <button
+              type="button"
+              className="snc-bc-link"
+              onClick={() => navigate(backTo ?? '/history')}
+            >
+              History
+            </button>
+            <span className="snc-bc-sep" aria-hidden="true">/</span>
+            <button
+              type="button"
+              className="snc-bc-link"
+              onClick={() => navigate('/history')}
+            >
+              Sync History
+            </button>
+            <span className="snc-bc-sep" aria-hidden="true">/</span>
+            <span className="snc-bc-current" aria-current="page">{agentId}</span>
+          </nav>
         </div>
 
         <div className="snc-header-center">
-          <nav className="snc-header-subnav" aria-label="breadcrumb">
-            <span className="snc-crumb snc-crumb--ancestor">History</span>
-            <span className="snc-crumb-sep" aria-hidden="true">·</span>
-            <span className="snc-crumb snc-crumb--section">Sync History</span>
-          </nav>
           <p className="snc-header-entity">{agentId}</p>
         </div>
 
