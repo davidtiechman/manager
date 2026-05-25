@@ -193,10 +193,11 @@
   color: #1e293b;
 }
 
-/* ── Grid outer — fills remaining height, no extra padding ──── */
+/* ── Grid outer — fills remaining height, outer breathing room ─ */
 .snc-grid-outer {
   flex: 1;
   min-height: 0;
+  padding: 12px 16px 16px;
 }
 
 /* ── AG Grid Quartz overrides ───────────────────────────────── */
