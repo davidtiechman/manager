@@ -421,24 +421,22 @@ export default function AgentSyncsList({
             className="snc-back"
             onClick={() => navigate(backTo ?? '/history')}
           >
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-              <path d="M8.5 2L3.5 6.5L8.5 11" stroke="currentColor"
-                strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <path d="M9 2.5L4.5 7L9 11.5" stroke="currentColor"
+                strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             History
           </button>
+          <div className="snc-header-vr" aria-hidden="true" />
         </div>
 
         <div className="snc-header-center">
           <nav className="snc-header-subnav" aria-label="breadcrumb">
             <span className="snc-crumb snc-crumb--ancestor">History</span>
-            <span className="snc-crumb-sep" aria-hidden="true">/</span>
+            <span className="snc-crumb-sep" aria-hidden="true">·</span>
             <span className="snc-crumb snc-crumb--section">Sync History</span>
           </nav>
-          <p className="snc-header-entity">
-            <span className="snc-entity-type">agent</span>
-            <span className="snc-entity-id">{agentId.replace(/^agent-?/i, '')}</span>
-          </p>
+          <p className="snc-header-entity">{agentId}</p>
         </div>
 
         <div className="snc-header-end">
