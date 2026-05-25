@@ -355,11 +355,8 @@
 .snc-status--inactive { background: #f1f5f9; color: #4b5563; }
 .snc-status--inactive::before { background: #9ca3af; }
 
-.snc-status--warning  { background: #fef9c3; color: #854d0e; }
-.snc-status--warning::before  { background: #eab308; }
-
-.snc-status--offline  { background: #fff1f2; color: #9f1239; }
-.snc-status--offline::before  { background: #f43f5e; }
+.snc-status--slow     { background: #fff7ed; color: #9a3412; }
+.snc-status--slow::before     { background: #f97316; }
 
 .snc-status--unknown,
 .snc-status-- {
