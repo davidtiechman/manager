@@ -378,13 +378,14 @@ export default function AgentSyncsList({
           </button>
         </div>
 
-        <nav className="snc-breadcrumb" aria-label="breadcrumb">
-          <span className="snc-crumb snc-crumb--ancestor">History</span>
-          <span className="snc-crumb-sep" aria-hidden="true">›</span>
-          <span className="snc-crumb snc-crumb--section">Sync History</span>
-          <span className="snc-crumb-sep" aria-hidden="true">›</span>
-          <span className="snc-crumb snc-crumb--current">{agentId}</span>
-        </nav>
+        <div className="snc-header-center">
+          <nav className="snc-header-subnav" aria-label="breadcrumb">
+            <span className="snc-crumb snc-crumb--ancestor">History</span>
+            <span className="snc-crumb-sep" aria-hidden="true">›</span>
+            <span className="snc-crumb snc-crumb--section">Sync History</span>
+          </nav>
+          <p className="snc-header-entity">{agentId}</p>
+        </div>
 
         <div className="snc-header-end">
           <ModeNavigationLink to="/" label="ניטור זמן אמת" variant="real-time" />

@@ -13,18 +13,18 @@
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
-/* ── Top header bar — 3-col grid so breadcrumb is truly centred ─ */
+/* ── Top header bar — 3-col grid, entity name centred ──────── */
 .snc-header {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 16px;
-  padding: 0 24px;
-  height: 64px;
-  background: #1e293b;
-  border-bottom: 1px solid #0f172a;
+  padding: 0 28px;
+  height: 76px;
+  background: #0f172a;
+  border-bottom: 1px solid #1e293b;
   flex-shrink: 0;
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
 }
 
 .snc-header-start {
@@ -40,69 +40,93 @@
   align-items: center;
 }
 
-/* Back button */
+/* ── Back button ────────────────────────────────────────────── */
 .snc-back {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 13px 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 7px;
-  background: transparent;
+  gap: 6px;
+  padding: 7px 14px 7px 11px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
   color: #94a3b8;
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.13s, color 0.13s, border-color 0.13s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   white-space: nowrap;
   flex-shrink: 0;
+  letter-spacing: 0.01em;
 }
 
 .snc-back:hover,
 .snc-back:focus-visible {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.09);
   color: #e2e8f0;
-  border-color: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.25);
   outline: none;
 }
 
-/* ── Breadcrumb — centred in the middle column ──────────────── */
-.snc-breadcrumb {
+.snc-back svg {
+  opacity: 0.7;
+  transition: opacity 0.15s, transform 0.15s;
+}
+.snc-back:hover svg {
+  opacity: 1;
+  transform: translateX(-2px);
+}
+
+/* ── Centre block: subnav label above, entity name below ────── */
+.snc-header-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Small navigation breadcrumb */
+.snc-header-subnav {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   white-space: nowrap;
 }
 
 .snc-crumb {
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   line-height: 1;
 }
 
 .snc-crumb--ancestor {
-  color: #64748b;
-  font-weight: 500;
+  color: #475569;
 }
 
 .snc-crumb--section {
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-.snc-crumb--current {
-  color: #f1f5f9;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  color: #64748b;
 }
 
 .snc-crumb-sep {
-  color: #334155;
-  font-size: 15px;
+  color: #2d3f55;
+  font-size: 13px;
   line-height: 1;
   user-select: none;
+}
+
+/* Large entity name */
+.snc-header-entity {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 /* ── Grid outer — fills remaining height ────────────────────── */
