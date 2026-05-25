@@ -147,7 +147,12 @@ export class ApiService {
       throw new Error('Failed to load agent sync history');
     }
 
-    return response.json() as Promise<SyncsIrmResponse>;
+    // Normalize: accept both IRM format { rows, lastRow }
+    // and legacy format { items, total } (backend not yet restarted)
+    const data = await response.json() as Record<string, unknown>;
+    const rows = (data.rows ?? data.items ?? []) as AgentHistoryRecord[];
+    const lastRow = (data.lastRow ?? null) as number | null;
+    return { rows, lastRow };
   }
 
   static async getAgentConfig(

@@ -1,11 +1,6 @@
 import { useCallback, useMemo, useRef } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AgGridReact } from 'ag-grid-react';
-import {
-  ModuleRegistry,
-  InfiniteRowModelModule,
-  CommunityFeaturesModule,
-} from 'ag-grid-community';
 import type {
   ColDef,
   IDatasource,
@@ -21,9 +16,6 @@ import '../../styles/syncs-grid.css';
 import { ApiService } from '../../api';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
 import ModeNavigationLink from '../ModeNavigationLink';
-
-// Register required modules for AG Grid v32
-ModuleRegistry.registerModules([InfiniteRowModelModule, CommunityFeaturesModule]);
 
 const BLOCK_SIZE = 100;
 
@@ -269,12 +261,14 @@ export default function AgentSyncsList({
         filterModel: params.filterModel as Record<string, unknown>,
       })
         .then(({ rows, lastRow }) => {
-          // lastRow: set only when we know the end; -1 = unknown
+          const safeRows = Array.isArray(rows) ? rows : [];
+          const blockSize = params.endRow - params.startRow;
+          // Tell AG Grid we've reached the end when last block is partial
           const knownEnd =
-            rows.length < params.endRow - params.startRow
-              ? params.startRow + rows.length
-              : -1;
-          params.successCallback(rows, lastRow ?? knownEnd);
+            safeRows.length < blockSize
+              ? params.startRow + safeRows.length
+              : undefined;
+          params.successCallback(safeRows, lastRow ?? knownEnd);
         })
         .catch((err) => {
           console.error('[SyncHistory] getRows failed:', err);
