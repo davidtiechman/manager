@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { AgGridReact } from 'ag-grid-react';
 import type {
@@ -18,6 +18,25 @@ import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord'
 import ModeNavigationLink from '../ModeNavigationLink';
 
 const BLOCK_SIZE = 100;
+
+/** Human-readable label for each column's filter chip */
+const COLUMN_LABELS: Record<string, string> = {
+  createdAt:        'Created At',
+  id:               'ID',
+  status:           'Status',
+  selectedLink:     'Selected Link',
+  schedulerMode:    'Scheduler Mode',
+  messagesInQueue:  'Msgs In Queue',
+  nextDeliveryTime: 'Next Delivery',
+  geoData:          'Geo Data',
+  serverLut:        'Server LUT',
+  linkType:         'Link Type',
+  linkAvailable:    'Available',
+  linkQuality:      'Quality',
+  latency:          'Latency',
+  reliability:      'Reliability',
+  linkTimestamp:    'Link Timestamp',
+};
 
 interface AgentSyncsListProps {
   agentId?: string;
@@ -238,11 +257,40 @@ export default function AgentSyncsList({
     () => ({
       sortable: true,
       resizable: true,
-      floatingFilter: false,   // filters via column-header menu popup instead
+      floatingFilter: false,
       suppressMovable: false,
     }),
     []
   );
+
+  // ── Active-filter state (drives the chip bar) ──────────────────────
+  const [filterModel, setFilterModel] = useState<Record<string, unknown>>({});
+
+  const onFilterChanged = useCallback(() => {
+    const model = gridRef.current?.api?.getFilterModel() ?? {};
+    setFilterModel(model as Record<string, unknown>);
+  }, []);
+
+  const clearFilter = useCallback((colId: string) => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+    void api.setColumnFilterModel(colId, null).then(() => {
+      api.onFilterChanged();
+    });
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    gridRef.current?.api?.setFilterModel(null);
+  }, []);
+
+  // ── Fix double scrollbar: lock html overflow on full-page mount ────
+  useEffect(() => {
+    if (isEmbedded) return;
+    const html = document.documentElement;
+    const prev = html.style.overflow;
+    html.style.overflow = 'hidden';
+    return () => { html.style.overflow = prev; };
+  }, [isEmbedded]);
 
   // Build datasource — re-created only when agentId changes
   const buildDatasource = useCallback((): IDatasource => ({
@@ -263,7 +311,6 @@ export default function AgentSyncsList({
         .then(({ rows, lastRow }) => {
           const safeRows = Array.isArray(rows) ? rows : [];
           const blockSize = params.endRow - params.startRow;
-          // Tell AG Grid we've reached the end when last block is partial
           const knownEnd =
             safeRows.length < blockSize
               ? params.startRow + safeRows.length
@@ -277,7 +324,6 @@ export default function AgentSyncsList({
     },
   }), [agentId]);
 
-  // Set datasource when grid is ready (most reliable approach for v32)
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
       event.api.updateGridOptions({ datasource: buildDatasource() });
@@ -308,6 +354,7 @@ export default function AgentSyncsList({
         cacheOverflowSize={2}
         maxConcurrentDatasourceRequests={2}
         onGridReady={onGridReady}
+        onFilterChanged={onFilterChanged}
         suppressCellFocus={false}
         enableCellTextSelection
         tooltipShowDelay={400}
@@ -356,12 +403,16 @@ export default function AgentSyncsList({
     );
   }
 
+  // ── Active filter chips (full-page only) ────────────────────────────
+
+  const activeColIds = Object.keys(filterModel);
+
   // ── Full-page ───────────────────────────────────────────────────────
 
   return (
     <div className="snc-page">
 
-      {/* 3-column grid: start | centre | end — breadcrumb is truly centred */}
+      {/* Page header */}
       <header className="snc-header">
 
         <div className="snc-header-start">
@@ -392,6 +443,32 @@ export default function AgentSyncsList({
         </div>
 
       </header>
+
+      {/* Active-filter chip bar — only visible when ≥1 filter is set */}
+      {activeColIds.length > 0 && (
+        <div className="snc-filter-bar" role="status" aria-label="Active filters">
+          <span className="snc-filter-bar-label">Filters:</span>
+          {activeColIds.map((colId) => (
+            <button
+              key={colId}
+              type="button"
+              className="snc-filter-chip"
+              onClick={() => clearFilter(colId)}
+              title={`Clear ${COLUMN_LABELS[colId] ?? colId} filter`}
+            >
+              {COLUMN_LABELS[colId] ?? colId}
+              <span className="snc-filter-chip-x" aria-hidden="true">×</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            className="snc-filter-clear-all"
+            onClick={clearAllFilters}
+          >
+            Clear all
+          </button>
+        </div>
+      )}
 
       {/* Grid */}
       <div className="snc-grid-outer">{gridEl}</div>
