@@ -238,7 +238,7 @@ export default function AgentSyncsList({
     () => ({
       sortable: true,
       resizable: true,
-      floatingFilter: true,
+      floatingFilter: false,   // filters via column-header menu popup instead
       suppressMovable: false,
     }),
     []
