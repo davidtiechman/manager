@@ -432,10 +432,13 @@ export default function AgentSyncsList({
         <div className="snc-header-center">
           <nav className="snc-header-subnav" aria-label="breadcrumb">
             <span className="snc-crumb snc-crumb--ancestor">History</span>
-            <span className="snc-crumb-sep" aria-hidden="true">›</span>
+            <span className="snc-crumb-sep" aria-hidden="true">/</span>
             <span className="snc-crumb snc-crumb--section">Sync History</span>
           </nav>
-          <p className="snc-header-entity">{agentId}</p>
+          <p className="snc-header-entity">
+            <span className="snc-entity-type">agent</span>
+            <span className="snc-entity-id">{agentId.replace(/^agent-?/i, '')}</span>
+          </p>
         </div>
 
         <div className="snc-header-end">
