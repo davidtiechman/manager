@@ -101,6 +101,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       // Pinned — flex is not supported on pinned columns; keep fixed width
       field: 'createdAt',
       headerName: 'Created At',
+      headerTooltip: 'Created At',
       pinned: 'left',
       width: 160,
       minWidth: 130,
@@ -111,6 +112,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       field: 'id',
       headerName: 'ID',
+      headerTooltip: 'ID',
       flex: 0.9,
       minWidth: 55,
       filter: 'agNumberColumnFilter',
@@ -119,6 +121,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       field: 'status',
       headerName: 'Status',
+      headerTooltip: 'Status',
       flex: 1.2,
       minWidth: 80,
       cellRenderer: StatusCell,
@@ -127,6 +130,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'selectedLink',
       headerName: 'Selected Link',
+      headerTooltip: 'Selected Link',
       valueGetter: (p) => p.data?.details?.selectedLink,
       flex: 1.3,
       minWidth: 80,
@@ -136,6 +140,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'schedulerMode',
       headerName: 'Scheduler Mode',
+      headerTooltip: 'Scheduler Mode',
       valueGetter: (p) => p.data?.details?.schedulerMode,
       flex: 1.5,
       minWidth: 95,
@@ -145,6 +150,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'messagesInQueue',
       headerName: 'Msgs In Queue',
+      headerTooltip: 'Messages In Queue',
       valueGetter: (p) => p.data?.details?.messagesInQueue,
       flex: 1.1,
       minWidth: 80,
@@ -154,6 +160,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'nextDeliveryTime',
       headerName: 'Next Delivery',
+      headerTooltip: 'Next Delivery Time',
       valueGetter: (p) => p.data?.details?.nextDeliveryTime,
       flex: 2.0,
       minWidth: 130,
@@ -163,6 +170,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'geoData',
       headerName: 'Geo Data',
+      headerTooltip: 'Geo Data',
       valueGetter: (p) => p.data?.details?.geoData,
       flex: 1.2,
       minWidth: 80,
@@ -172,6 +180,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'serverLut',
       headerName: 'Server LUT',
+      headerTooltip: 'Server Last Update Time',
       valueGetter: (p) => p.data?.details?.serverLut,
       flex: 2.0,
       minWidth: 130,
@@ -181,6 +190,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'linkType',
       headerName: 'Link Type',
+      headerTooltip: 'Link Type',
       valueGetter: (p) => p.data?.link_quality?.type,
       flex: 1.1,
       minWidth: 75,
@@ -190,6 +200,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'linkAvailable',
       headerName: 'Available',
+      headerTooltip: 'Link Available',
       valueGetter: (p) => p.data?.link_quality?.available,
       flex: 1.1,
       minWidth: 75,
@@ -199,6 +210,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'linkQuality',
       headerName: 'Quality',
+      headerTooltip: 'Link Quality',
       valueGetter: (p) => p.data?.link_quality?.quality,
       flex: 0.9,
       minWidth: 65,
@@ -208,6 +220,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'latency',
       headerName: 'Latency (ms)',
+      headerTooltip: 'Latency (ms)',
       valueGetter: (p) => p.data?.link_quality?.latency,
       flex: 1.0,
       minWidth: 75,
@@ -217,6 +230,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'reliability',
       headerName: 'Reliability',
+      headerTooltip: 'Reliability',
       valueGetter: (p) => p.data?.link_quality?.reliability,
       flex: 0.9,
       minWidth: 70,
@@ -226,6 +240,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'linkTimestamp',
       headerName: 'Link Timestamp',
+      headerTooltip: 'Link Quality Timestamp',
       valueGetter: (p) => p.data?.link_quality?.timestamp,
       flex: 2.0,
       minWidth: 130,
@@ -258,8 +273,6 @@ export default function AgentSyncsList({
       floatingFilter: false,
       suppressMovable: false,
       unSortIcon: true,
-      wrapHeaderText: true,    // allow header text to wrap to a second line
-      autoHeaderHeight: true,  // header row grows to fit wrapped text
     }),
     []
   );
