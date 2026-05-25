@@ -272,6 +272,12 @@ export default function AgentSyncsList({
       floatingFilter: false,
       suppressMovable: false,
       unSortIcon: true,
+      // cellStyle reads from ref so it always sees the current selection
+      // without the column defs needing to change
+      cellStyle: (params) =>
+        selectedColsRef.current.has(params.column.getColId())
+          ? { backgroundColor: 'rgba(59,130,246,0.09)' }
+          : null,
     }),
     []
   );
@@ -287,6 +293,7 @@ export default function AgentSyncsList({
   const clearFilter = useCallback((colId: string) => {
     const api = gridRef.current?.api;
     if (!api) return;
+    if (!api.getFilterModel()[colId]) return; // no-op — column has no active filter
     void api.setColumnFilterModel(colId, null).then(() => {
       api.onFilterChanged();
     });
@@ -355,6 +362,11 @@ export default function AgentSyncsList({
   } | null>(null);
 
   const [hiddenCols, setHiddenCols] = useState<string[]>([]);
+  const [selectedCols, setSelectedCols] = useState<Set<string>>(new Set());
+  const selectedColsRef = useRef<Set<string>>(new Set()); // stable ref for cellStyle callback
+  const gridWrapperRef = useRef<HTMLDivElement>(null);
+  const stripDragStartRef = useRef<string | null>(null);
+  const styleTagRef = useRef<HTMLStyleElement | null>(null);
 
   useEffect(() => {
     if (!ctxMenu) return;
@@ -362,6 +374,47 @@ export default function AgentSyncsList({
     window.addEventListener('pointerdown', close);
     return () => window.removeEventListener('pointerdown', close);
   }, [ctxMenu]);
+
+  // ── Column-selection highlight ────────────────────────────────────────
+  // Body cells: AG Grid native cellStyle (reads selectedColsRef) + refreshCells
+  // Header:     injected <style> tag (no AG Grid API for header bg)
+  useEffect(() => {
+    // 1. Sync ref so cellStyle callback sees new selection immediately
+    selectedColsRef.current = selectedCols;
+
+    // 2. Refresh body cells so AG Grid re-evaluates cellStyle for every cell
+    gridRef.current?.api?.refreshCells({ force: true });
+
+    // 3. Header highlight via injected CSS
+    if (!styleTagRef.current) {
+      const tag = document.createElement('style');
+      document.head.appendChild(tag);
+      styleTagRef.current = tag;
+    }
+    const tag = styleTagRef.current;
+    if (selectedCols.size === 0) {
+      tag.textContent = '';
+      return;
+    }
+    const hdrSel = Array.from(selectedCols)
+      .map((id) => `.snc-grid-wrapper .ag-header-cell[col-id="${id}"]`)
+      .join(',');
+    tag.textContent = `${hdrSel} { background: rgba(59,130,246,0.22) !important; }`;
+  }, [selectedCols]);
+
+  // Remove the injected style tag when component unmounts
+  useEffect(() => () => { styleTagRef.current?.remove(); }, []);
+
+  // Escape clears column selection (like Excel); clicking elsewhere keeps it alive
+  // so the user can right-click → "Hide selected columns" after dragging.
+  useEffect(() => {
+    if (selectedCols.size === 0) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelectedCols(new Set());
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [selectedCols.size]);
 
   const handleGridContextMenu = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -381,6 +434,86 @@ export default function AgentSyncsList({
     setHiddenCols([]);
   }, [hiddenCols]);
 
+  const showColumn = useCallback((colId: string) => {
+    gridRef.current?.api?.setColumnsVisible([colId], true);
+    setHiddenCols((prev) => prev.filter((c) => c !== colId));
+  }, []);
+
+  const hideSelectedCols = useCallback(() => {
+    if (selectedCols.size === 0) return;
+    const ids = Array.from(selectedCols);
+    gridRef.current?.api?.setColumnsVisible(ids, false);
+    setHiddenCols((prev) => [...prev, ...ids.filter((id) => !prev.includes(id))]);
+    setSelectedCols(new Set());
+  }, [selectedCols]);
+
+  // Finds which column header sits under the given clientX coordinate
+  const colIdAtClientX = useCallback((x: number): string | null => {
+    const wrapper = gridWrapperRef.current;
+    if (!wrapper) return null;
+    const cells = wrapper.querySelectorAll<HTMLElement>('.ag-header-cell[col-id]');
+    for (const cell of cells) {
+      const rect = cell.getBoundingClientRect();
+      if (x >= rect.left && x <= rect.right) {
+        return cell.getAttribute('col-id');
+      }
+    }
+    return null;
+  }, []);
+
+  // Returns all colIds between two colIds (inclusive) in DOM order
+  const colRangeBetween = useCallback((startId: string, endId: string): string[] => {
+    const wrapper = gridWrapperRef.current;
+    if (!wrapper) return [startId];
+    const cells = Array.from(wrapper.querySelectorAll<HTMLElement>('.ag-header-cell[col-id]'));
+    const ids = cells.map((c) => c.getAttribute('col-id')).filter(Boolean) as string[];
+    const ai = ids.indexOf(startId);
+    const bi = ids.indexOf(endId);
+    if (ai === -1) return endId ? [endId] : [];
+    if (bi === -1) return [startId];
+    const [lo, hi] = ai <= bi ? [ai, bi] : [bi, ai];
+    return ids.slice(lo, hi + 1);
+  }, []);
+
+  // Native-listener drag: React's event delegation doesn't reliably forward
+  // pointer-capture events; attaching directly to the DOM element does.
+  const onStripPointerDown = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+
+      const startId = colIdAtClientX(e.clientX);
+      if (!startId) return;
+
+      const el = e.currentTarget;          // the strip DOM element
+      const pid = e.pointerId;
+      el.setPointerCapture(pid);
+
+      stripDragStartRef.current = startId;
+      setSelectedCols(new Set([startId]));
+
+      const onMove = (ev: PointerEvent) => {
+        if (!stripDragStartRef.current) return;
+        const id = colIdAtClientX(ev.clientX);
+        if (!id) return;
+        setSelectedCols(new Set(colRangeBetween(stripDragStartRef.current, id)));
+      };
+
+      const onDone = () => {
+        el.releasePointerCapture(pid);
+        stripDragStartRef.current = null;
+        el.removeEventListener('pointermove', onMove);
+        el.removeEventListener('pointerup',   onDone);
+        el.removeEventListener('pointercancel', onDone);
+      };
+
+      el.addEventListener('pointermove',   onMove);
+      el.addEventListener('pointerup',     onDone);
+      el.addEventListener('pointercancel', onDone);
+    },
+    [colIdAtClientX, colRangeBetween]
+  );
+
   // ── No agentId guard ────────────────────────────────────────────────
 
   if (!agentId) {
@@ -395,9 +528,12 @@ export default function AgentSyncsList({
 
   const gridEl = (
     <div
+      ref={gridWrapperRef}
       className="snc-grid-wrapper ag-theme-quartz"
       onContextMenu={handleGridContextMenu}
     >
+      {/* Column-selection strip — 8px hover zone at top of header; drag to select range */}
+      <div className="snc-col-select-strip" onPointerDown={onStripPointerDown} />
       <AgGridReact<AgentHistoryRecord>
         ref={gridRef}
         columnDefs={columnDefs}
@@ -493,28 +629,46 @@ export default function AgentSyncsList({
 
       </header>
 
-      {/* Toolbar bar — hidden columns + active filters */}
+      {/* Toolbar bar — hidden columns · active filters */}
       {(activeColIds.length > 0 || hiddenCols.length > 0) && (
         <div className="snc-filter-bar" role="status" aria-label="Active filters">
+
+          {/* 1 — Per-column restore chips */}
           {hiddenCols.length > 0 && (
-            <button
-              type="button"
-              className="snc-restore-cols"
-              onClick={showAllColumns}
-              title="Show all hidden columns"
-            >
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <circle cx="8" cy="8" r="3"/>
-                <path d="M1.5 8C3 4.5 5.5 2.5 8 2.5S13 4.5 14.5 8C13 11.5 10.5 13.5 8 13.5S3 11.5 1.5 8z"
-                  stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-                <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-              </svg>
-              Show {hiddenCols.length} hidden column{hiddenCols.length > 1 ? 's' : ''}
-            </button>
+            <>
+              <span className="snc-filter-bar-label">Hidden:</span>
+              {hiddenCols.map((colId) => (
+                <button
+                  key={colId}
+                  type="button"
+                  className="snc-hidden-chip"
+                  onClick={() => showColumn(colId)}
+                  title={`Show ${COLUMN_LABELS[colId] ?? colId}`}
+                >
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                    <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M1.5 8C3 4.5 5.5 2.5 8 2.5S13 4.5 14.5 8C13 11.5 10.5 13.5 8 13.5S3 11.5 1.5 8z"
+                      stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                  </svg>
+                  {COLUMN_LABELS[colId] ?? colId}
+                </button>
+              ))}
+              {hiddenCols.length > 1 && (
+                <button
+                  type="button"
+                  className="snc-filter-clear-all"
+                  onClick={showAllColumns}
+                >
+                  Show all
+                </button>
+              )}
+            </>
           )}
           {hiddenCols.length > 0 && activeColIds.length > 0 && (
             <div className="snc-filter-bar-vr" aria-hidden="true" />
           )}
+
+          {/* 3 — Active filter chips */}
           {activeColIds.length > 0 && (
             <>
               <span className="snc-filter-bar-label">Filters:</span>
@@ -539,6 +693,7 @@ export default function AgentSyncsList({
               </button>
             </>
           )}
+
         </div>
       )}
 
@@ -599,6 +754,20 @@ export default function AgentSyncsList({
             Clear Filter
           </button>
           <div className="snc-ctx-sep" />
+          {/* Hide selected columns — shown when a strip-selection is active */}
+          {selectedCols.size > 0 && (
+            <button
+              type="button"
+              className="snc-ctx-item snc-ctx-item--muted"
+              onClick={() => { hideSelectedCols(); setCtxMenu(null); }}
+            >
+              <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M2 2l12 12M6.8 6.9a2.5 2.5 0 0 0 2.3 2.3M4 4.3A7.5 7.5 0 0 0 1.5 8c1.3 2.7 4 4.5 6.5 4.5 1 0 2-.3 2.8-.7M10.6 5.4A7.4 7.4 0 0 1 14.5 8c-1.3 2.7-4 4.5-6.5 4.5"
+                  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Hide {selectedCols.size} selected columns
+            </button>
+          )}
           <button
             type="button"
             className="snc-ctx-item snc-ctx-item--muted"
