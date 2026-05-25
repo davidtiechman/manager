@@ -98,7 +98,6 @@ function TextCell({ value }: ICellRendererParams) {
 function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
   return [
     {
-      // Pinned — flex is not supported on pinned columns; keep fixed width
       field: 'createdAt',
       headerName: 'Created At',
       headerTooltip: 'Created At',
@@ -113,7 +112,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       field: 'id',
       headerName: 'ID',
       headerTooltip: 'ID',
-      flex: 0.9,
+      width: 60,
       minWidth: 55,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
@@ -122,7 +121,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       field: 'status',
       headerName: 'Status',
       headerTooltip: 'Status',
-      flex: 1.2,
+      width: 95,
       minWidth: 80,
       cellRenderer: StatusCell,
       filter: 'agTextColumnFilter',
@@ -132,8 +131,8 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Selected Link',
       headerTooltip: 'Selected Link',
       valueGetter: (p) => p.data?.details?.selectedLink,
-      flex: 1.3,
-      minWidth: 80,
+      width: 110,
+      minWidth: 85,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
     },
@@ -142,7 +141,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Scheduler Mode',
       headerTooltip: 'Scheduler Mode',
       valueGetter: (p) => p.data?.details?.schedulerMode,
-      flex: 1.5,
+      width: 130,
       minWidth: 95,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
@@ -152,7 +151,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Msgs In Queue',
       headerTooltip: 'Messages In Queue',
       valueGetter: (p) => p.data?.details?.messagesInQueue,
-      flex: 1.1,
+      width: 105,
       minWidth: 80,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
@@ -162,7 +161,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Next Delivery',
       headerTooltip: 'Next Delivery Time',
       valueGetter: (p) => p.data?.details?.nextDeliveryTime,
-      flex: 2.0,
+      width: 150,
       minWidth: 130,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -172,8 +171,8 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Geo Data',
       headerTooltip: 'Geo Data',
       valueGetter: (p) => p.data?.details?.geoData,
-      flex: 1.2,
-      minWidth: 80,
+      width: 90,
+      minWidth: 75,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
     },
@@ -182,7 +181,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Server LUT',
       headerTooltip: 'Server Last Update Time',
       valueGetter: (p) => p.data?.details?.serverLut,
-      flex: 2.0,
+      width: 150,
       minWidth: 130,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -192,7 +191,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Link Type',
       headerTooltip: 'Link Type',
       valueGetter: (p) => p.data?.link_quality?.type,
-      flex: 1.1,
+      width: 90,
       minWidth: 75,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
@@ -202,7 +201,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Available',
       headerTooltip: 'Link Available',
       valueGetter: (p) => p.data?.link_quality?.available,
-      flex: 1.1,
+      width: 90,
       minWidth: 75,
       cellRenderer: AvailabilityCell,
       filter: 'agTextColumnFilter',
@@ -212,7 +211,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Quality',
       headerTooltip: 'Link Quality',
       valueGetter: (p) => p.data?.link_quality?.quality,
-      flex: 0.9,
+      width: 80,
       minWidth: 65,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
@@ -220,9 +219,9 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'latency',
       headerName: 'Latency (ms)',
-      headerTooltip: 'Latency (ms)',
+      headerTooltip: 'Latency in milliseconds',
       valueGetter: (p) => p.data?.link_quality?.latency,
-      flex: 1.0,
+      width: 95,
       minWidth: 75,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
@@ -230,9 +229,9 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
     {
       colId: 'reliability',
       headerName: 'Reliability',
-      headerTooltip: 'Reliability',
+      headerTooltip: 'Link Reliability',
       valueGetter: (p) => p.data?.link_quality?.reliability,
-      flex: 0.9,
+      width: 90,
       minWidth: 70,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
@@ -242,7 +241,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Link Timestamp',
       headerTooltip: 'Link Quality Timestamp',
       valueGetter: (p) => p.data?.link_quality?.timestamp,
-      flex: 2.0,
+      width: 150,
       minWidth: 130,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -341,9 +340,46 @@ export default function AgentSyncsList({
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
       event.api.updateGridOptions({ datasource: buildDatasource() });
+      event.api.sizeColumnsToFit();
     },
     [buildDatasource]
   );
+
+  const onGridSizeChanged = useCallback(() => {
+    gridRef.current?.api?.sizeColumnsToFit();
+  }, []);
+
+  // ── Context menu (right-click on column header) ─────────────────────
+  const [ctxMenu, setCtxMenu] = useState<{
+    x: number; y: number; colId: string;
+  } | null>(null);
+
+  const [hiddenCols, setHiddenCols] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const close = () => setCtxMenu(null);
+    window.addEventListener('pointerdown', close);
+    return () => window.removeEventListener('pointerdown', close);
+  }, [ctxMenu]);
+
+  const handleGridContextMenu = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      const cell = (e.target as Element).closest('[col-id].ag-header-cell');
+      if (!cell) return;
+      e.preventDefault();
+      const colId = cell.getAttribute('col-id') ?? '';
+      if (!colId) return;
+      setCtxMenu({ x: e.clientX, y: e.clientY, colId });
+    },
+    []
+  );
+
+  const showAllColumns = useCallback(() => {
+    if (hiddenCols.length === 0) return;
+    gridRef.current?.api?.setColumnsVisible(hiddenCols, true);
+    setHiddenCols([]);
+  }, [hiddenCols]);
 
   // ── No agentId guard ────────────────────────────────────────────────
 
@@ -358,7 +394,10 @@ export default function AgentSyncsList({
   // ── Shared grid ─────────────────────────────────────────────────────
 
   const gridEl = (
-    <div className="snc-grid-wrapper ag-theme-quartz">
+    <div
+      className="snc-grid-wrapper ag-theme-quartz"
+      onContextMenu={handleGridContextMenu}
+    >
       <AgGridReact<AgentHistoryRecord>
         ref={gridRef}
         columnDefs={columnDefs}
@@ -368,6 +407,7 @@ export default function AgentSyncsList({
         cacheOverflowSize={2}
         maxConcurrentDatasourceRequests={2}
         onGridReady={onGridReady}
+        onGridSizeChanged={onGridSizeChanged}
         onFilterChanged={onFilterChanged}
         suppressCellFocus={false}
         enableCellTextSelection
@@ -453,34 +493,129 @@ export default function AgentSyncsList({
 
       </header>
 
-      {/* Active-filter chip bar — only visible when ≥1 filter is set */}
-      {activeColIds.length > 0 && (
+      {/* Toolbar bar — hidden columns + active filters */}
+      {(activeColIds.length > 0 || hiddenCols.length > 0) && (
         <div className="snc-filter-bar" role="status" aria-label="Active filters">
-          <span className="snc-filter-bar-label">Filters:</span>
-          {activeColIds.map((colId) => (
+          {hiddenCols.length > 0 && (
             <button
-              key={colId}
               type="button"
-              className="snc-filter-chip"
-              onClick={() => clearFilter(colId)}
-              title={`Clear ${COLUMN_LABELS[colId] ?? colId} filter`}
+              className="snc-restore-cols"
+              onClick={showAllColumns}
+              title="Show all hidden columns"
             >
-              {COLUMN_LABELS[colId] ?? colId}
-              <span className="snc-filter-chip-x" aria-hidden="true">×</span>
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <circle cx="8" cy="8" r="3"/>
+                <path d="M1.5 8C3 4.5 5.5 2.5 8 2.5S13 4.5 14.5 8C13 11.5 10.5 13.5 8 13.5S3 11.5 1.5 8z"
+                  stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+              </svg>
+              Show {hiddenCols.length} hidden column{hiddenCols.length > 1 ? 's' : ''}
             </button>
-          ))}
-          <button
-            type="button"
-            className="snc-filter-clear-all"
-            onClick={clearAllFilters}
-          >
-            Clear all
-          </button>
+          )}
+          {hiddenCols.length > 0 && activeColIds.length > 0 && (
+            <div className="snc-filter-bar-vr" aria-hidden="true" />
+          )}
+          {activeColIds.length > 0 && (
+            <>
+              <span className="snc-filter-bar-label">Filters:</span>
+              {activeColIds.map((colId) => (
+                <button
+                  key={colId}
+                  type="button"
+                  className="snc-filter-chip"
+                  onClick={() => clearFilter(colId)}
+                  title={`Clear ${COLUMN_LABELS[colId] ?? colId} filter`}
+                >
+                  {COLUMN_LABELS[colId] ?? colId}
+                  <span className="snc-filter-chip-x" aria-hidden="true">×</span>
+                </button>
+              ))}
+              <button
+                type="button"
+                className="snc-filter-clear-all"
+                onClick={clearAllFilters}
+              >
+                Clear all
+              </button>
+            </>
+          )}
         </div>
       )}
 
       {/* Grid */}
       <div className="snc-grid-outer">{gridEl}</div>
+
+      {/* Right-click context menu — rendered fixed over everything */}
+      {ctxMenu && (
+        <div
+          className="snc-ctx-menu"
+          style={{ left: ctxMenu.x, top: ctxMenu.y }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="snc-ctx-item"
+            onClick={() => {
+              gridRef.current?.api?.applyColumnState({
+                state: [{ colId: ctxMenu.colId, sort: 'asc', sortIndex: 0 }],
+                defaultState: { sort: null },
+              });
+              setCtxMenu(null);
+            }}
+          >
+            <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 13V3M4.5 6.5L8 3l3.5 3.5"
+                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Sort Ascending
+          </button>
+          <button
+            type="button"
+            className="snc-ctx-item"
+            onClick={() => {
+              gridRef.current?.api?.applyColumnState({
+                state: [{ colId: ctxMenu.colId, sort: 'desc', sortIndex: 0 }],
+                defaultState: { sort: null },
+              });
+              setCtxMenu(null);
+            }}
+          >
+            <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 3v10M4.5 9.5L8 13l3.5-3.5"
+                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Sort Descending
+          </button>
+          <div className="snc-ctx-sep" />
+          <button
+            type="button"
+            className="snc-ctx-item"
+            onClick={() => { clearFilter(ctxMenu.colId); setCtxMenu(null); }}
+          >
+            <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2 4h12M5 8h6M7 12h2"
+                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+            Clear Filter
+          </button>
+          <div className="snc-ctx-sep" />
+          <button
+            type="button"
+            className="snc-ctx-item snc-ctx-item--muted"
+            onClick={() => {
+              gridRef.current?.api?.setColumnsVisible([ctxMenu.colId], false);
+              setHiddenCols((prev) => [...prev, ctxMenu.colId]);
+              setCtxMenu(null);
+            }}
+          >
+            <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M2 2l12 12M6.8 6.9a2.5 2.5 0 0 0 2.3 2.3M4 4.3A7.5 7.5 0 0 0 1.5 8c1.3 2.7 4 4.5 6.5 4.5 1 0 2-.3 2.8-.7M10.6 5.4A7.4 7.4 0 0 1 14.5 8c-1.3 2.7-4 4.5-6.5 4.5"
+                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Hide Column
+          </button>
+        </div>
+      )}
 
     </div>
   );

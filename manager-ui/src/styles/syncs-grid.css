@@ -434,3 +434,99 @@
   font-weight: 500;
   color: #6b7280;
 }
+
+/* ── Toolbar bar extras ─────────────────────────────────────── */
+
+/* Vertical rule between restore-cols and filter chips */
+.snc-filter-bar-vr {
+  width: 1px;
+  height: 18px;
+  background: #e2e8f0;
+  flex-shrink: 0;
+}
+
+/* Restore hidden columns button */
+.snc-restore-cols {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+
+.snc-restore-cols:hover {
+  background: #F3F4F6;
+}
+
+/* ── Header right-click context menu ────────────────────────── */
+.snc-ctx-menu {
+  position: fixed;
+  z-index: 9999;
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+  padding: 4px;
+  min-width: 176px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.snc-ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #374151;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+
+.snc-ctx-item:hover {
+  background: #F3F4F6;
+  color: #111827;
+}
+
+.snc-ctx-item--muted {
+  color: #6B7280;
+}
+
+.snc-ctx-item--muted:hover {
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+.snc-ctx-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.snc-ctx-item:hover .snc-ctx-icon {
+  opacity: 1;
+}
+
+.snc-ctx-sep {
+  height: 1px;
+  background: #F3F4F6;
+  margin: 3px 6px;
+}
