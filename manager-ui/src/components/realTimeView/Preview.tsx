@@ -10,6 +10,13 @@ import ModeNavigationLink from '../ModeNavigationLink';
 import type {PlatformSearchField,PlatformSearchState,} from '../../types/realTimeAgents/PlatformSearchField';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
+const DEFAULT_SIDEBAR_WIDTH = 396;
+const MIN_SIDEBAR_WIDTH = 220;
+const DETAILS_MIN_WIDTH = 360;
+const RESIZE_HANDLE_WIDTH = 6;
+const PAGE_HORIZONTAL_PADDING = 40;
+const SELECTED_LAYOUT_GAPS = 64;
+const MAX_SIDEBAR_VIEWPORT_RATIO = 0.72;
 
 type ViewMode = 'icon' | 'list';
 type KnownSearchField = Exclude<PlatformSearchField, 'other'>;
@@ -136,6 +143,32 @@ function stringifySearchValue(value: unknown) {
   return String(value);
 }
 
+function getMaxSidebarWidth() {
+  if (typeof window === 'undefined') {
+    return DEFAULT_SIDEBAR_WIDTH;
+  }
+
+  const maxByDetails =
+    window.innerWidth -
+    PAGE_HORIZONTAL_PADDING -
+    RESIZE_HANDLE_WIDTH -
+    SELECTED_LAYOUT_GAPS -
+    DETAILS_MIN_WIDTH;
+  const maxByViewport = window.innerWidth * MAX_SIDEBAR_VIEWPORT_RATIO;
+
+  return Math.max(
+    MIN_SIDEBAR_WIDTH,
+    Math.floor(Math.min(maxByDetails, maxByViewport))
+  );
+}
+
+function clampSidebarWidth(width: number) {
+  return Math.min(
+    Math.max(width, MIN_SIDEBAR_WIDTH),
+    getMaxSidebarWidth()
+  );
+}
+
 export default function Preview() {
   const [agents, setAgents] = useState<AgentResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,7 +176,9 @@ export default function Preview() {
   const [viewMode, setViewMode] = useState<ViewMode>('icon');
   const [isConfigurationEditing, setIsConfigurationEditing] = useState(false);
   const [configurationMessage, setConfigurationMessage] = useState('');
-  const [sidebarWidth, setSidebarWidth] = useState(260);
+  const [sidebarWidth, setSidebarWidth] = useState(() =>
+    clampSidebarWidth(DEFAULT_SIDEBAR_WIDTH)
+  );
   const [search, setSearch] = useState<PlatformSearchState>({
     field: 'unit',
     customField: '',
@@ -324,7 +359,9 @@ export default function Preview() {
         style={
 
           selectedAgent
-          ? {gridTemplateColumns: `${sidebarWidth}px 6px minmax(0, 1fr)`}
+          ? {
+              gridTemplateColumns: `${sidebarWidth}px ${RESIZE_HANDLE_WIDTH}px minmax(${DETAILS_MIN_WIDTH}px, 1fr)`,
+            }
           : undefined
         }
       >
@@ -446,8 +483,7 @@ export default function Preview() {
 
         const handleMouseMove = (moveEvent: MouseEvent) => {
           const nextWidth = startWidth + (moveEvent.clientX - startX);
-          const limitedWidth = Math.min(Math.max(nextWidth, 120), 500);
-          setSidebarWidth(limitedWidth);
+          setSidebarWidth(clampSidebarWidth(nextWidth));
         };
 
         const handleMouseUp = () => {
