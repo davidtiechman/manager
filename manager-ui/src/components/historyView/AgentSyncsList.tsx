@@ -277,6 +277,7 @@ export default function AgentSyncsList({
 
   // ── Active-filter state (drives the chip bar) ──────────────────────
   const [filterModel, setFilterModel] = useState<Record<string, unknown>>({});
+  const [totalRows, setTotalRows] = useState<number | null>(null);
 
   const onFilterChanged = useCallback(() => {
     const model = gridRef.current?.api?.getFilterModel() ?? {};
@@ -295,6 +296,12 @@ export default function AgentSyncsList({
   const clearAllFilters = useCallback(() => {
     gridRef.current?.api?.setFilterModel(null);
   }, []);
+
+  // ── Reset snapshot + count when agentId changes ────────────────────
+  useEffect(() => {
+    maxIdRef.current = null;
+    setTotalRows(null);
+  }, [agentId]);
 
   // ── Fix double scrollbar: lock html overflow on full-page mount ────
   useEffect(() => {
@@ -332,6 +339,10 @@ export default function AgentSyncsList({
             safeRows.length < blockSize
               ? params.startRow + safeRows.length
               : undefined;
+          const resolvedTotal = lastRow ?? knownEnd;
+          if (params.startRow === 0 && resolvedTotal !== undefined) {
+            setTotalRows(resolvedTotal);
+          }
           params.successCallback(safeRows, lastRow ?? knownEnd);
         })
         .catch((err) => {
@@ -689,6 +700,31 @@ export default function AgentSyncsList({
             </>
           )}
 
+        </div>
+      )}
+
+      {/* Row count status bar */}
+      {totalRows !== null && (
+        <div className="snc-count-bar">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M4 5h8M4 8h8M4 11h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+          {activeColIds.length > 0 ? (
+            <>
+              <span className="snc-count-bar-badge">Filtered</span>
+              <span>
+                <span className="snc-count-bar-num">{totalRows.toLocaleString('en-US')}</span>
+                {' '}matching rows
+              </span>
+            </>
+          ) : (
+            <span>
+              Total{' '}
+              <span className="snc-count-bar-num">{totalRows.toLocaleString('en-US')}</span>
+              {' '}rows
+            </span>
+          )}
         </div>
       )}
 
