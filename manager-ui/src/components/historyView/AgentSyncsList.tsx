@@ -320,9 +320,13 @@ export default function AgentSyncsList({
           sort: 'asc' | 'desc';
         }>,
         filterModel: params.filterModel as Record<string, unknown>,
+        maxId: maxIdRef.current,
       })
         .then(({ rows, lastRow }) => {
           const safeRows = Array.isArray(rows) ? rows : [];
+          if (params.startRow === 0 && safeRows.length > 0 && maxIdRef.current === null) {
+            maxIdRef.current = safeRows[0].id;
+          }
           const blockSize = params.endRow - params.startRow;
           const knownEnd =
             safeRows.length < blockSize
@@ -359,6 +363,7 @@ export default function AgentSyncsList({
   const gridWrapperRef = useRef<HTMLDivElement>(null);
   const stripDragStartRef = useRef<string | null>(null);
   const styleTagRef = useRef<HTMLStyleElement | null>(null);
+  const maxIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!ctxMenu) return;

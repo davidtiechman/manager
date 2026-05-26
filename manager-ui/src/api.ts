@@ -9,6 +9,7 @@ export interface SyncsIrmParams {
   endRow: number;
   sortModel?: Array<{ colId: string; sort: 'asc' | 'desc' }>;
   filterModel?: Record<string, unknown>;
+  maxId?: number | null;
 }
 
 export interface SyncsIrmResponse {
@@ -76,6 +77,7 @@ export class ApiService {
       endRow:      String(params.endRow),
       sortModel:   JSON.stringify(params.sortModel   ?? []),
       filterModel: JSON.stringify(params.filterModel ?? {}),
+      ...(params.maxId != null ? { maxId: String(params.maxId) } : {}),
     });
 
     const response = await fetch(
