@@ -1,9 +1,61 @@
 .agents-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 16px;
 }
+.home-layout.no-selected-agent .agents-grid {
+  grid-template-columns: repeat(auto-fill, 180px);
+  gap: 12px;
+  justify-content: start;
+}
 
+.home-layout.has-selected-agent .agents-grid {
+  grid-template-columns: repeat(auto-fill, 120px);
+  gap: 8px;
+  justify-content: start;
+}
+.home-layout.has-selected-agent .agent-card {
+  padding: 6px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  width: 120px;
+  min-height: 90px;
+}
+
+.home-layout.no-selected-agent .agent-card {
+  padding: 8px;
+  min-height: 80px;
+}
+.home-layout.has-selected-agent .tank-icon {
+  font-size: 20px;
+  margin-bottom: 0;
+}
+
+.home-layout.has-selected-agent .tank-svg {
+  width: 16px;
+  height: 16px;
+}
+
+.home-layout.has-selected-agent .agent-label {
+  font-size: 10px;
+  margin-bottom: 0px;
+}
+
+.home-layout.has-selected-agent .agent-info {
+  display: none;
+  /* display: grid;
+  gap: 2px;
+  font-size: 10px;
+  text-align: left; */
+}
+
+.home-layout.has-selected-agent .info-item {
+  margin-bottom: 0;
+  line-height: 1.2;
+}
 .agents-list {
   display: flex;
   flex-direction: column;
@@ -14,7 +66,7 @@
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
   align-items: end;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .filters-box label {
@@ -49,7 +101,8 @@
 }
 
 .agent-card {
-  width: 100%;
+  width: 180%;
+  min-height: 120px;
   border: 1px solid #ccc;
   border-radius: 12px;
   padding: 16px;
@@ -67,10 +120,24 @@
 .agent-card.list-view {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
+  padding: 6px 10px;
+  min-height: 55px;
   text-align: left;
 }
+.agent-card.list-view .tank-svg {
+  width: 18px;
+  height: 18px;
+}
 
+.agent-card.list-view .agent-label {
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.agent-card.list-view .agent-info {
+  font-size: 9px;
+}
 .agent-card.active {
   border: 2px solid #22c55e;
 }
@@ -84,8 +151,8 @@
 }
 
 .tank-icon {
-  font-size: 32px;
-  margin-bottom: 8px;
+  font-size: 10px;
+  margin-bottom: 4%;
   flex-shrink: 0;
 }
 
@@ -99,7 +166,8 @@
 
 .agent-label {
   font-weight: bold;
-  margin-bottom: 8px;
+  font-size: 13px;
+  margin-bottom: 4px;
 }
 
 .agent-info {
@@ -119,8 +187,8 @@
 }
 
 .tank-svg {
-  width: 50px;
-  height: 50px;
+  width: 25px;
+  height: 25px;
   transition: 0.3s;
 }
 
@@ -156,4 +224,82 @@
 
 .history-agents-grid .agent-info {
   font-size: 11px;
+}
+
+.home-layout.has-selected-agent .agent-card {
+  padding: 8px 10px;
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 8px;
+  text-align: left;
+}
+
+.home-layout.has-selected-agent .tank-svg {
+  width: 24px;
+  height: 24px;
+}
+
+.home-layout.has-selected-agent .tank-icon {
+  margin-bottom: 0;
+}
+
+.home-layout.has-selected-agent .agent-label {
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+
+.home-layout.has-selected-agent .agent-info {
+  font-size: 10px;
+  line-height: 1.15;
+}
+
+.home-layout.has-selected-agent .info-item {
+  margin-bottom: 1px;
+}
+.home-layout.has-selected-agent .tank-icon {
+  display: none;
+}
+
+.home-layout.has-selected-agent .agent-card {
+  position: relative;
+  padding: 8px 8px 8px 22px;
+  border-radius: 10px;
+  display: block;
+  text-align: left;
+  min-height: auto;
+}
+
+.home-layout.has-selected-agent .agent-card::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 11px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.home-layout.has-selected-agent .agent-card.active::before {
+  background: #22c55e;
+}
+
+.home-layout.has-selected-agent .agent-card.warning::before {
+  background: #f59e0b;
+}
+
+.home-layout.has-selected-agent .agent-card.inactive::before {
+  background: #ef4444;
+}
+
+.home-layout.has-selected-agent .agent-label {
+  font-size: 11px;
+  margin-bottom: 3px;
+}
+
+.home-layout.has-selected-agent .agent-info {
+  display: grid;
+  gap: 1px;
+  font-size: 9px;
+  line-height: 1.15;
 }

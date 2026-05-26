@@ -1,22 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
-import type {
-  AgentPreviewData,
-  ConfigurationTableData,
-} from '../../types/realTimeAgents/tables';
+import type {AgentPreviewData,ConfigurationTableData,} from '../../types/realTimeAgents/tables';
 import { toAgentPreview, toPlatformTable } from '../../types/realTimeAgents/adapter';
 import Details from './AgentDetails';
 import { ApiService } from '../../api';
 import TankIcon from '../agent-details/TankIcon';
 import ModeNavigationLink from '../ModeNavigationLink';
-import type {
-  PlatformSearchField,
-  PlatformSearchState,
-} from '../../types/realTimeAgents/PlatformSearchField';
+import type {PlatformSearchField,PlatformSearchState,} from '../../types/realTimeAgents/PlatformSearchField';
 
-const intervalFetchManager =
-  Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
+const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
 
 type ViewMode = 'icon' | 'list';
 type KnownSearchField = Exclude<PlatformSearchField, 'other'>;
@@ -150,6 +143,7 @@ export default function Preview() {
   const [viewMode, setViewMode] = useState<ViewMode>('icon');
   const [isConfigurationEditing, setIsConfigurationEditing] = useState(false);
   const [configurationMessage, setConfigurationMessage] = useState('');
+  const [sidebarWidth, setSidebarWidth] = useState(260);
   const [search, setSearch] = useState<PlatformSearchState>({
     field: 'unit',
     customField: '',
@@ -273,7 +267,7 @@ export default function Preview() {
 
   if (loading) {
     return (
-      <div className="page">
+      <div className="dashboard-layout">
         <div className="page-header">
           <ModeNavigationLink
             to="/history"
@@ -289,12 +283,15 @@ export default function Preview() {
 
   return (
     <div className="page">
-      <div className="page-header">
+      <div className="top-bar">
         <ModeNavigationLink
           to="/history"
           label="למעבר להיסטוריה"
           variant="history"
-        />
+          />
+        </div>
+
+      <div className="page-header">
         <h1>ניטור סוכנים בזמן אמת</h1>
 
         <p className="muted">
@@ -302,6 +299,7 @@ export default function Preview() {
             ? 'לחץ על אייקון כדי לראות פרטים'
             : 'לחץ על שורה כדי לראות פרטים'}
         </p>
+        {!selectedAgent && (
         <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
           <button
             type="button"
@@ -319,134 +317,167 @@ export default function Preview() {
             רשימה
           </button>
         </div>
+)}
       </div>
+      <div className={`home-layout ${
+        selectedAgent ? 'has-selected-agent' : 'no-selected-agent'}`}
+        style={
 
-      <div className="home-layout">
-        <aside className="agents-pane">
-          <div className="filters-box">
-            <label>
-              <span>Search column</span>
-              <select
-                value={search.field}
-                onChange={(event) =>
-                  setSearch((prev) => ({
-                    ...prev,
-                    field: event.target.value as PlatformSearchState['field'],
-                  }))
-                }
-              >
-                {platformSearchFields.map((field) => (
-                  <option key={field.value} value={field.value}>
-                    {field.label}
-                  </option>
-                ))}
-                <option value="other">אחר</option>
-              </select>
-            </label>
+          selectedAgent
+          ? {gridTemplateColumns: `${sidebarWidth}px 6px minmax(0, 1fr)`}
+          : undefined
+        }
+      >
+        <aside className="agents-sidebar">
+        <div className="filters-box">
+  <label>
+    <span>Search column</span>
+    <select
+      value={search.field}
+      onChange={(event) =>
+        setSearch((prev) => ({
+          ...prev,
+          field: event.target.value as PlatformSearchState['field'],
+        }))
+      }
+    >
+      {platformSearchFields.map((field) => (
+        <option key={field.value} value={field.value}>
+          {field.label}
+        </option>
+      ))}
+      <option value="other">אחר</option>
+    </select>
+  </label>
 
-            {search.field === 'other' && (
-              <label>
-                <span>Column name</span>
-                <input
-                  type="text"
-                  placeholder="unit, status.status, selectedLink..."
-                  value={search.customField}
-                  onChange={(event) =>
-                    setSearch((prev) => ({
-                      ...prev,
-                      customField: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-            )}
+  {search.field === 'other' && (
+    <label>
+      <span>Column name</span>
+      <input
+        type="text"
+        placeholder="unit, status.status, selectedLink..."
+        value={search.customField}
+        onChange={(event) =>
+          setSearch((prev) => ({
+            ...prev,
+            customField: event.target.value,
+          }))
+        }
+      />
+    </label>
+  )}
 
-            <label className="agent-free-text-filter">
-              <span>Free text</span>
-              <input
-                type="search"
-                placeholder="Type to filter"
-                value={search.text}
-                onChange={(event) =>
-                  setSearch((prev) => ({
-                    ...prev,
-                    text: event.target.value,
-                  }))
-                }
-              />
-            </label>
-          </div>
+  <label className="agent-free-text-filter">
+    <span>Free text</span>
+    <input
+      type="search"
+      placeholder="Type to filter"
+      value={search.text}
+      onChange={(event) =>
+        setSearch((prev) => ({
+          ...prev,
+          text: event.target.value,
+        }))
+      }
+    />
+  </label>
+</div>
 
-          {isCustomSearchFieldMissing && (
-            <p className="filter-message" role="alert">
-              העמודה "{customSearchField}" לא קיימת.
-            </p>
-          )}
+{isCustomSearchFieldMissing && (
+  <p className="filter-message" role="alert">
+    העמודה "{customSearchField}" לא קיימת.
+  </p>
+)}
 
-          <div className={`agents-grid ${viewMode === 'list' ? 'agents-list' : ''}`}>
-            {filteredAgents.map((agent) => {
-              const previewAgent = toAgentPreview(agent);
+<div
+  className={`agents-grid ${
+    !selectedAgent && viewMode === 'list' ? 'agents-list' : ''
+  }`}
+>
+  {filteredAgents.map((agent) => {
+    const previewAgent = toAgentPreview(agent);
 
-              return (
-                <button
-                  key={previewAgent.id}
-                  type="button"
-                  className={`agent-card ${previewAgent.status} ${
-                    viewMode === 'list' ? 'list-view' : ''
-                  } ${selectedAgentId === previewAgent.id ? 'selected' : ''}`}
-                  onClick={() => {
-                    setSelectedAgentId(previewAgent.id);
-                    setConfigurationMessage('');
-                    navigate(`/agents/${previewAgent.id}`);
-                  }}
-                >
-                  <div className="tank-icon">
-                    <TankIcon status={previewAgent.status} />
-                  </div>
+    return (
+      <button
+        key={previewAgent.id}
+        type="button"
+        className={`agent-card ${previewAgent.status} ${
+          !selectedAgent && viewMode === 'list' ? 'list-view' : ''
+        } ${selectedAgentId === previewAgent.id ? 'selected' : ''}`}
+        onClick={() => {
+          setSelectedAgentId(previewAgent.id);
+          setConfigurationMessage('');
+          navigate(`/agents/${previewAgent.id}`);
+        }}
+      >
+        <div className="tank-icon">
+          <TankIcon status={previewAgent.status} />
+        </div>
 
-                  <div className="agent-content">
-                    <div className="agent-label">{getAgentLabel(previewAgent)}</div>
+        <div className="agent-content">
+          <div className="agent-label">{getAgentLabel(previewAgent)}</div>
 
-                    <div className="agent-info">
-                      <div className="info-item">ID: {previewAgent.id}</div>
-                      <div className="info-item">סטטוס: {previewAgent.status}</div>
-                      <div className="info-item">שם סוכן: {previewAgent.call_sign}</div>
-                      <div className="info-item">יחידה: {previewAgent.unit}</div>
-                      <div className="info-item">
-                        פלטפורמה ID: {previewAgent.platformId}
-                      </div>
-                      <div className="info-item">צייד ID: {previewAgent.zayad_id}</div>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </aside>
-
-        <main className="details-pane">
-          {selectedAgent ? (
-            <Details
-              agent={selectedAgent}
-              onClose={() => {
-                setSelectedAgentId(null);
-                setIsConfigurationEditing(false);
-                setConfigurationMessage('');
-                navigate('/');
-              }}
-              onConfigurationEditChange={setIsConfigurationEditing}
-              onConfigurationSaved={updateAgentConfiguration}
-              configurationMessage={configurationMessage}
-              onConfigurationMessageChange={setConfigurationMessage}
-            />
-          ) : (
-            <div className="empty-details">
-              <h2>Agent Details</h2>
-              <p className="muted">Select an agent to view details.</p>
+          <div className="agent-info">
+            <div className="info-item">ID: {previewAgent.id}</div>
+            <div className="info-item">סטטוס: {previewAgent.status}</div>
+            <div className="info-item">שם סוכן: {previewAgent.call_sign}</div>
+            <div className="info-item">יחידה: {previewAgent.unit}</div>
+            <div className="info-item">
+              פלטפורמה ID: {previewAgent.platformId}
             </div>
-          )}
-        </main>
-      </div>
-    </div>
-  );
+            <div className="info-item">צייד ID: {previewAgent.zayad_id}</div>
+          </div>
+        </div>
+      </button>
+    );
+  })}
+</div>
+</aside>
+
+{selectedAgent && (
+  <>
+    <div
+      className="resize-handle"
+      onMouseDown={(event) => {
+        event.preventDefault();
+
+        const startX = event.clientX;
+        const startWidth = sidebarWidth;
+
+        const handleMouseMove = (moveEvent: MouseEvent) => {
+          const nextWidth = startWidth + (moveEvent.clientX - startX);
+          const limitedWidth = Math.min(Math.max(nextWidth, 120), 500);
+          setSidebarWidth(limitedWidth);
+        };
+
+        const handleMouseUp = () => {
+          window.removeEventListener('mousemove', handleMouseMove);
+          window.removeEventListener('mouseup', handleMouseUp);
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+      }}
+    />
+
+    <main className="details-pane">
+      <Details
+        agent={selectedAgent}
+        onClose={() => {
+          setSelectedAgentId(null);
+          setIsConfigurationEditing(false);
+          setConfigurationMessage('');
+          navigate('/');
+        }}
+        onConfigurationEditChange={setIsConfigurationEditing}
+        onConfigurationSaved={updateAgentConfiguration}
+        configurationMessage={configurationMessage}
+        onConfigurationMessageChange={setConfigurationMessage}
+      />
+    </main>
+  </>
+)}
+</div>
+</div>
+);
 }

@@ -1,9 +1,20 @@
 .page {
-  padding: 24px;
+  padding: 0 20px 20px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.top-bar {
+  height: 48px;
+  margin: 0 -20px 16px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  background: #020617;
 }
 
 .page-header {
-  margin-bottom: 20px;
+  margin-bottom: 8px;
 }
 
 .muted {
@@ -12,9 +23,39 @@
 
 .home-layout {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr);
-  gap: 20px;
+  gap: 32px;
   align-items: start;
+}
+
+.home-layout.no-selected-agent {
+  grid-template-columns: 1fr;
+}
+
+.home-layout.has-selected-agent {
+  grid-template-columns: 260px 6px minmax(0, 1fr);
+}
+.home-layout.has-selected-agent .agents-sidebar {
+  padding: 10px;
+}
+
+.agents-sidebar {
+  width: 100%;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+}
+
+.details-pane {
+  position: sticky;
+  top: 12px;
+  min-height: calc(100vh - 120px);
+  padding: 20px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  min-width: 0;
 }
 
 .history-layout {
@@ -26,26 +67,28 @@
   overflow: visible;
 }
 
-.agents-pane,
-.details-pane {
-  min-width: 0;
-}
-
 .agents-pane {
+  min-width: 0;
   max-height: calc(100vh - 170px);
   overflow: auto;
   padding: 6px;
 }
-
-.details-pane {
-  position: sticky;
-  top: 24px;
+.resize-handle {
+  width: 6px;
+  align-self: stretch;
+  cursor: col-resize;
+  border-radius: 999px;
+  background: #cbd5e1;
 }
 
-.empty-details {
+.resize-handle:hover {
+  background: #64748b;
+}
+
+/* .empty-details {
   min-height: 240px;
   padding: 20px;
   border: 1px solid #ddd;
   border-radius: 12px;
   background: #f8fafc;
-}
+} */
