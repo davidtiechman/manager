@@ -6,6 +6,7 @@ import type {
   IDatasource,
   IGetRowsParams,
   GridReadyEvent,
+  ColumnResizedEvent,
   ICellRendererParams,
 } from 'ag-grid-community';
 
@@ -131,7 +132,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Selected Link',
       headerTooltip: 'Selected Link',
       valueGetter: (p) => p.data?.details?.selectedLink,
-      width: 110,
+      flex: 1.5,
       minWidth: 85,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
@@ -141,7 +142,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Scheduler Mode',
       headerTooltip: 'Scheduler Mode',
       valueGetter: (p) => p.data?.details?.schedulerMode,
-      width: 130,
+      flex: 1.5,
       minWidth: 95,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
@@ -151,7 +152,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Msgs In Queue',
       headerTooltip: 'Messages In Queue',
       valueGetter: (p) => p.data?.details?.messagesInQueue,
-      width: 105,
+      flex: 1,
       minWidth: 80,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
@@ -161,7 +162,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Next Delivery',
       headerTooltip: 'Next Delivery Time',
       valueGetter: (p) => p.data?.details?.nextDeliveryTime,
-      width: 150,
+      flex: 2,
       minWidth: 130,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -171,7 +172,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Geo Data',
       headerTooltip: 'Geo Data',
       valueGetter: (p) => p.data?.details?.geoData,
-      width: 90,
+      flex: 1,
       minWidth: 75,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
@@ -181,7 +182,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Server LUT',
       headerTooltip: 'Server Last Update Time',
       valueGetter: (p) => p.data?.details?.serverLut,
-      width: 150,
+      flex: 2,
       minWidth: 130,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -191,7 +192,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Link Type',
       headerTooltip: 'Link Type',
       valueGetter: (p) => p.data?.link_quality?.type,
-      width: 90,
+      flex: 1,
       minWidth: 75,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
@@ -201,7 +202,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Available',
       headerTooltip: 'Link Available',
       valueGetter: (p) => p.data?.link_quality?.available,
-      width: 90,
+      flex: 1,
       minWidth: 75,
       cellRenderer: AvailabilityCell,
       filter: 'agTextColumnFilter',
@@ -211,7 +212,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Quality',
       headerTooltip: 'Link Quality',
       valueGetter: (p) => p.data?.link_quality?.quality,
-      width: 80,
+      flex: 1,
       minWidth: 65,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
@@ -221,7 +222,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Latency (ms)',
       headerTooltip: 'Latency in milliseconds',
       valueGetter: (p) => p.data?.link_quality?.latency,
-      width: 95,
+      flex: 1,
       minWidth: 75,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
@@ -231,7 +232,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Reliability',
       headerTooltip: 'Link Reliability',
       valueGetter: (p) => p.data?.link_quality?.reliability,
-      width: 90,
+      flex: 1,
       minWidth: 70,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
@@ -241,7 +242,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       headerName: 'Link Timestamp',
       headerTooltip: 'Link Quality Timestamp',
       valueGetter: (p) => p.data?.link_quality?.timestamp,
-      width: 150,
+      flex: 2,
       minWidth: 130,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -352,16 +353,27 @@ export default function AgentSyncsList({
     },
   }), [agentId]);
 
+  const LS_COL_KEY = 'snc-col-state';
+
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
       event.api.updateGridOptions({ datasource: buildDatasource() });
-      event.api.sizeColumnsToFit();
+      const saved = localStorage.getItem(LS_COL_KEY);
+      if (saved) {
+        try {
+          event.api.applyColumnState({ state: JSON.parse(saved), applyOrder: true });
+        } catch {
+          localStorage.removeItem(LS_COL_KEY);
+        }
+      }
     },
     [buildDatasource]
   );
 
-  const onGridSizeChanged = useCallback(() => {
-    gridRef.current?.api?.sizeColumnsToFit();
+  const onColumnResized = useCallback((e: ColumnResizedEvent) => {
+    if (!e.finished) return;
+    const state = gridRef.current?.api?.getColumnState();
+    if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
   }, []);
 
   // ── Context menu (right-click on column header) ─────────────────────
@@ -549,7 +561,7 @@ export default function AgentSyncsList({
         cacheOverflowSize={2}
         maxConcurrentDatasourceRequests={2}
         onGridReady={onGridReady}
-        onGridSizeChanged={onGridSizeChanged}
+        onColumnResized={onColumnResized}
         onFilterChanged={onFilterChanged}
         suppressCellFocus={false}
         enableCellTextSelection
