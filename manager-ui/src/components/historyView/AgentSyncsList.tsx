@@ -19,8 +19,18 @@ import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord'
 import ModeNavigationLink from '../ModeNavigationLink';
 
 const BLOCK_SIZE = 100;
+const LS_COL_KEY = 'snc-col-state';
 
-/** Human-readable label for each column's filter chip */
+/** Columns hidden by default (first load, no saved state) */
+const DEFAULT_HIDDEN: string[] = [
+  'nextDeliveryTime',
+  'geoData',
+  'serverLut',
+  'reliability',
+  'linkTimestamp',
+];
+
+/** Human-readable label for each column */
 const COLUMN_LABELS: Record<string, string> = {
   createdAt:        'Created At',
   id:               'ID',
@@ -38,6 +48,22 @@ const COLUMN_LABELS: Record<string, string> = {
   reliability:      'Reliability',
   linkTimestamp:    'Link Timestamp',
 };
+
+/** Column groups shown in the picker panel */
+const COLUMN_GROUPS: Array<{ label: string; cols: string[] }> = [
+  {
+    label: 'General',
+    cols: ['createdAt', 'id', 'status'],
+  },
+  {
+    label: 'Sync Details',
+    cols: ['selectedLink', 'schedulerMode', 'messagesInQueue', 'nextDeliveryTime', 'geoData', 'serverLut'],
+  },
+  {
+    label: 'Link Quality',
+    cols: ['linkType', 'linkAvailable', 'linkQuality', 'latency', 'reliability', 'linkTimestamp'],
+  },
+];
 
 interface AgentSyncsListProps {
   agentId?: string;
@@ -166,6 +192,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       minWidth: 130,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
+      hide: true,
     },
     {
       colId: 'geoData',
@@ -176,6 +203,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       minWidth: 75,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
+      hide: true,
     },
     {
       colId: 'serverLut',
@@ -186,6 +214,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       minWidth: 130,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
+      hide: true,
     },
     {
       colId: 'linkType',
@@ -236,6 +265,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       minWidth: 70,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
+      hide: true,
     },
     {
       colId: 'linkTimestamp',
@@ -246,6 +276,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       minWidth: 130,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
+      hide: true,
     },
   ];
 }
@@ -276,10 +307,22 @@ export default function AgentSyncsList({
     []
   );
 
-  // ── Active-filter state (drives the chip bar) ──────────────────────
+  // ── State ──────────────────────────────────────────────────────────
   const [filterModel, setFilterModel] = useState<Record<string, unknown>>({});
   const [totalRows, setTotalRows] = useState<number | null>(null);
+  const [hiddenCols, setHiddenCols] = useState<string[]>(DEFAULT_HIDDEN);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [selectedCols, setSelectedCols] = useState<Set<string>>(new Set());
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; colId: string } | null>(null);
 
+  // ── Refs ────────────────────────────────────────────────────────────
+  const gridWrapperRef = useRef<HTMLDivElement>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const stripDragStartRef = useRef<string | null>(null);
+  const styleTagRef = useRef<HTMLStyleElement | null>(null);
+  const maxIdRef = useRef<number | null>(null);
+
+  // ── Filter callbacks ───────────────────────────────────────────────
   const onFilterChanged = useCallback(() => {
     const model = gridRef.current?.api?.getFilterModel() ?? {};
     setFilterModel(model as Record<string, unknown>);
@@ -288,7 +331,7 @@ export default function AgentSyncsList({
   const clearFilter = useCallback((colId: string) => {
     const api = gridRef.current?.api;
     if (!api) return;
-    if (!api.getFilterModel()[colId]) return; // no-op — column has no active filter
+    if (!api.getFilterModel()[colId]) return;
     void api.setColumnFilterModel(colId, null).then(() => {
       api.onFilterChanged();
     });
@@ -313,7 +356,7 @@ export default function AgentSyncsList({
     return () => { html.style.overflow = prev; };
   }, [isEmbedded]);
 
-  // Build datasource — re-created only when agentId changes
+  // ── Datasource ─────────────────────────────────────────────────────
   const buildDatasource = useCallback((): IDatasource => ({
     getRows(params: IGetRowsParams) {
       if (!agentId) {
@@ -323,10 +366,7 @@ export default function AgentSyncsList({
       ApiService.getHistorySyncsIrm(agentId, {
         startRow: params.startRow,
         endRow: params.endRow,
-        sortModel: params.sortModel as Array<{
-          colId: string;
-          sort: 'asc' | 'desc';
-        }>,
+        sortModel: params.sortModel as Array<{ colId: string; sort: 'asc' | 'desc' }>,
         filterModel: params.filterModel as Record<string, unknown>,
         maxId: maxIdRef.current,
       })
@@ -337,9 +377,7 @@ export default function AgentSyncsList({
           }
           const blockSize = params.endRow - params.startRow;
           const knownEnd =
-            safeRows.length < blockSize
-              ? params.startRow + safeRows.length
-              : undefined;
+            safeRows.length < blockSize ? params.startRow + safeRows.length : undefined;
           const resolvedTotal = lastRow ?? knownEnd;
           if (params.startRow === 0 && resolvedTotal !== undefined) {
             setTotalRows(resolvedTotal);
@@ -353,7 +391,11 @@ export default function AgentSyncsList({
     },
   }), [agentId]);
 
-  const LS_COL_KEY = 'snc-col-state';
+  // ── Persist column state to localStorage ───────────────────────────
+  const saveColState = useCallback(() => {
+    const state = gridRef.current?.api?.getColumnState();
+    if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
+  }, []);
 
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
@@ -361,7 +403,11 @@ export default function AgentSyncsList({
       const saved = localStorage.getItem(LS_COL_KEY);
       if (saved) {
         try {
-          event.api.applyColumnState({ state: JSON.parse(saved), applyOrder: true });
+          const parsed = JSON.parse(saved) as Array<{ colId: string; hide?: boolean }>;
+          event.api.applyColumnState({ state: parsed, applyOrder: true });
+          // Sync hiddenCols React state with restored column visibility
+          const restored = parsed.filter((s) => s.hide === true).map((s) => s.colId);
+          setHiddenCols(restored);
         } catch {
           localStorage.removeItem(LS_COL_KEY);
         }
@@ -370,24 +416,15 @@ export default function AgentSyncsList({
     [buildDatasource]
   );
 
-  const onColumnResized = useCallback((e: ColumnResizedEvent) => {
-    if (!e.finished) return;
-    const state = gridRef.current?.api?.getColumnState();
-    if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
-  }, []);
+  const onColumnResized = useCallback(
+    (e: ColumnResizedEvent) => {
+      if (!e.finished) return;
+      saveColState();
+    },
+    [saveColState]
+  );
 
-  // ── Context menu (right-click on column header) ─────────────────────
-  const [ctxMenu, setCtxMenu] = useState<{
-    x: number; y: number; colId: string;
-  } | null>(null);
-
-  const [hiddenCols, setHiddenCols] = useState<string[]>([]);
-  const [selectedCols, setSelectedCols] = useState<Set<string>>(new Set());
-  const gridWrapperRef = useRef<HTMLDivElement>(null);
-  const stripDragStartRef = useRef<string | null>(null);
-  const styleTagRef = useRef<HTMLStyleElement | null>(null);
-  const maxIdRef = useRef<number | null>(null);
-
+  // ── Close context menu on outside pointer-down ─────────────────────
   useEffect(() => {
     if (!ctxMenu) return;
     const close = () => setCtxMenu(null);
@@ -395,12 +432,23 @@ export default function AgentSyncsList({
     return () => window.removeEventListener('pointerdown', close);
   }, [ctxMenu]);
 
-  // Remove injected style tag on unmount
+  // ── Close column picker on outside pointer-down ────────────────────
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const close = (e: PointerEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+      }
+    };
+    window.addEventListener('pointerdown', close);
+    return () => window.removeEventListener('pointerdown', close);
+  }, [pickerOpen]);
+
+  // ── Remove injected style tag on unmount ───────────────────────────
   useEffect(() => () => { styleTagRef.current?.remove(); }, []);
 
-  // ── Single source of truth for selection: updates React state + CSS together ──
-  // Called synchronously from mouse handlers so the highlight follows the cursor
-  // in real-time without waiting for a React re-render / useEffect cycle.
+  // ── Column selection highlight (CSS injection) ─────────────────────
+  // Must be declared before any callback that calls it.
   const applyColSelection = useCallback((cols: Set<string>) => {
     setSelectedCols(cols);
     if (!styleTagRef.current) {
@@ -418,8 +466,64 @@ export default function AgentSyncsList({
       `${body}{background:rgba(59,130,246,0.08)!important}`;
   }, []);
 
-  // Any left-click anywhere clears selection.
-  // Right-click (button 2) is exempt so the context menu still sees the selection.
+  // ── Column visibility helpers ───────────────────────────────────────
+
+  /** Toggle a single column on/off from the picker panel */
+  const toggleColVisibility = useCallback(
+    (colId: string) => {
+      const api = gridRef.current?.api;
+      if (!api) return;
+      const isHidden = hiddenCols.includes(colId);
+      api.setColumnsVisible([colId], isHidden); // show if currently hidden
+      const next = isHidden
+        ? hiddenCols.filter((c) => c !== colId)
+        : [...hiddenCols, colId];
+      setHiddenCols(next);
+      const state = api.getColumnState();
+      if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
+    },
+    [hiddenCols]
+  );
+
+  /** Restore all defaults via the picker's reset link */
+  const resetColsToDefault = useCallback(() => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+    const allCols = COLUMN_GROUPS.flatMap((g) => g.cols);
+    api.setColumnsVisible(allCols, true);
+    api.setColumnsVisible(DEFAULT_HIDDEN, false);
+    setHiddenCols([...DEFAULT_HIDDEN]);
+    const state = api.getColumnState();
+    if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
+  }, []);
+
+  const showAllColumns = useCallback(() => {
+    if (hiddenCols.length === 0) return;
+    gridRef.current?.api?.setColumnsVisible(hiddenCols, true);
+    setHiddenCols([]);
+    saveColState();
+  }, [hiddenCols, saveColState]);
+
+  const showColumn = useCallback(
+    (colId: string) => {
+      gridRef.current?.api?.setColumnsVisible([colId], true);
+      setHiddenCols((prev) => prev.filter((c) => c !== colId));
+      saveColState();
+    },
+    [saveColState]
+  );
+
+  /** Hide columns selected via the drag-strip, then save */
+  const hideSelectedCols = useCallback(() => {
+    if (selectedCols.size === 0) return;
+    const ids = Array.from(selectedCols);
+    gridRef.current?.api?.setColumnsVisible(ids, false);
+    setHiddenCols((prev) => [...prev, ...ids.filter((id) => !prev.includes(id))]);
+    applyColSelection(new Set());
+    saveColState();
+  }, [selectedCols, applyColSelection, saveColState]);
+
+  // ── Clear column selection on left-click anywhere ──────────────────
   useEffect(() => {
     if (selectedCols.size === 0) return;
     const clear = (e: PointerEvent) => {
@@ -437,6 +541,7 @@ export default function AgentSyncsList({
     };
   }, [selectedCols.size, applyColSelection]);
 
+  // ── Context menu on header right-click ─────────────────────────────
   const handleGridContextMenu = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const cell = (e.target as Element).closest('[col-id].ag-header-cell');
@@ -449,26 +554,8 @@ export default function AgentSyncsList({
     []
   );
 
-  const showAllColumns = useCallback(() => {
-    if (hiddenCols.length === 0) return;
-    gridRef.current?.api?.setColumnsVisible(hiddenCols, true);
-    setHiddenCols([]);
-  }, [hiddenCols]);
+  // ── Column-selection strip helpers ─────────────────────────────────
 
-  const showColumn = useCallback((colId: string) => {
-    gridRef.current?.api?.setColumnsVisible([colId], true);
-    setHiddenCols((prev) => prev.filter((c) => c !== colId));
-  }, []);
-
-  const hideSelectedCols = useCallback(() => {
-    if (selectedCols.size === 0) return;
-    const ids = Array.from(selectedCols);
-    gridRef.current?.api?.setColumnsVisible(ids, false);
-    setHiddenCols((prev) => [...prev, ...ids.filter((id) => !prev.includes(id))]);
-    applyColSelection(new Set());
-  }, [selectedCols, applyColSelection]);
-
-  // Returns header cells sorted by visual left position (pinned + scrollable mixed)
   const getSortedHeaderCells = useCallback((): HTMLElement[] => {
     const wrapper = gridWrapperRef.current;
     if (!wrapper) return [];
@@ -476,36 +563,38 @@ export default function AgentSyncsList({
       .sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
   }, []);
 
-  // Returns the colId under clientX, clamped to first/last column when off-grid
-  const colIdAtClientX = useCallback((x: number): string | null => {
-    const cells = getSortedHeaderCells();
-    if (cells.length === 0) return null;
-    if (x <= cells[0].getBoundingClientRect().right)
-      return cells[0].getAttribute('col-id');
-    if (x >= cells[cells.length - 1].getBoundingClientRect().left)
-      return cells[cells.length - 1].getAttribute('col-id');
-    for (const cell of cells) {
-      const rect = cell.getBoundingClientRect();
-      if (x >= rect.left && x <= rect.right) return cell.getAttribute('col-id');
-    }
-    return null;
-  }, [getSortedHeaderCells]);
+  const colIdAtClientX = useCallback(
+    (x: number): string | null => {
+      const cells = getSortedHeaderCells();
+      if (cells.length === 0) return null;
+      if (x <= cells[0].getBoundingClientRect().right)
+        return cells[0].getAttribute('col-id');
+      if (x >= cells[cells.length - 1].getBoundingClientRect().left)
+        return cells[cells.length - 1].getAttribute('col-id');
+      for (const cell of cells) {
+        const rect = cell.getBoundingClientRect();
+        if (x >= rect.left && x <= rect.right) return cell.getAttribute('col-id');
+      }
+      return null;
+    },
+    [getSortedHeaderCells]
+  );
 
-  // Returns all colIds between two colIds (inclusive) in visual order
-  const colRangeBetween = useCallback((startId: string, endId: string): string[] => {
-    const ids = getSortedHeaderCells()
-      .map((c) => c.getAttribute('col-id'))
-      .filter(Boolean) as string[];
-    const ai = ids.indexOf(startId);
-    const bi = ids.indexOf(endId);
-    if (ai === -1) return endId ? [endId] : [];
-    if (bi === -1) return [startId];
-    const [lo, hi] = ai <= bi ? [ai, bi] : [bi, ai];
-    return ids.slice(lo, hi + 1);
-  }, [getSortedHeaderCells]);
+  const colRangeBetween = useCallback(
+    (startId: string, endId: string): string[] => {
+      const ids = getSortedHeaderCells()
+        .map((c) => c.getAttribute('col-id'))
+        .filter(Boolean) as string[];
+      const ai = ids.indexOf(startId);
+      const bi = ids.indexOf(endId);
+      if (ai === -1) return endId ? [endId] : [];
+      if (bi === -1) return [startId];
+      const [lo, hi] = ai <= bi ? [ai, bi] : [bi, ai];
+      return ids.slice(lo, hi + 1);
+    },
+    [getSortedHeaderCells]
+  );
 
-  // Strip mouse-down: start drag-selection via window mousemove.
-  // applyColSelection is called on every move so the highlight is synchronous.
   const onStripMouseDown = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (e.button !== 0) return;
@@ -542,7 +631,7 @@ export default function AgentSyncsList({
     );
   }
 
-  // ── Shared grid ─────────────────────────────────────────────────────
+  // ── Shared grid element ─────────────────────────────────────────────
 
   const gridEl = (
     <div
@@ -550,7 +639,7 @@ export default function AgentSyncsList({
       className="snc-grid-wrapper ag-theme-quartz"
       onContextMenu={handleGridContextMenu}
     >
-      {/* Column-selection strip — 8px hover zone at top of header; drag to select range */}
+      {/* Column-selection strip — 8px hover zone at top of header */}
       <div className="snc-col-select-strip" onMouseDown={onStripMouseDown} />
       <AgGridReact<AgentHistoryRecord>
         ref={gridRef}
@@ -572,7 +661,7 @@ export default function AgentSyncsList({
     </div>
   );
 
-  // ── Embedded ────────────────────────────────────────────────────────
+  // ── Embedded view ───────────────────────────────────────────────────
 
   if (isEmbedded) {
     return (
@@ -612,16 +701,14 @@ export default function AgentSyncsList({
     );
   }
 
-  // ── Active filter chips (full-page only) ────────────────────────────
+  // ── Full-page view ──────────────────────────────────────────────────
 
   const activeColIds = Object.keys(filterModel);
-
-  // ── Full-page ───────────────────────────────────────────────────────
 
   return (
     <div className="snc-page">
 
-      {/* Page header */}
+      {/* ── Page header ─────────────────────────────────────────── */}
       <header className="snc-header">
 
         <div className="snc-header-start">
@@ -643,16 +730,113 @@ export default function AgentSyncsList({
         </div>
 
         <div className="snc-header-end">
+
+          {/* ── Column visibility picker ───────────────────────── */}
+          <div className="snc-col-picker-wrap" ref={pickerRef}>
+
+            <button
+              type="button"
+              className="snc-col-picker-btn"
+              onClick={() => setPickerOpen((o) => !o)}
+              aria-expanded={pickerOpen}
+              aria-haspopup="true"
+            >
+              {/* Columns icon — three vertical bars */}
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <rect x="1"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+                <rect x="6"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+                <rect x="11" y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+              </svg>
+              Columns
+              {hiddenCols.length > 0 && (
+                <span className="snc-col-picker-badge">{hiddenCols.length}</span>
+              )}
+              {/* Chevron */}
+              <svg
+                className="snc-col-picker-chevron"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 6l4 4 4-4"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+
+            {pickerOpen && (
+              <div className="snc-col-picker-panel">
+
+                {COLUMN_GROUPS.map((group) => (
+                  <div key={group.label} className="snc-col-picker-group">
+                    <div className="snc-col-picker-group-label">{group.label}</div>
+                    {group.cols.map((colId) => {
+                      const isVisible = !hiddenCols.includes(colId);
+                      return (
+                        <div
+                          key={colId}
+                          className="snc-col-picker-row"
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => toggleColVisibility(colId)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              toggleColVisibility(colId);
+                            }
+                          }}
+                        >
+                          <span className="snc-col-picker-name">
+                            {COLUMN_LABELS[colId] ?? colId}
+                          </span>
+                          <span
+                            role="switch"
+                            aria-checked={isVisible}
+                            className={`snc-col-picker-toggle${isVisible ? ' snc-col-picker-toggle--on' : ''}`}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+
+                <div className="snc-col-picker-footer">
+                  <button
+                    type="button"
+                    className="snc-col-picker-reset"
+                    onClick={resetColsToDefault}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path
+                        d="M13 8A5 5 0 1 1 8 3c1.4 0 2.6.5 3.5 1.4L13 6V2"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    Reset to default
+                  </button>
+                </div>
+
+              </div>
+            )}
+          </div>
+          {/* ── /Column picker ──────────────────────────────────── */}
+
           <ModeNavigationLink to="/" label="ניטור זמן אמת" variant="real-time" />
         </div>
 
       </header>
 
-      {/* Toolbar bar — hidden columns · active filters */}
+      {/* ── Toolbar bar — hidden columns · active filters ──────── */}
       {(activeColIds.length > 0 || hiddenCols.length > 0) && (
         <div className="snc-filter-bar" role="status" aria-label="Active filters">
 
-          {/* 1 — Per-column restore chips */}
           {hiddenCols.length > 0 && (
             <>
               <span className="snc-filter-bar-label">Hidden:</span>
@@ -683,11 +867,11 @@ export default function AgentSyncsList({
               )}
             </>
           )}
+
           {hiddenCols.length > 0 && activeColIds.length > 0 && (
             <div className="snc-filter-bar-vr" aria-hidden="true" />
           )}
 
-          {/* 3 — Active filter chips */}
           {activeColIds.length > 0 && (
             <>
               <span className="snc-filter-bar-label">Filters:</span>
@@ -716,7 +900,7 @@ export default function AgentSyncsList({
         </div>
       )}
 
-      {/* Row count status bar */}
+      {/* ── Row count status bar ─────────────────────────────────── */}
       {totalRows !== null && (
         <div className="snc-count-bar">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -741,10 +925,10 @@ export default function AgentSyncsList({
         </div>
       )}
 
-      {/* Grid */}
+      {/* ── Grid ─────────────────────────────────────────────────── */}
       <div className="snc-grid-outer">{gridEl}</div>
 
-      {/* Right-click context menu — rendered fixed over everything */}
+      {/* ── Right-click context menu ─────────────────────────────── */}
       {ctxMenu && (
         <div
           className="snc-ctx-menu"
@@ -798,7 +982,6 @@ export default function AgentSyncsList({
             Clear Filter
           </button>
           <div className="snc-ctx-sep" />
-          {/* Hide selected columns — shown when a strip-selection is active */}
           {selectedCols.size > 0 && (
             <button
               type="button"
@@ -818,6 +1001,7 @@ export default function AgentSyncsList({
             onClick={() => {
               gridRef.current?.api?.setColumnsVisible([ctxMenu.colId], false);
               setHiddenCols((prev) => [...prev, ctxMenu.colId]);
+              saveColState();
               setCtxMenu(null);
             }}
           >
