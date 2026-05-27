@@ -751,38 +751,40 @@ export default function AgentSyncsList({
 
             {pickerOpen && (
               <div className="snc-col-picker-panel">
-                {COLUMN_GROUPS.map((group) => (
-                  <div key={group.label} className="snc-col-picker-group">
-                    <div className="snc-col-picker-group-label">{group.label}</div>
-                    {group.cols.map((colId) => {
-                      const isVisible = !hiddenCols.includes(colId);
-                      return (
-                        <div
-                          key={colId}
-                          className="snc-col-picker-row"
-                          role="button"
-                          tabIndex={0}
-                          onClick={() => toggleColVisibility(colId)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              toggleColVisibility(colId);
-                            }
-                          }}
-                        >
-                          <span className="snc-col-picker-name">
-                            {COLUMN_LABELS[colId] ?? colId}
-                          </span>
-                          <span
-                            role="switch"
-                            aria-checked={isVisible}
-                            className={`snc-col-picker-toggle${isVisible ? ' snc-col-picker-toggle--on' : ''}`}
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+                <div className="snc-col-picker-scroll">
+                  {COLUMN_GROUPS.map((group) => (
+                    <div key={group.label} className="snc-col-picker-group">
+                      <div className="snc-col-picker-group-label">{group.label}</div>
+                      {group.cols.map((colId) => {
+                        const isVisible = !hiddenCols.includes(colId);
+                        return (
+                          <div
+                            key={colId}
+                            className="snc-col-picker-row"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => toggleColVisibility(colId)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                toggleColVisibility(colId);
+                              }
+                            }}
+                          >
+                            <span className="snc-col-picker-name">
+                              {COLUMN_LABELS[colId] ?? colId}
+                            </span>
+                            <span
+                              role="switch"
+                              aria-checked={isVisible}
+                              className={`snc-col-picker-toggle${isVisible ? ' snc-col-picker-toggle--on' : ''}`}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ))}
+                </div>
                 <div className="snc-col-picker-footer">
                   <button
                     type="button"
