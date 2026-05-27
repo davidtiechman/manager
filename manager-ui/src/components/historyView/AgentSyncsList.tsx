@@ -106,7 +106,6 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       minWidth: 130,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
-      sort: 'desc',
     },
     {
       field: 'id',
@@ -116,6 +115,7 @@ function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       minWidth: 62,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
+      sort: 'desc',
     },
     {
       field: 'status',
