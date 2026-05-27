@@ -10,7 +10,7 @@ import ModeNavigationLink from '../ModeNavigationLink';
 import type {PlatformSearchField,PlatformSearchState,} from '../../types/realTimeAgents/PlatformSearchField';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
-const DEFAULT_SIDEBAR_WIDTH = 396;
+const DEFAULT_SIDEBAR_WIDTH = 420;
 const MIN_SIDEBAR_WIDTH = 220;
 const DETAILS_MIN_WIDTH = 360;
 const RESIZE_HANDLE_WIDTH = 6;
@@ -34,6 +34,10 @@ type SearchValueMatch = {
   exists: boolean;
   value: unknown;
 };
+
+function normalizeSearchKey(value: string) {
+  return value.trim().toLowerCase().replace(/[\s_-]+/g, '');
+}
 
 function getNestedEntry(source: unknown, path: string): SearchValueMatch {
   if (!source || typeof source !== 'object') {
@@ -90,7 +94,7 @@ function findCustomSearchEntry(
   agent: AgentResponse,
   field: string
 ): SearchValueMatch {
-  const normalizedField = field.trim().toLowerCase();
+  const normalizedField = normalizeSearchKey(field);
 
   if (normalizedField === '') {
     return { exists: false, value: undefined };
@@ -98,7 +102,7 @@ function findCustomSearchEntry(
 
   const platformFields = toPlatformTable(agent);
   const platformField = Object.keys(platformFields).find(
-    (key) => key.toLowerCase() === normalizedField
+    (key) => normalizeSearchKey(key) === normalizedField
   );
 
   if (platformField) {
@@ -114,10 +118,12 @@ function findCustomSearchEntry(
   }
 
   const flattenedEntry = flattenValues(agent).find(({ key }) => {
-    const normalizedKey = key.toLowerCase();
+    const normalizedKey = normalizeSearchKey(key);
+    const normalizedLastKey = normalizeSearchKey(key.split('.').pop() ?? '');
+
     return (
       normalizedKey === normalizedField ||
-      normalizedKey.split('.').pop() === normalizedField
+      normalizedLastKey === normalizedField
     );
   });
 
@@ -188,6 +194,9 @@ export default function Preview() {
   const { agentId: routeAgentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
   const customSearchField = search.customField.trim();
+  const isSearchActive =
+    search.text.trim() !== '' ||
+    (search.field === 'other' && customSearchField !== '');
   const isCustomSearchFieldMissing =
     search.field === 'other' &&
     customSearchField !== '' &&
@@ -206,7 +215,7 @@ export default function Preview() {
 
       const customSearchEntry = findCustomSearchEntry(agent, customSearchField);
       if (!customSearchEntry.exists) {
-        return false;
+        return isCustomSearchFieldMissing;
       }
 
       if (searchText === '') {
@@ -324,11 +333,10 @@ export default function Preview() {
           label="למעבר להיסטוריה"
           variant="history"
           />
+        <h1 className="top-bar-title">ניטור סוכנים בזמן אמת</h1>
         </div>
 
-      <div className="page-header">
-        <h1>ניטור סוכנים בזמן אמת</h1>
-
+      <div className={`page-header ${selectedAgent ? '' : 'main-preview-header'}`}>
         <p className="muted">
           {viewMode === 'icon'
             ? 'לחץ על אייקון כדי לראות פרטים'
@@ -425,6 +433,13 @@ export default function Preview() {
     העמודה "{customSearchField}" לא קיימת.
   </p>
 )}
+
+<div className="agents-results-summary" aria-live="polite">
+  <span className="agents-results-label">Agents</span>
+  <span className="agents-results-count">
+    {isSearchActive ? `${filteredAgents.length} / ${agents.length}` : agents.length}
+  </span>
+</div>
 
 <div
   className={`agents-grid ${

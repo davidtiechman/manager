@@ -6,7 +6,7 @@ export interface AgentResponse {
 
   status: {
     id: string;
-    status: 'active' | 'inactive' | 'warning' | 'offline';
+    status: 'active' | 'inactive' | 'slow';
 
     details: {
       selectedLink: string;

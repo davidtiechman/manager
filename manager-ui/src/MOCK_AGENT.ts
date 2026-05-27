@@ -7,7 +7,7 @@ export const MOCK_AGENTS: AgentResponse[] = [
 
         status: {
             id: 'status-101',
-            status: 'warning',
+            status: 'slow',
 
             details: {
                 selectedLink: 'lte',

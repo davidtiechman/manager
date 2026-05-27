@@ -4,6 +4,19 @@ import { HistoryAgent } from '../../types/history/historyAgent';
 import { useNavigate } from 'react-router-dom';
 import ModeNavigationLink from '../ModeNavigationLink';
 
+function formatHistoryDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value || 'לא זמין';
+  }
+
+  return new Intl.DateTimeFormat('he-IL', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date);
+}
+
 export default function AgentHistoryList() {
   const [agents, setAgents] = useState<HistoryAgent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,9 +42,12 @@ export default function AgentHistoryList() {
   if (loading) {
     return (
       <div className="page">
-        <div className="page-header">
+        <div className="top-bar">
           <ModeNavigationLink to="/" label="למעבר לניטור זמן אמת" variant="real-time" />
-          <h1>תצוגת היסטוריה סוכנים</h1>
+          <h1 className="top-bar-title">תצוגת היסטוריה סוכנים</h1>
+        </div>
+
+        <div className="page-header">
           <p className="muted">טוען נתונים...</p>
         </div>
       </div>
@@ -40,15 +56,24 @@ export default function AgentHistoryList() {
 
   return (
     <div className="page">
-      <div className="page-header">
+      <div className="top-bar">
         <ModeNavigationLink to="/" label="למעבר לניטור זמן אמת" variant="real-time" />
-        <h1>תצוגת היסטוריה סוכנים</h1>
+        <h1 className="top-bar-title">תצוגת היסטוריה סוכנים</h1>
+      </div>
 
-        <p className="menu">
-          {viewMode === 'icon'
-            ? 'לחץ על אייקון כדי לראות היסטוריית syncs'
-            : 'לחץ על שורה כדי לראות היסטוריית syncs'}
-        </p>
+      <div className="page-header main-preview-header">
+        <div className="history-overview">
+          <div className="history-overview-stat">
+            <span className="history-overview-label">Agents</span>
+            <span className="history-overview-count">{agents.length}</span>
+          </div>
+
+          <p className="history-overview-copy">
+            {viewMode === 'icon'
+              ? 'לחץ על אייקון כדי לראות את היסטוריית הסנכרונים של הסוכן'
+              : 'לחץ על שורה כדי לראות את היסטוריית הסנכרונים של הסוכן'}
+          </p>
+        </div>
 
         <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
           <button
@@ -82,7 +107,11 @@ export default function AgentHistoryList() {
                 onClick={() => {
                   navigate(`/history/${agent.id}`);
                 }}
-              >
+            >
+                <span className="history-agent-mark" aria-hidden="true">
+                  {agent.callSign?.charAt(0) || agent.id.charAt(0)}
+                </span>
+
                 <div className="agent-content">
                   <div className="agent-label">
                     {agent.callSign || agent.id}
@@ -90,7 +119,7 @@ export default function AgentHistoryList() {
 
                   <div className="agent-info">
                     <div className="info-item">ID: {agent.id}</div>
-                    <div className='info-item'>Created at: {agent.createdAt}</div>
+                    <div className='info-item'>נוצר: {formatHistoryDate(agent.createdAt)}</div>
                   </div>
                 </div>
               </button>

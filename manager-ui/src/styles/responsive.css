@@ -3,6 +3,11 @@
     grid-template-columns: 1fr;
   }
 
+  .home-layout.no-selected-agent .agents-grid,
+  .home-layout.no-selected-agent .agents-grid.agents-list {
+    grid-template-columns: 1fr;
+  }
+
   .agents-pane {
     max-height: none;
   }
@@ -22,5 +27,11 @@
 
   .details-tables-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 521px) and (max-width: 900px) {
+  .home-layout.no-selected-agent .agents-grid.agents-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
