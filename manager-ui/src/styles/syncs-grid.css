@@ -542,6 +542,17 @@
   color: #0369a1;
 }
 
+/* ── Selected row highlight ─────────────────────────────────── */
+.snc-grid-wrapper .ag-row-selected {
+  background-color: #e0f2fe !important;
+  border-top: 1px solid #bae6fd !important;
+  border-bottom: 1px solid #bae6fd !important;
+}
+
+.snc-grid-wrapper .ag-row-selected .ag-cell {
+  color: #0c4a6e;
+}
+
 /* ── Row count status bar ───────────────────────────────────── */
 .snc-count-bar {
   display: flex;

@@ -564,6 +564,7 @@ export default function AgentSyncsList({
         onColumnResized={onColumnResized}
         onFilterChanged={onFilterChanged}
         suppressCellFocus={false}
+        rowSelection="single"
         enableCellTextSelection
         tooltipShowDelay={400}
         overlayNoRowsTemplate='<span class="snc-no-rows">אין רשומות עבור agent זה</span>'
