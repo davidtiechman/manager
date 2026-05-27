@@ -430,17 +430,6 @@
   color: #6b7280;
 }
 
-/* ── Toolbar bar extras ─────────────────────────────────────── */
-
-/* Vertical rule between restore-cols and filter chips */
-.snc-filter-bar-vr {
-  width: 1px;
-  height: 18px;
-  background: #e2e8f0;
-  flex-shrink: 0;
-}
-
-
 /* ── Header right-click context menu ────────────────────────── */
 .snc-ctx-menu {
   position: fixed;
@@ -516,30 +505,6 @@
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='16' viewBox='0 0 14 16'%3E%3Cline x1='7' y1='1' x2='7' y2='10' stroke='%231e293b' stroke-width='2.2' stroke-linecap='round'/%3E%3Cpath d='M2 7L7 14L12 7Z' fill='%231e293b'/%3E%3C/svg%3E") 7 1, default;
   user-select: none;
   touch-action: none;
-}
-
-/* ── Hidden-column restore chip ─────────────────────────────── */
-.snc-hidden-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px 3px 8px;
-  border: 1px solid #D1D5DB;
-  border-radius: 20px;
-  background: #f8fafc;
-  color: #374151;
-  font-size: 12px;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.12s, border-color 0.12s, color 0.12s;
-}
-
-.snc-hidden-chip:hover {
-  background: #e0f2fe;
-  border-color: #38bdf8;
-  color: #0369a1;
 }
 
 /* ── Selected row highlight ─────────────────────────────────── */

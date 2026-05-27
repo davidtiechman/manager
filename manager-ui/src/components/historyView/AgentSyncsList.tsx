@@ -497,22 +497,6 @@ export default function AgentSyncsList({
     if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
   }, []);
 
-  const showAllColumns = useCallback(() => {
-    if (hiddenCols.length === 0) return;
-    gridRef.current?.api?.setColumnsVisible(hiddenCols, true);
-    setHiddenCols([]);
-    saveColState();
-  }, [hiddenCols, saveColState]);
-
-  const showColumn = useCallback(
-    (colId: string) => {
-      gridRef.current?.api?.setColumnsVisible([colId], true);
-      setHiddenCols((prev) => prev.filter((c) => c !== colId));
-      saveColState();
-    },
-    [saveColState]
-  );
-
   /** Hide columns selected via the drag-strip, then save */
   const hideSelectedCols = useCallback(() => {
     if (selectedCols.size === 0) return;
@@ -833,44 +817,9 @@ export default function AgentSyncsList({
 
       </header>
 
-      {/* ── Toolbar bar — hidden columns · active filters ──────── */}
-      {(activeColIds.length > 0 || hiddenCols.length > 0) && (
+      {/* ── Toolbar bar — active filters ────────────────────────── */}
+      {activeColIds.length > 0 && (
         <div className="snc-filter-bar" role="status" aria-label="Active filters">
-
-          {hiddenCols.length > 0 && (
-            <>
-              <span className="snc-filter-bar-label">Hidden:</span>
-              {hiddenCols.map((colId) => (
-                <button
-                  key={colId}
-                  type="button"
-                  className="snc-hidden-chip"
-                  onClick={() => showColumn(colId)}
-                  title={`Show ${COLUMN_LABELS[colId] ?? colId}`}
-                >
-                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-                    <path d="M1.5 8C3 4.5 5.5 2.5 8 2.5S13 4.5 14.5 8C13 11.5 10.5 13.5 8 13.5S3 11.5 1.5 8z"
-                      stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
-                  </svg>
-                  {COLUMN_LABELS[colId] ?? colId}
-                </button>
-              ))}
-              {hiddenCols.length > 1 && (
-                <button
-                  type="button"
-                  className="snc-filter-clear-all"
-                  onClick={showAllColumns}
-                >
-                  Show all
-                </button>
-              )}
-            </>
-          )}
-
-          {hiddenCols.length > 0 && activeColIds.length > 0 && (
-            <div className="snc-filter-bar-vr" aria-hidden="true" />
-          )}
 
           {activeColIds.length > 0 && (
             <>
