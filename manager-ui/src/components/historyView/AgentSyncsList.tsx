@@ -707,17 +707,26 @@ export default function AgentSyncsList({
             </svg>
             History
           </button>
-        </div>
-
-        <div className="snc-header-center">
-          <p className="snc-header-entity">{agentId}</p>
+          <div className="snc-header-sep" aria-hidden="true" />
+          <div className="snc-agent-identity">
+            <span className="snc-agent-id-text">{agentId}</span>
+            <span className="snc-page-label">Sync History</span>
+          </div>
         </div>
 
         <div className="snc-header-end">
+          <ModeNavigationLink to="/" label="ניטור זמן אמת" variant="real-time" />
+        </div>
 
-          {/* ── Column visibility picker ───────────────────────── */}
+      </header>
+
+      {/* ── Toolbar: columns · active filters · row count ──────── */}
+      <div className="snc-toolbar">
+
+        <div className="snc-toolbar-start">
+
+          {/* Column picker */}
           <div className="snc-col-picker-wrap" ref={pickerRef}>
-
             <button
               type="button"
               className="snc-col-picker-btn"
@@ -725,8 +734,7 @@ export default function AgentSyncsList({
               aria-expanded={pickerOpen}
               aria-haspopup="true"
             >
-              {/* Columns icon — three vertical bars */}
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                 <rect x="1"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
                 <rect x="6"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
                 <rect x="11" y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
@@ -735,26 +743,14 @@ export default function AgentSyncsList({
               {hiddenCols.length > 0 && (
                 <span className="snc-col-picker-badge">{hiddenCols.length}</span>
               )}
-              {/* Chevron */}
-              <svg
-                className="snc-col-picker-chevron"
-                viewBox="0 0 16 16"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M4 6l4 4 4-4"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
+              <svg className="snc-col-picker-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.7"
+                  strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
 
             {pickerOpen && (
               <div className="snc-col-picker-panel">
-
                 {COLUMN_GROUPS.map((group) => (
                   <div key={group.label} className="snc-col-picker-group">
                     <div className="snc-col-picker-group-label">{group.label}</div>
@@ -787,7 +783,6 @@ export default function AgentSyncsList({
                     })}
                   </div>
                 ))}
-
                 <div className="snc-col-picker-footer">
                   <button
                     type="button"
@@ -795,34 +790,20 @@ export default function AgentSyncsList({
                     onClick={resetColsToDefault}
                   >
                     <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <path
-                        d="M13 8A5 5 0 1 1 8 3c1.4 0 2.6.5 3.5 1.4L13 6V2"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
+                      <path d="M13 8A5 5 0 1 1 8 3c1.4 0 2.6.5 3.5 1.4L13 6V2"
+                        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                     Reset to default
                   </button>
                 </div>
-
               </div>
             )}
           </div>
-          {/* ── /Column picker ──────────────────────────────────── */}
 
-          <ModeNavigationLink to="/" label="ניטור זמן אמת" variant="real-time" />
-        </div>
-
-      </header>
-
-      {/* ── Toolbar bar — active filters ────────────────────────── */}
-      {activeColIds.length > 0 && (
-        <div className="snc-filter-bar" role="status" aria-label="Active filters">
-
+          {/* Active filter chips (appear inline after picker) */}
           {activeColIds.length > 0 && (
             <>
+              <div className="snc-toolbar-vr" aria-hidden="true" />
               <span className="snc-filter-bar-label">Filters:</span>
               {activeColIds.map((colId) => (
                 <button
@@ -847,32 +828,29 @@ export default function AgentSyncsList({
           )}
 
         </div>
-      )}
 
-      {/* ── Row count status bar ─────────────────────────────────── */}
-      {totalRows !== null && (
-        <div className="snc-count-bar">
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <rect x="1" y="1" width="14" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M4 5h8M4 8h8M4 11h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-          {activeColIds.length > 0 ? (
-            <>
-              <span className="snc-count-bar-badge">Filtered</span>
-              <span>
-                <span className="snc-count-bar-num">{totalRows.toLocaleString('en-US')}</span>
-                {' '}matching rows
-              </span>
-            </>
-          ) : (
-            <span>
-              Total{' '}
-              <span className="snc-count-bar-num">{totalRows.toLocaleString('en-US')}</span>
-              {' '}rows
-            </span>
+        {/* Row count — right-aligned */}
+        <div className="snc-toolbar-end">
+          {totalRows !== null && (
+            <div className="snc-row-count">
+              {activeColIds.length > 0 ? (
+                <>
+                  <span className="snc-row-count-badge">Filtered</span>
+                  <span className="snc-row-count-num">{totalRows.toLocaleString('en-US')}</span>
+                  <span>rows</span>
+                </>
+              ) : (
+                <>
+                  <span>Total</span>
+                  <span className="snc-row-count-num">{totalRows.toLocaleString('en-US')}</span>
+                  <span>rows</span>
+                </>
+              )}
+            </div>
           )}
         </div>
-      )}
+
+      </div>
 
       {/* ── Grid ─────────────────────────────────────────────────── */}
       <div className="snc-grid-outer">{gridEl}</div>
