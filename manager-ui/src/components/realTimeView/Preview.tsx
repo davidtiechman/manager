@@ -10,13 +10,13 @@ import ModeNavigationLink from '../ModeNavigationLink';
 import type {PlatformSearchField,PlatformSearchState,} from '../../types/realTimeAgents/PlatformSearchField';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
-const DEFAULT_SIDEBAR_WIDTH = 420;
-const MIN_SIDEBAR_WIDTH = 220;
-const DETAILS_MIN_WIDTH = 360;
-const RESIZE_HANDLE_WIDTH = 6;
-const PAGE_HORIZONTAL_PADDING = 40;
-const SELECTED_LAYOUT_GAPS = 64;
-const MAX_SIDEBAR_VIEWPORT_RATIO = 0.72;
+const DEFAULT_SIDEBAR_WIDTH = Number(import.meta.env.VITE_DEFAULT_SIDEBAR_WIDTH) || 420;
+const MIN_SIDEBAR_WIDTH =  Number(import.meta.env.VITE_MIN_SIDEBAR_WIDTH) || 220;
+const DETAILS_MIN_WIDTH = Number(import.meta.env.VITE_DETAILS_MIN_WIDTH) || 360;
+const RESIZE_HANDLE_WIDTH = Number(import.meta.env.VITE_RESIZE_HANDLE_WIDTH) || 6;
+const PAGE_HORIZONTAL_PADDING = Number(import.meta.env.VITE_PAGE_HORIZONTAL_PADDING) || 40;
+const SELECTED_LAYOUT_GAPS = Number(import.meta.env.VITE_SELECTED_LAYOUT_GAPS) || 64;
+const MAX_SIDEBAR_VIEWPORT_RATIO = Number(import.meta.env.VITE_MAX_SIDEBAR_VIEWPORT_RATIO) || 0.72;
 
 type ViewMode = 'icon' | 'list';
 type KnownSearchField = Exclude<PlatformSearchField, 'other'>;
