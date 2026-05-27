@@ -10,7 +10,7 @@ import ModeNavigationLink from '../ModeNavigationLink';
 import type {PlatformSearchField,PlatformSearchState,} from '../../types/realTimeAgents/PlatformSearchField';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
-const DEFAULT_SIDEBAR_WIDTH = 396;
+const DEFAULT_SIDEBAR_WIDTH = 420;
 const MIN_SIDEBAR_WIDTH = 220;
 const DETAILS_MIN_WIDTH = 360;
 const RESIZE_HANDLE_WIDTH = 6;
@@ -324,11 +324,10 @@ export default function Preview() {
           label="למעבר להיסטוריה"
           variant="history"
           />
+        <h1 className="top-bar-title">ניטור סוכנים בזמן אמת</h1>
         </div>
 
-      <div className="page-header">
-        <h1>ניטור סוכנים בזמן אמת</h1>
-
+      <div className={`page-header ${selectedAgent ? '' : 'main-preview-header'}`}>
         <p className="muted">
           {viewMode === 'icon'
             ? 'לחץ על אייקון כדי לראות פרטים'

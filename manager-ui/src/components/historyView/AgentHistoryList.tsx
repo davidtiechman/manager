@@ -29,9 +29,12 @@ export default function AgentHistoryList() {
   if (loading) {
     return (
       <div className="page">
-        <div className="page-header">
+        <div className="top-bar">
           <ModeNavigationLink to="/" label="למעבר לניטור זמן אמת" variant="real-time" />
-          <h1>תצוגת היסטוריה סוכנים</h1>
+          <h1 className="top-bar-title">תצוגת היסטוריה סוכנים</h1>
+        </div>
+
+        <div className="page-header">
           <p className="muted">טוען נתונים...</p>
         </div>
       </div>
@@ -40,10 +43,12 @@ export default function AgentHistoryList() {
 
   return (
     <div className="page">
-      <div className="page-header">
+      <div className="top-bar">
         <ModeNavigationLink to="/" label="למעבר לניטור זמן אמת" variant="real-time" />
-        <h1>תצוגת היסטוריה סוכנים</h1>
+        <h1 className="top-bar-title">תצוגת היסטוריה סוכנים</h1>
+      </div>
 
+      <div className="page-header main-preview-header">
         <p className="menu">
           {viewMode === 'icon'
             ? 'לחץ על אייקון כדי לראות היסטוריית syncs'

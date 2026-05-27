@@ -290,9 +290,12 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
   if (!agentId) {
     return (
       <div className="page">
-        <div className="page-header">
+        <div className="top-bar">
           <ModeNavigationLink to="/" label="למעבר לניטור זמן אמת" variant="real-time" />
-          <h1>Agent History</h1>
+          <h1 className="top-bar-title">Agent History</h1>
+        </div>
+
+        <div className="page-header">
           <p className="muted">לא נמצא מזהה agent בכתובת.</p>
         </div>
       </div>
@@ -311,9 +314,12 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
 
     return (
       <div className="page">
-        <div className="page-header">
+        <div className="top-bar">
           <ModeNavigationLink to="/" label="למעבר לניטור זמן אמת" variant="real-time" />
-          <h1>Sync History</h1>
+          <h1 className="top-bar-title">Sync History</h1>
+        </div>
+
+        <div className="page-header">
           <p className="muted">טוען רשומות...</p>
         </div>
       </div>
@@ -448,8 +454,9 @@ export default function AgentSyncsList({ agentId: agentIdProp, onClose }: AgentS
 
   return (
     <div className="page">
-      <div className="page-header">
+      <div className="top-bar">
         <ModeNavigationLink to="/" label="למעבר לניטור זמן אמת" variant="real-time" />
+        <h1 className="top-bar-title">Sync History</h1>
       </div>
 
       {detailsContent}
