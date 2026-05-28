@@ -1,22 +1,25 @@
 /**
  * syncGrid.columns.tsx
  *
- * Exports everything that is purely about column shape / cell rendering:
- *   - module-level constants  (BLOCK_SIZE, LS_COL_KEY, DEFAULT_HIDDEN, …)
- *   - cell renderer components (internal – not exported)
- *   - buildColumnDefs()
+ * Single source of truth for every column in the sync-history grid.
  *
- * Nothing in this file knows about React state, routing, or the AG Grid
- * API instance.  It is safe to import from any context.
+ * To add a column:
+ *   1. Add ONE entry inside buildColumnDefs() using the col() factory.
+ *      - Set `group` to place it in the picker panel.
+ *      - `minWidth` is auto-calculated from headerName — override only
+ *        when you need a specific value.
+ *   2. That's it. COLUMN_LABELS and COLUMN_GROUPS are derived automatically.
+ *
+ * Nothing here knows about React state, routing, or the AG Grid API instance.
  */
 
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
 
-// ── Constants ───────────────────────────────────────────────────────
+// ── Grid constants ──────────────────────────────────────────────────
 
-export const BLOCK_SIZE = 100;
-export const LS_COL_KEY = 'snc-col-state';
+export const BLOCK_SIZE  = 100;
+export const LS_COL_KEY  = 'snc-col-state';
 
 /** Columns hidden by default (first load, no saved state) */
 export const DEFAULT_HIDDEN: string[] = [
@@ -27,42 +30,41 @@ export const DEFAULT_HIDDEN: string[] = [
   'linkTimestamp',
 ];
 
-/** Human-readable label for each column */
-export const COLUMN_LABELS: Record<string, string> = {
-  createdAt:        'Created At',
-  id:               'ID',
-  status:           'Status',
-  selectedLink:     'Selected Link',
-  schedulerMode:    'Scheduler Mode',
-  messagesInQueue:  'Msgs In Queue',
-  nextDeliveryTime: 'Next Delivery',
-  geoData:          'Geo Data',
-  serverLut:        'Server LUT',
-  linkType:         'Link Type',
-  linkAvailable:    'Available',
-  linkQuality:      'Quality',
-  latency:          'Latency',
-  reliability:      'Reliability',
-  linkTimestamp:    'Link Timestamp',
-};
+// ── Column metadata ─────────────────────────────────────────────────
 
-/** Column groups shown in the picker panel */
-export const COLUMN_GROUPS: Array<{ label: string; cols: string[] }> = [
-  {
-    label: 'General',
-    cols: ['createdAt', 'id', 'status'],
-  },
-  {
-    label: 'Sync Details',
-    cols: ['selectedLink', 'schedulerMode', 'messagesInQueue', 'nextDeliveryTime', 'geoData', 'serverLut'],
-  },
-  {
-    label: 'Link Quality',
-    cols: ['linkType', 'linkAvailable', 'linkQuality', 'latency', 'reliability', 'linkTimestamp'],
-  },
-];
+/** Picker panel group names — order here controls render order */
+export type ColGroup = 'General' | 'Sync Details' | 'Link Quality';
+const GROUP_ORDER: ColGroup[] = ['General', 'Sync Details', 'Link Quality'];
 
-// ── Cell renderers ──────────────────────────────────────────────────
+/**
+ * Standard AG Grid ColDef plus `group` for the picker panel.
+ * AG Grid silently ignores unknown properties, so passing SyncColDef[]
+ * to <AgGridReact columnDefs={...}> is safe.
+ */
+interface SyncColDef extends ColDef<AgentHistoryRecord> {
+  group: ColGroup;
+}
+
+// ── Auto-minWidth factory ───────────────────────────────────────────
+
+/** Approximate px per character at 12.5 px / weight-600 Inter */
+const CHAR_WIDTH    = 7.5;
+/** Sort icon + cell padding shared by every header cell */
+const HDR_OVERHEAD  = 44;
+
+/**
+ * Wraps a column definition and fills in `minWidth` automatically
+ * from `headerName` unless the caller already supplies one.
+ * Explicit `minWidth` in `def` always wins.
+ */
+function col(def: SyncColDef): SyncColDef {
+  const autoMin = def.headerName
+    ? Math.ceil(def.headerName.length * CHAR_WIDTH) + HDR_OVERHEAD
+    : undefined;
+  return { ...def, minWidth: def.minWidth ?? autoMin };
+}
+
+// ── Cell renderers (internal) ───────────────────────────────────────
 
 function StatusCell({ value }: ICellRendererParams) {
   if (value == null || value === '') return <span className="snc-null">—</span>;
@@ -113,20 +115,23 @@ function TextCell({ value }: ICellRendererParams) {
 }
 
 // ── Column definitions ──────────────────────────────────────────────
+// Add a new column here ONLY. Labels and groups are derived below.
 
-export function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
+function buildColumnDefsInternal(): SyncColDef[] {
   return [
-    {
+    // ── General ──────────────────────────────────────────────────
+    col({
+      group: 'General',
       field: 'createdAt',
       headerName: 'Created At',
       headerTooltip: 'Created At',
       pinned: 'left',
       width: 160,
-      minWidth: 130,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
-    },
-    {
+    }),
+    col({
+      group: 'General',
       field: 'id',
       headerName: 'ID',
       headerTooltip: 'ID',
@@ -135,140 +140,191 @@ export function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
       sort: 'desc',
-    },
-    {
+    }),
+    col({
+      group: 'General',
       field: 'status',
       headerName: 'Status',
       headerTooltip: 'Status',
       width: 105,
-      minWidth: 90,
       cellRenderer: StatusCell,
       filter: 'agTextColumnFilter',
-    },
-    {
+    }),
+
+    // ── Sync Details ─────────────────────────────────────────────
+    col({
+      group: 'Sync Details',
       colId: 'selectedLink',
       headerName: 'Selected Link',
       headerTooltip: 'Selected Link',
       valueGetter: (p) => p.data?.details?.selectedLink,
       flex: 1.5,
-      minWidth: 145,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
-    },
-    {
+    }),
+    col({
+      group: 'Sync Details',
       colId: 'schedulerMode',
       headerName: 'Scheduler Mode',
       headerTooltip: 'Scheduler Mode',
       valueGetter: (p) => p.data?.details?.schedulerMode,
       flex: 1.5,
-      minWidth: 155,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
-    },
-    {
+    }),
+    col({
+      group: 'Sync Details',
       colId: 'messagesInQueue',
       headerName: 'Msgs In Queue',
       headerTooltip: 'Messages In Queue',
       valueGetter: (p) => p.data?.details?.messagesInQueue,
       flex: 1,
-      minWidth: 140,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
-    },
-    {
+    }),
+    col({
+      group: 'Sync Details',
       colId: 'nextDeliveryTime',
       headerName: 'Next Delivery',
       headerTooltip: 'Next Delivery Time',
       valueGetter: (p) => p.data?.details?.nextDeliveryTime,
       flex: 2,
-      minWidth: 140,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
       hide: true,
-    },
-    {
+    }),
+    col({
+      group: 'Sync Details',
       colId: 'geoData',
       headerName: 'Geo Data',
       headerTooltip: 'Geo Data',
       valueGetter: (p) => p.data?.details?.geoData,
       flex: 1,
-      minWidth: 105,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
       hide: true,
-    },
-    {
+    }),
+    col({
+      group: 'Sync Details',
       colId: 'serverLut',
       headerName: 'Server LUT',
       headerTooltip: 'Server Last Update Time',
       valueGetter: (p) => p.data?.details?.serverLut,
       flex: 2,
-      minWidth: 120,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
       hide: true,
-    },
-    {
+    }),
+
+    // ── Link Quality ─────────────────────────────────────────────
+    col({
+      group: 'Link Quality',
       colId: 'linkType',
       headerName: 'Link Type',
       headerTooltip: 'Link Type',
       valueGetter: (p) => p.data?.link_quality?.type,
       flex: 1,
-      minWidth: 115,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
-    },
-    {
+    }),
+    col({
+      group: 'Link Quality',
       colId: 'linkAvailable',
       headerName: 'Available',
       headerTooltip: 'Link Available',
       valueGetter: (p) => p.data?.link_quality?.available,
       flex: 1,
-      minWidth: 110,
       cellRenderer: AvailabilityCell,
       filter: 'agTextColumnFilter',
-    },
-    {
+    }),
+    col({
+      group: 'Link Quality',
       colId: 'linkQuality',
       headerName: 'Quality',
       headerTooltip: 'Link Quality',
       valueGetter: (p) => p.data?.link_quality?.quality,
       flex: 1,
-      minWidth: 100,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
-    },
-    {
+    }),
+    col({
+      group: 'Link Quality',
       colId: 'latency',
       headerName: 'Latency (ms)',
       headerTooltip: 'Latency in milliseconds',
       valueGetter: (p) => p.data?.link_quality?.latency,
       flex: 1,
-      minWidth: 135,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
-    },
-    {
+    }),
+    col({
+      group: 'Link Quality',
       colId: 'reliability',
       headerName: 'Reliability',
       headerTooltip: 'Link Reliability',
       valueGetter: (p) => p.data?.link_quality?.reliability,
       flex: 1,
-      minWidth: 125,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
       hide: true,
-    },
-    {
+    }),
+    col({
+      group: 'Link Quality',
       colId: 'linkTimestamp',
       headerName: 'Link Timestamp',
       headerTooltip: 'Link Quality Timestamp',
       valueGetter: (p) => p.data?.link_quality?.timestamp,
       flex: 2,
-      minWidth: 150,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
       hide: true,
-    },
+    }),
   ];
 }
+
+// ── Public API ──────────────────────────────────────────────────────
+
+/** Column definitions for <AgGridReact columnDefs={...}> */
+export function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
+  return buildColumnDefsInternal();
+}
+
+/**
+ * colId → headerName map, derived from column definitions.
+ * Used by filter chips and the picker panel.
+ */
+export function buildColumnLabels(
+  defs: SyncColDef[]
+): Record<string, string> {
+  return Object.fromEntries(
+    defs
+      .map((d) => [(d.colId ?? d.field) as string, d.headerName ?? ''])
+      .filter(([id]) => Boolean(id))
+  );
+}
+
+/**
+ * Picker groups in GROUP_ORDER, derived from each column's `group` property.
+ */
+export function buildColumnGroups(
+  defs: SyncColDef[]
+): Array<{ label: string; cols: string[] }> {
+  return GROUP_ORDER.map((label) => ({
+    label,
+    cols: defs
+      .filter((d) => d.group === label)
+      .map((d) => (d.colId ?? d.field) as string)
+      .filter(Boolean),
+  }));
+}
+
+// ── Singleton exports ───────────────────────────────────────────────
+// Evaluated once at module load. Safe because defs never change at runtime.
+
+const _defs = buildColumnDefsInternal();
+
+/** colId → human label (e.g. 'selectedLink' → 'Selected Link') */
+export const COLUMN_LABELS = buildColumnLabels(_defs);
+
+/** Picker panel groups with their column ids */
+export const COLUMN_GROUPS = buildColumnGroups(_defs);
