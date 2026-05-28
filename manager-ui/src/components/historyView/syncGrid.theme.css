@@ -25,6 +25,9 @@
   --ag-row-height: 38px;
   --ag-header-height: 44px;
 
+  /* Tighter cell padding — default Quartz is 12px, too wide for dense grids */
+  --ag-cell-horizontal-padding: 10px;
+
   /* Header — LIGHT (Google Sheets style) */
   --ag-header-background-color: #f4f6f8;
   --ag-header-foreground-color: #4b5563;
@@ -96,6 +99,48 @@
 .snc-grid-wrapper .ag-header-cell-sorted-desc .ag-header-cell-text {
   color: #111827 !important;
   font-weight: 700 !important;
+}
+
+/* ── Column menu / filter button — no space at rest, fades in on hover */
+/*    Quartz hides it with opacity:0 but still reserves the width.      */
+/*    We collapse the width so the header text gets its full space.      */
+.snc-grid-wrapper .ag-header-cell-menu-button,
+.snc-grid-wrapper .ag-header-cell-filter-button {
+  opacity: 0;
+  width: 0 !important;
+  overflow: hidden;
+  margin-left: 0 !important;
+  transition: width 0.15s ease, opacity 0.15s ease, margin-left 0.15s ease;
+}
+
+/* Show when hovering the header cell */
+.snc-grid-wrapper .ag-header-cell:hover .ag-header-cell-menu-button,
+.snc-grid-wrapper .ag-header-cell:hover .ag-header-cell-filter-button {
+  opacity: 0.55;
+  width: 18px !important;
+  margin-left: 4px !important;
+}
+
+/* Full opacity on direct icon hover */
+.snc-grid-wrapper .ag-header-cell:hover .ag-header-cell-menu-button:hover,
+.snc-grid-wrapper .ag-header-cell:hover .ag-header-cell-filter-button:hover {
+  opacity: 1;
+}
+
+/* Keep button visible while the column menu popup is open */
+.snc-grid-wrapper .ag-column-menu-visible .ag-header-cell-menu-button,
+.snc-grid-wrapper .ag-column-menu-visible .ag-header-cell-filter-button {
+  opacity: 1;
+  width: 18px !important;
+  margin-left: 4px !important;
+}
+
+/* Always show filter button when a filter is active on that column */
+.snc-grid-wrapper .ag-header-cell-filtered .ag-header-cell-menu-button,
+.snc-grid-wrapper .ag-header-cell-filtered .ag-header-cell-filter-button {
+  opacity: 0.75;
+  width: 18px !important;
+  margin-left: 4px !important;
 }
 
 /* ── Column filter popup (menu) styling ─────────────────────── */
