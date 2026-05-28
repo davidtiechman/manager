@@ -46,17 +46,22 @@ const GROUP_ORDER: ColGroup[] = ['General', 'Sync Details', 'Link Quality'];
 type EnumSource = Record<string, string> | readonly (string | boolean)[];
 
 /**
- * Column definition for the sync-history grid.
+ * Input shape for `col()` — `group` is flat for readability at call site.
  *
- * `group` is consumed by the column picker panel.
+ * `group` is moved into `context.group` so AG Grid doesn't see a custom root prop.
  * `enum` is consumed by the `col()` factory only — when set, the column
  * gets `filter: 'agSetColumnFilter'` with the enum values as options.
  * `col()` strips `enum` before returning so AG Grid never sees it.
  */
-interface SyncColDef extends ColDef<AgentHistoryRecord> {
+interface SyncColDefInput extends Omit<ColDef<AgentHistoryRecord>, 'context'> {
   group: ColGroup;
   enum?: EnumSource;
 }
+
+/** Output of `col()` — `group` lives in `context` (AG Grid's place for app data). */
+type SyncColDef = ColDef<AgentHistoryRecord> & {
+  context: { group: ColGroup };
+};
 
 // ── Auto-minWidth factory ───────────────────────────────────────────
 
@@ -102,8 +107,8 @@ function withBlanksFormatter(
  *
  * `enum` is stripped from the output so AG Grid never sees an unknown property.
  */
-function col(def: SyncColDef): SyncColDef {
-  const { enum: enumDef, ...rest } = def;
+function col(def: SyncColDefInput): SyncColDef {
+  const { group, enum: enumDef, ...rest } = def;
   const autoMin = rest.headerName
     ? Math.ceil(rest.headerName.length * CHAR_WIDTH) + HDR_OVERHEAD
     : undefined;
@@ -130,6 +135,7 @@ function col(def: SyncColDef): SyncColDef {
     ...(setFilterFromEnum ?? {}),
     ...(chipRendererFromEnum ?? {}),
     minWidth: rest.minWidth ?? autoMin,
+    context: { group },
   };
 }
 
@@ -391,7 +397,7 @@ export function buildColumnLabels(
 }
 
 /**
- * Picker groups in GROUP_ORDER, derived from each column's `group` property.
+ * Picker groups in GROUP_ORDER, derived from each column's `context.group`.
  */
 export function buildColumnGroups(
   defs: SyncColDef[]
@@ -399,7 +405,7 @@ export function buildColumnGroups(
   return GROUP_ORDER.map((label) => ({
     label,
     cols: defs
-      .filter((d) => d.group === label)
+      .filter((d) => d.context?.group === label)
       .map((d) => (d.colId ?? d.field) as string)
       .filter(Boolean),
   }));
