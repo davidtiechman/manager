@@ -1,8 +1,10 @@
+import { AgentResponse } from "./agentResponse";
+
 export type DateValue = string | number | Date;
 
 export interface AgentPreviewData {
   id: string;
-  status: string;
+  status: AgentResponse['status']['status'];
   call_sign: string;
   unit: string;
   unit_code: string;
