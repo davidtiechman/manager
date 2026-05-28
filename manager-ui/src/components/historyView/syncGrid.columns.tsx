@@ -36,14 +36,15 @@ export const DEFAULT_HIDDEN: string[] = [
 export type ColGroup = 'General' | 'Sync Details' | 'Link Quality';
 const GROUP_ORDER: ColGroup[] = ['General', 'Sync Details', 'Link Quality'];
 
-/**
- * Standard AG Grid ColDef plus `group` for the picker panel.
- * AG Grid silently ignores unknown properties, so passing SyncColDef[]
- * to <AgGridReact columnDefs={...}> is safe.
- */
-interface SyncColDef extends ColDef<AgentHistoryRecord> {
+/** Input shape for `col()` — `group` is flat for readability at call site. */
+interface SyncColDefInput extends Omit<ColDef<AgentHistoryRecord>, 'context'> {
   group: ColGroup;
 }
+
+/** Output of `col()` — `group` lives in `context` (AG Grid's place for app data). */
+type SyncColDef = ColDef<AgentHistoryRecord> & {
+  context: { group: ColGroup };
+};
 
 // ── Auto-minWidth factory ───────────────────────────────────────────
 
@@ -55,13 +56,18 @@ const HDR_OVERHEAD  = 44;
 /**
  * Wraps a column definition and fills in `minWidth` automatically
  * from `headerName` unless the caller already supplies one.
- * Explicit `minWidth` in `def` always wins.
+ * Also moves `group` into `colDef.context` so AG Grid doesn't warn.
  */
-function col(def: SyncColDef): SyncColDef {
-  const autoMin = def.headerName
-    ? Math.ceil(def.headerName.length * CHAR_WIDTH) + HDR_OVERHEAD
+function col(def: SyncColDefInput): SyncColDef {
+  const { group, ...rest } = def;
+  const autoMin = rest.headerName
+    ? Math.ceil(rest.headerName.length * CHAR_WIDTH) + HDR_OVERHEAD
     : undefined;
-  return { ...def, minWidth: def.minWidth ?? autoMin };
+  return {
+    ...rest,
+    minWidth: rest.minWidth ?? autoMin,
+    context: { group },
+  };
 }
 
 // ── Cell renderers (internal) ───────────────────────────────────────
@@ -304,7 +310,7 @@ export function buildColumnLabels(
 }
 
 /**
- * Picker groups in GROUP_ORDER, derived from each column's `group` property.
+ * Picker groups in GROUP_ORDER, derived from each column's `context.group`.
  */
 export function buildColumnGroups(
   defs: SyncColDef[]
@@ -312,7 +318,7 @@ export function buildColumnGroups(
   return GROUP_ORDER.map((label) => ({
     label,
     cols: defs
-      .filter((d) => d.group === label)
+      .filter((d) => d.context?.group === label)
       .map((d) => (d.colId ?? d.field) as string)
       .filter(Boolean),
   }));
