@@ -1,0 +1,207 @@
+/* ═══════════════════════════════════════════════════════════════
+   Sync History — Cell renderers, context menu,
+                  column-selection strip, row highlight, scrollbar
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Cell renderer classes ───────────────────────────────────── */
+
+/* Status badge */
+.snc-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px 2px 7px;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: capitalize;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.snc-status::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.snc-status--active   { background: #dcfce7; color: #166534; }
+.snc-status--active::before   { background: #22c55e; }
+
+.snc-status--inactive { background: #f1f5f9; color: #4b5563; }
+.snc-status--inactive::before { background: #9ca3af; }
+
+.snc-status--slow     { background: #fff7ed; color: #9a3412; }
+.snc-status--slow::before     { background: #f97316; }
+
+.snc-status--unknown,
+.snc-status-- {
+  background: #f8fafc;
+  color: #6b7280;
+}
+.snc-status--unknown::before,
+.snc-status--::before { background: #d1d5db; }
+
+/* Availability badge — dot + text, consistent with Status */
+.snc-avail {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px 2px 7px;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.snc-avail::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.snc-avail--yes { background: #dcfce7; color: #166534; }
+.snc-avail--yes::before { background: #22c55e; }
+
+.snc-avail--no  { background: #fee2e2; color: #991b1b; }
+.snc-avail--no::before  { background: #f43f5e; }
+
+/* Date */
+.snc-date {
+  font-size: 12.5px;
+  color: #374151;
+  letter-spacing: 0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Numeric — neutral dark */
+.snc-num {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #334155;
+  font-size: 13px;
+}
+
+/* Text */
+.snc-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+  color: #374151;
+}
+
+/* Null placeholder */
+.snc-null {
+  color: #d1d5db;
+  font-size: 13px;
+  user-select: none;
+  line-height: 1;
+}
+
+/* No-rows overlay */
+.snc-no-rows {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+/* ── Header right-click context menu ────────────────────────── */
+.snc-ctx-menu {
+  position: fixed;
+  z-index: 9999;
+  background: #ffffff;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+  padding: 4px;
+  min-width: 176px;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.snc-ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: #374151;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  transition: background 0.1s;
+}
+
+.snc-ctx-item:hover {
+  background: #F3F4F6;
+  color: #111827;
+}
+
+.snc-ctx-item--muted {
+  color: #6B7280;
+}
+
+.snc-ctx-item--muted:hover {
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+.snc-ctx-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.snc-ctx-item:hover .snc-ctx-icon {
+  opacity: 1;
+}
+
+.snc-ctx-sep {
+  height: 1px;
+  background: #F3F4F6;
+  margin: 3px 6px;
+}
+
+/* ── Column-selection strip (hover zone above header cells) ── */
+.snc-col-select-strip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  z-index: 10;
+  /* Downward-arrow column-select cursor (SVG data URI, hotspot at top-centre) */
+  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='16' viewBox='0 0 14 16'%3E%3Cline x1='7' y1='1' x2='7' y2='10' stroke='%231e293b' stroke-width='2.2' stroke-linecap='round'/%3E%3Cpath d='M2 7L7 14L12 7Z' fill='%231e293b'/%3E%3C/svg%3E") 7 1, default;
+  user-select: none;
+  touch-action: none;
+}
+
+/* ── Selected row highlight ─────────────────────────────────── */
+.snc-grid-wrapper .ag-row-selected {
+  background-color: #e0f2fe !important;
+  border-top: 1px solid #bae6fd !important;
+  border-bottom: 1px solid #bae6fd !important;
+}
+
+.snc-grid-wrapper .ag-row-selected .ag-cell {
+  color: #0c4a6e;
+}
+
+/* ── Hide dead scrollbar track under pinned-left column ─────── */
+/* visibility:hidden preserves the spacer's layout contribution  */
+/* so the real horizontal scrollbar still works correctly        */
+.snc-grid-wrapper .ag-horizontal-left-spacer {
+  visibility: hidden;
+}

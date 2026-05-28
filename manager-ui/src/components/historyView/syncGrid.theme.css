@@ -1,0 +1,178 @@
+/* ═══════════════════════════════════════════════════════════════
+   Sync History — AG Grid layout container + theme / overrides
+   Quartz theme, light header (Google Sheets style)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Grid outer — fills remaining height, outer breathing room ─ */
+.snc-grid-outer {
+  flex: 1;
+  min-height: 0;
+  padding: 12px 16px 16px;
+}
+
+/* ── AG Grid Quartz overrides ───────────────────────────────── */
+.snc-grid-wrapper {
+  position: relative; /* required for the column-selection strip */
+  width: 100%;
+  height: 100%;
+
+  /* Typography */
+  --ag-font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --ag-font-size: 13px;
+  --ag-line-height: 1.4;
+
+  /* Sizing */
+  --ag-row-height: 38px;
+  --ag-header-height: 44px;
+
+  /* Tighter cell padding — default Quartz is 12px, too wide for dense grids */
+  --ag-cell-horizontal-padding: 10px;
+
+  /* Header — LIGHT (Google Sheets style) */
+  --ag-header-background-color: #f4f6f8;
+  --ag-header-foreground-color: #4b5563;
+  --ag-header-column-separator-display: block;
+  --ag-header-column-separator-color: #dde3ea;
+  --ag-header-column-separator-height: 60%;
+  --ag-header-column-resize-handle-display: block;
+  --ag-header-column-resize-handle-color: #bac5d0;
+
+  /* Rows — warm off-white */
+  --ag-background-color: #ffffff;
+  --ag-odd-row-background-color: #f7f9fb;
+  --ag-row-hover-color: #edf2f7;
+  --ag-selected-row-background-color: #dbeafe;
+
+  /* Borders */
+  --ag-border-color: #dde3ea;
+  --ag-row-border-color: #eef1f5;
+  --ag-cell-horizontal-border: solid #eef1f5;
+  --ag-wrapper-border-radius: 0;
+
+  /* Accent */
+  --ag-accent-color: #0ea5e9;
+  --ag-input-focus-border-color: #38bdf8;
+  --ag-checkbox-checked-color: #0ea5e9;
+  --ag-range-selection-border-color: #0ea5e9;
+
+  /* Secondary */
+  --ag-secondary-foreground-color: #6b7280;
+  --ag-disabled-foreground-color: #9ca3af;
+  --ag-input-border-color: #d1d5db;
+  --ag-menu-background-color: #ffffff;
+
+  --ag-filter-tool-panel-header-height: 32px;
+  --ag-list-item-height: 28px;
+}
+
+/* ── Header cells — readable dark text on light background ─── */
+.snc-grid-wrapper .ag-header-cell-text {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #4b5563;
+}
+
+.snc-grid-wrapper .ag-header-cell:hover {
+  background: #eaecf0 !important;
+}
+
+.snc-grid-wrapper .ag-header-cell:hover .ag-header-cell-text {
+  color: #111827;
+}
+
+/* Active sort arrows — dark and legible */
+.snc-grid-wrapper .ag-sort-ascending-icon,
+.snc-grid-wrapper .ag-sort-descending-icon {
+  color: #374151;
+  opacity: 1;
+}
+
+/* ── Sorted column — dark underline, no fill ────────────────── */
+.snc-grid-wrapper .ag-header-cell-sorted-asc,
+.snc-grid-wrapper .ag-header-cell-sorted-desc {
+  background: transparent !important;
+  box-shadow: inset 0 -2px 0 0 #374151 !important;
+}
+
+.snc-grid-wrapper .ag-header-cell-sorted-asc .ag-header-cell-text,
+.snc-grid-wrapper .ag-header-cell-sorted-desc .ag-header-cell-text {
+  color: #111827 !important;
+  font-weight: 700 !important;
+}
+
+/* ── Column menu / filter button — no space at rest, fades in on hover */
+/*    Quartz hides it with opacity:0 but still reserves the width.      */
+/*    We collapse the width so the header text gets its full space.      */
+.snc-grid-wrapper .ag-header-cell-menu-button,
+.snc-grid-wrapper .ag-header-cell-filter-button {
+  opacity: 0;
+  width: 0 !important;
+  overflow: hidden;
+  margin-left: 0 !important;
+  transition: width 0.15s ease, opacity 0.15s ease, margin-left 0.15s ease;
+}
+
+/* Show when hovering the header cell */
+.snc-grid-wrapper .ag-header-cell:hover .ag-header-cell-menu-button,
+.snc-grid-wrapper .ag-header-cell:hover .ag-header-cell-filter-button {
+  opacity: 0.55;
+  width: 18px !important;
+  margin-left: 4px !important;
+}
+
+/* Full opacity on direct icon hover */
+.snc-grid-wrapper .ag-header-cell:hover .ag-header-cell-menu-button:hover,
+.snc-grid-wrapper .ag-header-cell:hover .ag-header-cell-filter-button:hover {
+  opacity: 1;
+}
+
+/* Keep button visible while the column menu popup is open */
+.snc-grid-wrapper .ag-column-menu-visible .ag-header-cell-menu-button,
+.snc-grid-wrapper .ag-column-menu-visible .ag-header-cell-filter-button {
+  opacity: 1;
+  width: 18px !important;
+  margin-left: 4px !important;
+}
+
+/* Always show filter button when a filter is active on that column */
+.snc-grid-wrapper .ag-header-cell-filtered .ag-header-cell-menu-button,
+.snc-grid-wrapper .ag-header-cell-filtered .ag-header-cell-filter-button {
+  opacity: 0.75;
+  width: 18px !important;
+  margin-left: 4px !important;
+}
+
+/* ── Column filter popup (menu) styling ─────────────────────── */
+.snc-grid-wrapper .ag-menu {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.snc-grid-wrapper .ag-filter-apply-panel {
+  padding: 8px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* ── Pinned left column separator ───────────────────────────── */
+.snc-grid-wrapper .ag-pinned-left-header,
+.snc-grid-wrapper .ag-cell.ag-cell-last-left-pinned {
+  border-right: 2px solid #dde3ea !important;
+}
+
+/* ── Cell text styling ──────────────────────────────────────── */
+.snc-grid-wrapper .ag-cell {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+}
+
+/* ID column */
+.snc-grid-wrapper .ag-cell[col-id='id'] {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #475569;
+  font-size: 12.5px;
+}

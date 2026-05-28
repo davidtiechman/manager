@@ -1,0 +1,80 @@
+.mode-navigation-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  border: 1px solid;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 700;
+  width: fit-content;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.mode-navigation-link.history {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+.mode-navigation-link.history:hover,
+.mode-navigation-link.history:focus-visible {
+  background: #dbeafe;
+  border-color: #2563eb;
+  color: #1e40af;
+}
+
+.mode-navigation-link.real-time {
+  background: #f0fdf4;
+  border-color: #22c55e;
+  color: #166534;
+}
+
+.mode-navigation-link.real-time:hover,
+.mode-navigation-link.real-time:focus-visible {
+  background: #dcfce7;
+  border-color: #16a34a;
+  color: #14532d;
+}
+
+.mode-navigation-icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+}
+
+.mode-navigation-svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.view-toggle {
+  display: inline-flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #e2e8f0;
+}
+
+.view-toggle-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  cursor: pointer;
+  background: transparent;
+  color: #334155;
+  font: inherit;
+  font-weight: 600;
+}
+
+.view-toggle-button.active {
+  background: #0f172a;
+  color: #fff;
+}
