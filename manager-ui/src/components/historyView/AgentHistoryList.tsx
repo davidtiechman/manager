@@ -108,17 +108,13 @@ export default function AgentHistoryList() {
                   navigate(`/history/${agent.id}`);
                 }}
             >
-                <span className="history-agent-mark" aria-hidden="true">
-                  {agent.callSign?.charAt(0) || agent.id.charAt(0)}
-                </span>
 
                 <div className="agent-content">
                   <div className="agent-label">
-                    {agent.callSign || agent.id}
+                    ID: {agent.id}
                   </div>
 
                   <div className="agent-info">
-                    <div className="info-item">ID: {agent.id}</div>
                     <div className='info-item'>נוצר: {formatHistoryDate(agent.createdAt)}</div>
                   </div>
                 </div>
