@@ -103,6 +103,39 @@
   min-width: 0;
 }
 
+.filter-label-row {
+  display: flex;
+  min-width: 0;
+  min-height: 18px;
+  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filter-field-context {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: fit-content;
+  align-items: center;
+  padding: 2px 6px;
+  border: 1px solid #bae6fd;
+  border-radius: 999px;
+  background: #f0f9ff;
+  color: #0369a1;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.filter-selected-field {
+  min-width: 0;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .filter-message {
   margin: -4px 0 12px;
   color: #b91c1c;
