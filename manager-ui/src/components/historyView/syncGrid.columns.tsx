@@ -70,11 +70,33 @@ function enumValues(source: EnumSource): (string | boolean)[] {
   return Array.isArray(source) ? [...source] : Object.values(source);
 }
 
+/** Label shown in the set-filter dropdown for null/undefined values. */
+const BLANKS_LABEL = '(Blanks)';
+
+type SetFilterValueFormatter = (params: { value: unknown }) => string;
+
+/**
+ * Compose a filter-dropdown formatter so that null/undefined always shows as
+ * "(Blanks)" regardless of any user-supplied formatter (which only sees
+ * non-null values).
+ */
+function withBlanksFormatter(
+  userFormatter: SetFilterValueFormatter | undefined
+): SetFilterValueFormatter {
+  return (params) => {
+    if (params.value == null) return BLANKS_LABEL;
+    if (userFormatter) return userFormatter(params);
+    return String(params.value);
+  };
+}
+
 /**
  * Wraps a column definition and:
  *   - fills in `minWidth` from `headerName` when not provided,
  *   - translates `enum` → `agSetColumnFilter` + `filterParams.values`
- *     (unless the caller already set a different `filter`).
+ *     (unless the caller already set a different `filter`). The values
+ *     list always includes `null` so users can filter blank/missing rows;
+ *     `null` is displayed as `(Blanks)` in the dropdown.
  *
  * `enum` is stripped from the output so AG Grid never sees an unknown property.
  */
@@ -89,8 +111,11 @@ function col(def: SyncColDef): SyncColDef {
       ? {
           filter: 'agSetColumnFilter',
           filterParams: {
-            values: enumValues(enumDef),
             ...(rest.filterParams ?? {}),
+            values: [...enumValues(enumDef), null],
+            valueFormatter: withBlanksFormatter(
+              rest.filterParams?.valueFormatter as SetFilterValueFormatter | undefined
+            ),
           },
         }
       : null;
