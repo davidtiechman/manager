@@ -97,6 +97,8 @@ function withBlanksFormatter(
  *     (unless the caller already set a different `filter`). The values
  *     list always includes `null` so users can filter blank/missing rows;
  *     `null` is displayed as `(Blanks)` in the dropdown.
+ *   - injects `EnumChipCell` as the cell renderer when `enum` is set
+ *     and no `cellRenderer` is provided.
  *
  * `enum` is stripped from the output so AG Grid never sees an unknown property.
  */
@@ -120,9 +122,13 @@ function col(def: SyncColDef): SyncColDef {
         }
       : null;
 
+  const chipRendererFromEnum =
+    enumDef && !rest.cellRenderer ? { cellRenderer: EnumChipCell } : null;
+
   return {
     ...rest,
     ...(setFilterFromEnum ?? {}),
+    ...(chipRendererFromEnum ?? {}),
     minWidth: rest.minWidth ?? autoMin,
   };
 }
@@ -177,6 +183,23 @@ function TextCell({ value }: ICellRendererParams) {
   );
 }
 
+/**
+ * Renders a colored chip for any enum-backed value.
+ * Class shape: `snc-chip snc-chip--{colId}-{value-slug}`.
+ * Unknown values still render — they just hit the neutral base style.
+ */
+function EnumChipCell({ value, column }: ICellRendererParams) {
+  if (value == null || value === '') return <span className="snc-null">—</span>;
+  const colId = column?.getColId();
+  const slug = String(value).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const className = colId ? `snc-chip snc-chip--${colId}-${slug}` : 'snc-chip';
+  return (
+    <span className={className} title={String(value)}>
+      {String(value)}
+    </span>
+  );
+}
+
 // ── Column definitions ──────────────────────────────────────────────
 // Add a new column here ONLY. Labels and groups are derived below.
 
@@ -222,7 +245,6 @@ function buildColumnDefsInternal(): SyncColDef[] {
       headerTooltip: 'Selected Link',
       valueGetter: (p) => p.data?.details?.selectedLink,
       flex: 1.5,
-      cellRenderer: TextCell,
       enum: LinkType,
     }),
     col({
@@ -232,7 +254,6 @@ function buildColumnDefsInternal(): SyncColDef[] {
       headerTooltip: 'Scheduler Mode',
       valueGetter: (p) => p.data?.details?.schedulerMode,
       flex: 1.5,
-      cellRenderer: TextCell,
       enum: SchedulerMode,
     }),
     col({
@@ -287,7 +308,6 @@ function buildColumnDefsInternal(): SyncColDef[] {
       headerTooltip: 'Link Type',
       valueGetter: (p) => p.data?.link_quality?.type,
       flex: 1,
-      cellRenderer: TextCell,
       enum: LinkType,
     }),
     col({
@@ -312,7 +332,6 @@ function buildColumnDefsInternal(): SyncColDef[] {
       headerTooltip: 'Link Quality',
       valueGetter: (p) => p.data?.link_quality?.quality,
       flex: 1,
-      cellRenderer: TextCell,
       enum: LinkQualityType,
     }),
     col({
