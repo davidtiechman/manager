@@ -500,6 +500,43 @@ function buildSyncsWhere(agentId, filterModel, params) {
             const bool = value === 'true' || value === true;
             params.push(bool);
             conditions.push(`${col} = $${params.length}`);
+        } else if (filterType === 'set') {
+            // agSetColumnFilter (Enterprise) sends { filterType: 'set', values: [...] }.
+            // Empty values array  = "no checkbox selected" = match no rows.
+            // Missing values array = skip the filter entirely.
+            // `null` in the values array means the user selected "(Blanks)" →
+            //   becomes `col IS NULL` combined with the IN-list via OR.
+            if (!Array.isArray(filter.values)) continue;
+            if (filter.values.length === 0) {
+                conditions.push('FALSE');
+                continue;
+            }
+
+            const nonNullValues = filter.values.filter(
+                (v) => v !== null && v !== undefined
+            );
+            const includeNulls = nonNullValues.length !== filter.values.length;
+            const parts = [];
+
+            if (nonNullValues.length > 0) {
+                const placeholders = nonNullValues.map((v) => {
+                    if (col === 'link_available') {
+                        params.push(v === true || v === 'true');
+                    } else {
+                        params.push(String(v));
+                    }
+                    return `$${params.length}`;
+                });
+                parts.push(`${col} IN (${placeholders.join(', ')})`);
+            }
+
+            if (includeNulls) {
+                parts.push(`${col} IS NULL`);
+            }
+
+            if (parts.length > 0) {
+                conditions.push(`(${parts.join(' OR ')})`);
+            }
         }
     }
 

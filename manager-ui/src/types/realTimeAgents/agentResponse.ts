@@ -1,3 +1,9 @@
+import type {
+  LinkQualityType,
+  LinkType,
+  SchedulerMode,
+  StatusAgent,
+} from '../serverEnums';
 export type DateValue = string | number | Date;
 
 export interface AgentResponse {
@@ -6,17 +12,17 @@ export interface AgentResponse {
 
   status: {
     id: string;
-    status: 'active' | 'inactive' | 'slow';
+    status: StatusAgent;
 
     details: {
-      selectedLink: string;
-      schedulerMode: string;
+      selectedLink: LinkType;
+      schedulerMode: SchedulerMode;
       messagesInQueue: number;
 
       linkQualities: {
-        type: string;
+        type: LinkType;
         available: boolean;
-        quality: string;
+        quality: LinkQualityType;
         latency: number;
         reliability: number;
         timestamp: number;
@@ -41,8 +47,8 @@ export interface AgentResponse {
   };
 
   configuration: {
-    schedulerMode: string;
-    selectedLink: string;
+    schedulerMode: SchedulerMode;
+    selectedLink: LinkType;
     intervalMs: number;
     maxRetries: number;
     sparkProxyUrl: string;

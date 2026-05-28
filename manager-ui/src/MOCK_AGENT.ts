@@ -1,4 +1,10 @@
 import type { AgentResponse } from './types/realTimeAgents/agentResponse';
+import {
+    LinkQualityType,
+    LinkType,
+    SchedulerMode,
+    StatusAgent,
+} from './types/serverEnums';
 
 export const MOCK_AGENTS: AgentResponse[] = [
     {
@@ -7,17 +13,17 @@ export const MOCK_AGENTS: AgentResponse[] = [
 
         status: {
             id: 'status-101',
-            status: 'slow',
+            status: StatusAgent.SLOW,
 
             details: {
                 selectedLink: 'lte',
-                schedulerMode: 'auto',
+                schedulerMode: SchedulerMode.CONTINUOUS,
                 messagesInQueue: 4,
 
                 linkQualities: {
-                    type: 'lte',
+                    type: LinkType.IP,
                     available: true,
-                    quality: '0.92',
+                    quality: LinkQualityType.GOOD,
                     latency: 120,
                     reliability: 0.95,
                     timestamp: Date.now(),
@@ -42,7 +48,7 @@ export const MOCK_AGENTS: AgentResponse[] = [
         },
 
         configuration: {
-            schedulerMode: 'auto',
+            schedulerMode: SchedulerMode.CONTINUOUS,
             selectedLink: 'lte',
             intervalMs: 5000,
             maxRetries: 3,

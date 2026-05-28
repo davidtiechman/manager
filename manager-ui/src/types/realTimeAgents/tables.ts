@@ -1,4 +1,10 @@
 import { AgentResponse } from "./agentResponse";
+import type {
+  LinkQualityType,
+  LinkType,
+  SchedulerMode,
+  StatusAgent,
+} from "../serverEnums";
 
 export type DateValue = string | number | Date;
 
@@ -14,9 +20,9 @@ export interface AgentPreviewData {
 
 
 export interface LinkQualityTableData {
-  linkType: string;
+  linkType: LinkType;
   linkAvailable: boolean;
-  linkQuality: string;
+  linkQuality: LinkQualityType;
   latency: number;
   reliability: number;
   linkTimestamp: DateValue;
@@ -32,9 +38,9 @@ export interface PlatformTableData {
 }
 
 export interface SyncDetailsTableData {
-  status: string;
-  schedulerMode: string;
-  selectedLink: string;
+  status: StatusAgent;
+  schedulerMode: SchedulerMode;
+  selectedLink: LinkType;
   messagesInQueue: number;
   nextDeliveryTime: DateValue;
   serverLut: DateValue;
@@ -42,8 +48,8 @@ export interface SyncDetailsTableData {
 }
 
 export interface ConfigurationTableData {
-  schedulerMode: string;
-  selectedLink: string;
+  schedulerMode: SchedulerMode;
+  selectedLink: LinkType;
   intervalMs: number;
   maxRetries: number;
   sparkProxyUrl: string;

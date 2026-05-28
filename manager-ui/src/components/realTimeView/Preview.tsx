@@ -7,7 +7,10 @@ import Details from './AgentDetails';
 import { ApiService } from '../../api';
 import TankIcon from '../agent-details/TankIcon';
 import ModeNavigationLink from '../ModeNavigationLink';
-import type {PlatformSearchField,PlatformSearchState,} from '../../types/realTimeAgents/PlatformSearchField';
+import {
+  agentFilterFields,
+  type AgentSearchState,
+} from '../../types/realTimeAgents/agentFilterFields';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
 const DEFAULT_SIDEBAR_WIDTH = Number(import.meta.env.VITE_DEFAULT_SIDEBAR_WIDTH) || 420;
@@ -19,16 +22,25 @@ const SELECTED_LAYOUT_GAPS = Number(import.meta.env.VITE_SELECTED_LAYOUT_GAPS) |
 const MAX_SIDEBAR_VIEWPORT_RATIO = Number(import.meta.env.VITE_MAX_SIDEBAR_VIEWPORT_RATIO) || 0.72;
 
 type ViewMode = 'icon' | 'list';
-type KnownSearchField = Exclude<PlatformSearchField, 'other'>;
 
-const platformSearchFields: { label: string; value: KnownSearchField }[] = [
-  { label: 'Platform ID', value: 'platformId' },
-  { label: 'Platform Name', value: 'platformName' },
-  { label: 'Unit', value: 'unit' },
-  { label: 'Unit Code', value: 'unit_code' },
-  { label: 'Zayad ID', value: 'zayad_id' },
-  { label: 'Call Sign', value: 'call_sign' },
-];
+const filterFieldGroups = [
+  'Platform',
+  'Live Status',
+  'Link Quality',
+  'Configuration',
+] as const;
+
+function stringifySearchValue(value: unknown) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+}
 
 type SearchValueMatch = {
   exists: boolean;
@@ -137,18 +149,6 @@ function findCustomSearchEntry(
   return { exists: false, value: undefined };
 }
 
-function stringifySearchValue(value: unknown) {
-  if (value === null || value === undefined) {
-    return '';
-  }
-
-  if (typeof value === 'object') {
-    return JSON.stringify(value);
-  }
-
-  return String(value);
-}
-
 function getMaxSidebarWidth() {
   if (typeof window === 'undefined') {
     return DEFAULT_SIDEBAR_WIDTH;
@@ -185,7 +185,7 @@ export default function Preview() {
   const [sidebarWidth, setSidebarWidth] = useState(() =>
     clampSidebarWidth(DEFAULT_SIDEBAR_WIDTH)
   );
-  const [search, setSearch] = useState<PlatformSearchState>({
+  const [search, setSearch] = useState<AgentSearchState>({
     field: 'unit',
     customField: '',
     text: '',
@@ -193,6 +193,9 @@ export default function Preview() {
   const isConfigurationEditingRef = useRef(isConfigurationEditing);
   const { agentId: routeAgentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
+  const selectedFilterField = agentFilterFields.find(
+    (field) => field.value === search.field
+  );
   const customSearchField = search.customField.trim();
   const isSearchActive =
     search.text.trim() !== '' ||
@@ -227,12 +230,17 @@ export default function Preview() {
         .includes(searchText);
     }
 
-    if (searchText === '') {
+    if (!selectedFilterField || searchText === '') {
       return true;
     }
 
-    const platformFields = toPlatformTable(agent);
-    return stringifySearchValue(platformFields[search.field])
+    const value = selectedFilterField.getValue(agent);
+
+    if (selectedFilterField.kind === 'enum') {
+      return stringifySearchValue(value) === search.text;
+    }
+
+    return stringifySearchValue(value)
       .toLowerCase()
       .includes(searchText);
   });
@@ -376,20 +384,32 @@ export default function Preview() {
         <aside className="agents-sidebar">
         <div className="filters-box">
   <label>
-    <span>Search column</span>
+    <span className="filter-label-row">
+      <span>Search column</span>
+      {selectedFilterField?.group === 'Configuration' && (
+        <span className="filter-field-context">Configuration field</span>
+      )}
+    </span>
     <select
       value={search.field}
       onChange={(event) =>
         setSearch((prev) => ({
           ...prev,
-          field: event.target.value as PlatformSearchState['field'],
+          field: event.target.value as AgentSearchState['field'],
+          text: '',
         }))
       }
     >
-      {platformSearchFields.map((field) => (
-        <option key={field.value} value={field.value}>
-          {field.label}
-        </option>
+      {filterFieldGroups.map((group) => (
+        <optgroup key={group} label={group}>
+          {agentFilterFields
+            .filter((field) => field.group === group)
+            .map((field) => (
+              <option key={field.value} value={field.value}>
+                {field.label}
+              </option>
+            ))}
+        </optgroup>
       ))}
       <option value="other">אחר</option>
     </select>
@@ -413,18 +433,42 @@ export default function Preview() {
   )}
 
   <label className="agent-free-text-filter">
-    <span>Free text</span>
-    <input
-      type="search"
-      placeholder="Type to filter"
-      value={search.text}
-      onChange={(event) =>
-        setSearch((prev) => ({
-          ...prev,
-          text: event.target.value,
-        }))
-      }
-    />
+    <span className="filter-label-row">
+      <span>{selectedFilterField?.kind === 'enum' ? 'Value' : 'Free text'}</span>
+      {selectedFilterField && (
+        <span className="filter-selected-field">{selectedFilterField.label}</span>
+      )}
+    </span>
+    {selectedFilterField?.kind === 'enum' ? (
+      <select
+        value={search.text}
+        onChange={(event) =>
+          setSearch((prev) => ({
+            ...prev,
+            text: event.target.value,
+          }))
+        }
+      >
+        <option value="">All</option>
+        {selectedFilterField.options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    ) : (
+      <input
+        type="search"
+        placeholder="Type to filter"
+        value={search.text}
+        onChange={(event) =>
+          setSearch((prev) => ({
+            ...prev,
+            text: event.target.value,
+          }))
+        }
+      />
+    )}
   </label>
 </div>
 
