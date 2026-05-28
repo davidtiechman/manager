@@ -7,278 +7,32 @@ import type {
   IGetRowsParams,
   GridReadyEvent,
   ColumnResizedEvent,
-  ICellRendererParams,
 } from 'ag-grid-community';
 
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
-import '../../styles/syncs-grid.css';
+import '../../styles/AgentSyncsList.css';
+import '../../styles/syncGrid.theme.css';
+import '../../styles/syncGrid.cells.css';
+import '../../styles/ColumnPicker.css';
 
 import { ApiService } from '../../api';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
 import ModeNavigationLink from '../ModeNavigationLink';
 
-const BLOCK_SIZE = 100;
-const LS_COL_KEY = 'snc-col-state';
-
-/** Columns hidden by default (first load, no saved state) */
-const DEFAULT_HIDDEN: string[] = [
-  'nextDeliveryTime',
-  'geoData',
-  'serverLut',
-  'reliability',
-  'linkTimestamp',
-];
-
-/** Human-readable label for each column */
-const COLUMN_LABELS: Record<string, string> = {
-  createdAt:        'Created At',
-  id:               'ID',
-  status:           'Status',
-  selectedLink:     'Selected Link',
-  schedulerMode:    'Scheduler Mode',
-  messagesInQueue:  'Msgs In Queue',
-  nextDeliveryTime: 'Next Delivery',
-  geoData:          'Geo Data',
-  serverLut:        'Server LUT',
-  linkType:         'Link Type',
-  linkAvailable:    'Available',
-  linkQuality:      'Quality',
-  latency:          'Latency',
-  reliability:      'Reliability',
-  linkTimestamp:    'Link Timestamp',
-};
-
-/** Column groups shown in the picker panel */
-const COLUMN_GROUPS: Array<{ label: string; cols: string[] }> = [
-  {
-    label: 'General',
-    cols: ['createdAt', 'id', 'status'],
-  },
-  {
-    label: 'Sync Details',
-    cols: ['selectedLink', 'schedulerMode', 'messagesInQueue', 'nextDeliveryTime', 'geoData', 'serverLut'],
-  },
-  {
-    label: 'Link Quality',
-    cols: ['linkType', 'linkAvailable', 'linkQuality', 'latency', 'reliability', 'linkTimestamp'],
-  },
-];
+import {
+  BLOCK_SIZE,
+  LS_COL_KEY,
+  DEFAULT_HIDDEN,
+  COLUMN_LABELS,
+  COLUMN_GROUPS,
+  buildColumnDefs,
+} from './syncGrid.columns';
+import { useColumnSelection } from './useColumnSelection';
 
 interface AgentSyncsListProps {
   agentId?: string;
   onClose?: () => void;
-}
-
-// ── Cell renderers ──────────────────────────────────────────────────
-
-function StatusCell({ value }: ICellRendererParams) {
-  if (value == null || value === '') return <span className="snc-null">—</span>;
-  const key = String(value).toLowerCase();
-  return <span className={`snc-status snc-status--${key}`}>{value}</span>;
-}
-
-function AvailabilityCell({ value }: ICellRendererParams) {
-  if (value == null) return <span className="snc-null">—</span>;
-  const isYes = value === true || value === 'true';
-  return (
-    <span className={`snc-avail snc-avail--${isYes ? 'yes' : 'no'}`}>
-      {isYes ? 'Yes' : 'No'}
-    </span>
-  );
-}
-
-function DateCell({ value }: ICellRendererParams) {
-  if (value == null || value === '') return <span className="snc-null">—</span>;
-  const raw =
-    typeof value === 'number' && value < 1_000_000_000_000 ? value * 1000 : value;
-  const date = new Date(raw);
-  if (Number.isNaN(date.getTime()))
-    return <span title={String(value)}>{String(value)}</span>;
-  const formatted = new Intl.DateTimeFormat('he-IL', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  }).format(date);
-  return (
-    <span className="snc-date" title={date.toISOString()}>
-      {formatted}
-    </span>
-  );
-}
-
-function NumericCell({ value }: ICellRendererParams) {
-  if (value == null || value === '') return <span className="snc-null">—</span>;
-  return <span className="snc-num">{String(value)}</span>;
-}
-
-function TextCell({ value }: ICellRendererParams) {
-  if (value == null || value === '') return <span className="snc-null">—</span>;
-  return (
-    <span className="snc-text" title={String(value)}>
-      {String(value)}
-    </span>
-  );
-}
-
-// ── Column definitions ──────────────────────────────────────────────
-
-function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
-  return [
-    {
-      field: 'createdAt',
-      headerName: 'Created At',
-      headerTooltip: 'Created At',
-      pinned: 'left',
-      width: 160,
-      minWidth: 130,
-      cellRenderer: DateCell,
-      filter: 'agDateColumnFilter',
-    },
-    {
-      field: 'id',
-      headerName: 'ID',
-      headerTooltip: 'ID',
-      width: 72,
-      minWidth: 62,
-      filter: 'agNumberColumnFilter',
-      cellRenderer: NumericCell,
-      sort: 'desc',
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      headerTooltip: 'Status',
-      width: 95,
-      minWidth: 80,
-      cellRenderer: StatusCell,
-      filter: 'agTextColumnFilter',
-    },
-    {
-      colId: 'selectedLink',
-      headerName: 'Selected Link',
-      headerTooltip: 'Selected Link',
-      valueGetter: (p) => p.data?.details?.selectedLink,
-      flex: 1.5,
-      minWidth: 85,
-      cellRenderer: TextCell,
-      filter: 'agTextColumnFilter',
-    },
-    {
-      colId: 'schedulerMode',
-      headerName: 'Scheduler Mode',
-      headerTooltip: 'Scheduler Mode',
-      valueGetter: (p) => p.data?.details?.schedulerMode,
-      flex: 1.5,
-      minWidth: 95,
-      cellRenderer: TextCell,
-      filter: 'agTextColumnFilter',
-    },
-    {
-      colId: 'messagesInQueue',
-      headerName: 'Msgs In Queue',
-      headerTooltip: 'Messages In Queue',
-      valueGetter: (p) => p.data?.details?.messagesInQueue,
-      flex: 1,
-      minWidth: 80,
-      filter: 'agNumberColumnFilter',
-      cellRenderer: NumericCell,
-    },
-    {
-      colId: 'nextDeliveryTime',
-      headerName: 'Next Delivery',
-      headerTooltip: 'Next Delivery Time',
-      valueGetter: (p) => p.data?.details?.nextDeliveryTime,
-      flex: 2,
-      minWidth: 130,
-      cellRenderer: DateCell,
-      filter: 'agDateColumnFilter',
-      hide: true,
-    },
-    {
-      colId: 'geoData',
-      headerName: 'Geo Data',
-      headerTooltip: 'Geo Data',
-      valueGetter: (p) => p.data?.details?.geoData,
-      flex: 1,
-      minWidth: 75,
-      cellRenderer: TextCell,
-      filter: 'agTextColumnFilter',
-      hide: true,
-    },
-    {
-      colId: 'serverLut',
-      headerName: 'Server LUT',
-      headerTooltip: 'Server Last Update Time',
-      valueGetter: (p) => p.data?.details?.serverLut,
-      flex: 2,
-      minWidth: 130,
-      cellRenderer: DateCell,
-      filter: 'agDateColumnFilter',
-      hide: true,
-    },
-    {
-      colId: 'linkType',
-      headerName: 'Link Type',
-      headerTooltip: 'Link Type',
-      valueGetter: (p) => p.data?.link_quality?.type,
-      flex: 1,
-      minWidth: 75,
-      cellRenderer: TextCell,
-      filter: 'agTextColumnFilter',
-    },
-    {
-      colId: 'linkAvailable',
-      headerName: 'Available',
-      headerTooltip: 'Link Available',
-      valueGetter: (p) => p.data?.link_quality?.available,
-      flex: 1,
-      minWidth: 75,
-      cellRenderer: AvailabilityCell,
-      filter: 'agTextColumnFilter',
-    },
-    {
-      colId: 'linkQuality',
-      headerName: 'Quality',
-      headerTooltip: 'Link Quality',
-      valueGetter: (p) => p.data?.link_quality?.quality,
-      flex: 1,
-      minWidth: 65,
-      cellRenderer: TextCell,
-      filter: 'agTextColumnFilter',
-    },
-    {
-      colId: 'latency',
-      headerName: 'Latency (ms)',
-      headerTooltip: 'Latency in milliseconds',
-      valueGetter: (p) => p.data?.link_quality?.latency,
-      flex: 1,
-      minWidth: 75,
-      filter: 'agNumberColumnFilter',
-      cellRenderer: NumericCell,
-    },
-    {
-      colId: 'reliability',
-      headerName: 'Reliability',
-      headerTooltip: 'Link Reliability',
-      valueGetter: (p) => p.data?.link_quality?.reliability,
-      flex: 1,
-      minWidth: 70,
-      filter: 'agNumberColumnFilter',
-      cellRenderer: NumericCell,
-      hide: true,
-    },
-    {
-      colId: 'linkTimestamp',
-      headerName: 'Link Timestamp',
-      headerTooltip: 'Link Quality Timestamp',
-      valueGetter: (p) => p.data?.link_quality?.timestamp,
-      flex: 2,
-      minWidth: 130,
-      cellRenderer: DateCell,
-      filter: 'agDateColumnFilter',
-      hide: true,
-    },
-  ];
 }
 
 // ── Component ───────────────────────────────────────────────────────
@@ -312,14 +66,11 @@ export default function AgentSyncsList({
   const [totalRows, setTotalRows] = useState<number | null>(null);
   const [hiddenCols, setHiddenCols] = useState<string[]>(DEFAULT_HIDDEN);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [selectedCols, setSelectedCols] = useState<Set<string>>(new Set());
   const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; colId: string } | null>(null);
 
   // ── Refs ────────────────────────────────────────────────────────────
   const gridWrapperRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<HTMLDivElement>(null);
-  const stripDragStartRef = useRef<string | null>(null);
-  const styleTagRef = useRef<HTMLStyleElement | null>(null);
   const maxIdRef = useRef<number | null>(null);
 
   // ── Filter callbacks ───────────────────────────────────────────────
@@ -444,28 +195,6 @@ export default function AgentSyncsList({
     return () => window.removeEventListener('pointerdown', close);
   }, [pickerOpen]);
 
-  // ── Remove injected style tag on unmount ───────────────────────────
-  useEffect(() => () => { styleTagRef.current?.remove(); }, []);
-
-  // ── Column selection highlight (CSS injection) ─────────────────────
-  // Must be declared before any callback that calls it.
-  const applyColSelection = useCallback((cols: Set<string>) => {
-    setSelectedCols(cols);
-    if (!styleTagRef.current) {
-      const tag = document.createElement('style');
-      document.head.appendChild(tag);
-      styleTagRef.current = tag;
-    }
-    const tag = styleTagRef.current;
-    if (cols.size === 0) { tag.textContent = ''; return; }
-    const ids = Array.from(cols);
-    const hdr  = ids.map((id) => `.snc-grid-wrapper .ag-header-cell[col-id="${id}"]`).join(',');
-    const body = ids.map((id) => `.snc-grid-wrapper .ag-cell[col-id="${id}"]`).join(',');
-    tag.textContent =
-      `${hdr}{background:rgba(59,130,246,0.22)!important}` +
-      `${body}{background:rgba(59,130,246,0.08)!important}`;
-  }, []);
-
   // ── Column visibility helpers ───────────────────────────────────────
 
   /** Toggle a single column on/off from the picker panel */
@@ -497,34 +226,6 @@ export default function AgentSyncsList({
     if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
   }, []);
 
-  /** Hide columns selected via the drag-strip, then save */
-  const hideSelectedCols = useCallback(() => {
-    if (selectedCols.size === 0) return;
-    const ids = Array.from(selectedCols);
-    gridRef.current?.api?.setColumnsVisible(ids, false);
-    setHiddenCols((prev) => [...prev, ...ids.filter((id) => !prev.includes(id))]);
-    applyColSelection(new Set());
-    saveColState();
-  }, [selectedCols, applyColSelection, saveColState]);
-
-  // ── Clear column selection on left-click anywhere ──────────────────
-  useEffect(() => {
-    if (selectedCols.size === 0) return;
-    const clear = (e: PointerEvent) => {
-      if (e.button === 2) return;
-      const t = e.target as Element;
-      if (t.closest('.snc-col-select-strip') || t.closest('.snc-ctx-menu')) return;
-      applyColSelection(new Set());
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') applyColSelection(new Set()); };
-    window.addEventListener('pointerdown', clear);
-    window.addEventListener('keydown',     onKey);
-    return () => {
-      window.removeEventListener('pointerdown', clear);
-      window.removeEventListener('keydown',     onKey);
-    };
-  }, [selectedCols.size, applyColSelection]);
-
   // ── Context menu on header right-click ─────────────────────────────
   const handleGridContextMenu = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -538,72 +239,17 @@ export default function AgentSyncsList({
     []
   );
 
-  // ── Column-selection strip helpers ─────────────────────────────────
-
-  const getSortedHeaderCells = useCallback((): HTMLElement[] => {
-    const wrapper = gridWrapperRef.current;
-    if (!wrapper) return [];
-    return Array.from(wrapper.querySelectorAll<HTMLElement>('.ag-header-cell[col-id]'))
-      .sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+  // ── Column-selection strip (drag-select, CSS highlight, hide) ──────
+  const onHideSelection = useCallback((ids: string[]) => {
+    setHiddenCols((prev) => [...prev, ...ids.filter((id) => !prev.includes(id))]);
   }, []);
 
-  const colIdAtClientX = useCallback(
-    (x: number): string | null => {
-      const cells = getSortedHeaderCells();
-      if (cells.length === 0) return null;
-      if (x <= cells[0].getBoundingClientRect().right)
-        return cells[0].getAttribute('col-id');
-      if (x >= cells[cells.length - 1].getBoundingClientRect().left)
-        return cells[cells.length - 1].getAttribute('col-id');
-      for (const cell of cells) {
-        const rect = cell.getBoundingClientRect();
-        if (x >= rect.left && x <= rect.right) return cell.getAttribute('col-id');
-      }
-      return null;
-    },
-    [getSortedHeaderCells]
-  );
-
-  const colRangeBetween = useCallback(
-    (startId: string, endId: string): string[] => {
-      const ids = getSortedHeaderCells()
-        .map((c) => c.getAttribute('col-id'))
-        .filter(Boolean) as string[];
-      const ai = ids.indexOf(startId);
-      const bi = ids.indexOf(endId);
-      if (ai === -1) return endId ? [endId] : [];
-      if (bi === -1) return [startId];
-      const [lo, hi] = ai <= bi ? [ai, bi] : [bi, ai];
-      return ids.slice(lo, hi + 1);
-    },
-    [getSortedHeaderCells]
-  );
-
-  const onStripMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.button !== 0) return;
-      e.preventDefault();
-
-      const startId = colIdAtClientX(e.clientX);
-      if (!startId) return;
-
-      stripDragStartRef.current = startId;
-      applyColSelection(new Set([startId]));
-
-      const onMove = (ev: MouseEvent) => {
-        const cur = colIdAtClientX(ev.clientX);
-        if (!cur || !stripDragStartRef.current) return;
-        applyColSelection(new Set(colRangeBetween(stripDragStartRef.current, cur)));
-      };
-      const onUp = () => {
-        window.removeEventListener('mousemove', onMove);
-        window.removeEventListener('mouseup',   onUp);
-      };
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('mouseup',   onUp);
-    },
-    [colIdAtClientX, colRangeBetween, applyColSelection]
-  );
+  const { selectedCols, onStripMouseDown, hideSelectedCols } = useColumnSelection({
+    gridWrapperRef,
+    gridRef,
+    onHide: onHideSelection,
+    saveColState,
+  });
 
   // ── No agentId guard ────────────────────────────────────────────────
 
