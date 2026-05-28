@@ -15,6 +15,12 @@
 
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
+import {
+  LinkQualityType,
+  LinkType,
+  SchedulerMode,
+  StatusAgent,
+} from '../../types/serverEnums';
 
 // ── Grid constants ──────────────────────────────────────────────────
 
@@ -36,13 +42,20 @@ export const DEFAULT_HIDDEN: string[] = [
 export type ColGroup = 'General' | 'Sync Details' | 'Link Quality';
 const GROUP_ORDER: ColGroup[] = ['General', 'Sync Details', 'Link Quality'];
 
+/** Allowed shapes for the `enum` field on a column definition. */
+type EnumSource = Record<string, string> | readonly (string | boolean)[];
+
 /**
- * Standard AG Grid ColDef plus `group` for the picker panel.
- * AG Grid silently ignores unknown properties, so passing SyncColDef[]
- * to <AgGridReact columnDefs={...}> is safe.
+ * Column definition for the sync-history grid.
+ *
+ * `group` is consumed by the column picker panel.
+ * `enum` is consumed by the `col()` factory only — when set, the column
+ * gets `filter: 'agSetColumnFilter'` with the enum values as options.
+ * `col()` strips `enum` before returning so AG Grid never sees it.
  */
 interface SyncColDef extends ColDef<AgentHistoryRecord> {
   group: ColGroup;
+  enum?: EnumSource;
 }
 
 // ── Auto-minWidth factory ───────────────────────────────────────────
@@ -52,16 +65,41 @@ const CHAR_WIDTH    = 7.5;
 /** Sort icon + cell padding shared by every header cell */
 const HDR_OVERHEAD  = 44;
 
+/** Extract the runtime values from an EnumSource (string-enum object or array). */
+function enumValues(source: EnumSource): (string | boolean)[] {
+  return Array.isArray(source) ? [...source] : Object.values(source);
+}
+
 /**
- * Wraps a column definition and fills in `minWidth` automatically
- * from `headerName` unless the caller already supplies one.
- * Explicit `minWidth` in `def` always wins.
+ * Wraps a column definition and:
+ *   - fills in `minWidth` from `headerName` when not provided,
+ *   - translates `enum` → `agSetColumnFilter` + `filterParams.values`
+ *     (unless the caller already set a different `filter`).
+ *
+ * `enum` is stripped from the output so AG Grid never sees an unknown property.
  */
 function col(def: SyncColDef): SyncColDef {
-  const autoMin = def.headerName
-    ? Math.ceil(def.headerName.length * CHAR_WIDTH) + HDR_OVERHEAD
+  const { enum: enumDef, ...rest } = def;
+  const autoMin = rest.headerName
+    ? Math.ceil(rest.headerName.length * CHAR_WIDTH) + HDR_OVERHEAD
     : undefined;
-  return { ...def, minWidth: def.minWidth ?? autoMin };
+
+  const setFilterFromEnum =
+    enumDef && !rest.filter
+      ? {
+          filter: 'agSetColumnFilter',
+          filterParams: {
+            values: enumValues(enumDef),
+            ...(rest.filterParams ?? {}),
+          },
+        }
+      : null;
+
+  return {
+    ...rest,
+    ...(setFilterFromEnum ?? {}),
+    minWidth: rest.minWidth ?? autoMin,
+  };
 }
 
 // ── Cell renderers (internal) ───────────────────────────────────────
@@ -148,7 +186,7 @@ function buildColumnDefsInternal(): SyncColDef[] {
       headerTooltip: 'Status',
       width: 105,
       cellRenderer: StatusCell,
-      filter: 'agTextColumnFilter',
+      enum: StatusAgent,
     }),
 
     // ── Sync Details ─────────────────────────────────────────────
@@ -160,7 +198,7 @@ function buildColumnDefsInternal(): SyncColDef[] {
       valueGetter: (p) => p.data?.details?.selectedLink,
       flex: 1.5,
       cellRenderer: TextCell,
-      filter: 'agTextColumnFilter',
+      enum: LinkType,
     }),
     col({
       group: 'Sync Details',
@@ -170,7 +208,7 @@ function buildColumnDefsInternal(): SyncColDef[] {
       valueGetter: (p) => p.data?.details?.schedulerMode,
       flex: 1.5,
       cellRenderer: TextCell,
-      filter: 'agTextColumnFilter',
+      enum: SchedulerMode,
     }),
     col({
       group: 'Sync Details',
@@ -225,7 +263,7 @@ function buildColumnDefsInternal(): SyncColDef[] {
       valueGetter: (p) => p.data?.link_quality?.type,
       flex: 1,
       cellRenderer: TextCell,
-      filter: 'agTextColumnFilter',
+      enum: LinkType,
     }),
     col({
       group: 'Link Quality',
@@ -235,7 +273,12 @@ function buildColumnDefsInternal(): SyncColDef[] {
       valueGetter: (p) => p.data?.link_quality?.available,
       flex: 1,
       cellRenderer: AvailabilityCell,
-      filter: 'agTextColumnFilter',
+      enum: [true, false],
+      // Render booleans as Yes/No inside the filter dropdown (column cells use AvailabilityCell).
+      filterParams: {
+        valueFormatter: (p: { value: unknown }) =>
+          p.value === true || p.value === 'true' ? 'Yes' : 'No',
+      },
     }),
     col({
       group: 'Link Quality',
@@ -245,7 +288,7 @@ function buildColumnDefsInternal(): SyncColDef[] {
       valueGetter: (p) => p.data?.link_quality?.quality,
       flex: 1,
       cellRenderer: TextCell,
-      filter: 'agTextColumnFilter',
+      enum: LinkQualityType,
     }),
     col({
       group: 'Link Quality',

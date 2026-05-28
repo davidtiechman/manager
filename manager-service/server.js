@@ -500,6 +500,24 @@ function buildSyncsWhere(agentId, filterModel, params) {
             const bool = value === 'true' || value === true;
             params.push(bool);
             conditions.push(`${col} = $${params.length}`);
+        } else if (filterType === 'set') {
+            // agSetColumnFilter (Enterprise) sends { filterType: 'set', values: [...] }.
+            // Empty values array = "no checkbox selected" = match no rows.
+            // Missing/invalid values array = skip the filter entirely.
+            if (!Array.isArray(filter.values)) continue;
+            if (filter.values.length === 0) {
+                conditions.push('FALSE');
+                continue;
+            }
+            const placeholders = filter.values.map((v) => {
+                if (col === 'link_available') {
+                    params.push(v === true || v === 'true');
+                } else {
+                    params.push(String(v));
+                }
+                return `$${params.length}`;
+            });
+            conditions.push(`${col} IN (${placeholders.join(', ')})`);
         }
     }
 
