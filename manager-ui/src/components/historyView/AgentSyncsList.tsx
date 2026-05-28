@@ -11,10 +11,10 @@ import type {
 
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
-import '../../styles/AgentSyncsList.css';
-import '../../styles/syncGrid.theme.css';
-import '../../styles/syncGrid.cells.css';
-import '../../styles/ColumnPicker.css';
+import './AgentSyncsList.css';
+import './syncGrid.theme.css';
+import './syncGrid.cells.css';
+import './ColumnPicker.css';
 
 import { ApiService } from '../../api';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
