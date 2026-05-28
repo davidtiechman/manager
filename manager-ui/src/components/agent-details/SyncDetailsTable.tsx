@@ -7,18 +7,7 @@ interface Props {
 }
 
 export default function SyncDetailsTable({ agent }: Props) {
-  const fields = toSyncDetailsTable(agent);
-
-  function renderValue(key: string, value: unknown) {
-    if (
-      (key === 'nextDeliveryTime' || key === 'serverLut' || key === 'lastSeen') &&
-      value
-    ) {
-      return formatOptionalDate(value as string | number | Date);
-    }
-
-    return String(value ?? '');
-  }
+  const sync = toSyncDetailsTable(agent);
 
   return (
     <section className="details-section">
@@ -26,12 +15,13 @@ export default function SyncDetailsTable({ agent }: Props) {
 
       <table className="details-table">
         <tbody>
-          {fields.map((field) => (
-            <tr key={field.key}>
-              <td>{field.label}</td>
-              <td>{renderValue(field.key, field.value)}</td>
-            </tr>
-          ))}
+          <tr><td>status</td><td>{sync.status}</td></tr>
+          <tr><td>scheduler mode</td><td>{sync.schedulerMode}</td></tr>
+          <tr><td>selected link</td><td>{sync.selectedLink}</td></tr>
+          <tr><td>messages in queue</td><td>{sync.messagesInQueue}</td></tr>
+          <tr><td>next delivery time</td><td>{formatOptionalDate(sync.nextDeliveryTime)}</td></tr>
+          <tr><td>server lut</td><td>{formatOptionalDate(sync.serverLut)}</td></tr>
+          <tr><td>last seen</td><td>{formatOptionalDate(sync.lastSeen)}</td></tr>
         </tbody>
       </table>
     </section>

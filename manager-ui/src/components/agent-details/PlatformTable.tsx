@@ -6,7 +6,7 @@ interface Props {
 }
 
 export default function PlatformTable({ agent }: Props) {
-  const fields = toPlatformTable(agent);
+  const platform = toPlatformTable(agent);
 
   return (
     <section className="details-section">
@@ -14,12 +14,12 @@ export default function PlatformTable({ agent }: Props) {
 
       <table className="details-table">
         <tbody>
-          {fields.map((field) => (
-            <tr key={field.key}>
-              <td>{field.label}</td>
-              <td>{String(field.value ?? '')}</td>
-            </tr>
-          ))}
+          <tr><td>unit code</td><td>{platform.unit_code}</td></tr>
+          <tr><td>unit</td><td>{platform.unit}</td></tr>
+          <tr><td>zayad id</td><td>{platform.zayad_id}</td></tr>
+          <tr><td>call sign</td><td>{platform.call_sign}</td></tr>
+          <tr><td>platform id</td><td>{platform.platformId}</td></tr>
+          <tr><td>platform name</td><td>{platform.platformName}</td></tr>
         </tbody>
       </table>
     </section>

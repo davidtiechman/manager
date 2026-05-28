@@ -1,7 +1,7 @@
 import type { AgentResponse } from './types/realTimeAgents/agentResponse';
 import type { AgentHistoryRecord } from './types/history/agentHistoryRecord';
 import type { HistoryAgent } from './types/history/historyAgent';
-import type { ConfigurationPayload } from './types/realTimeAgents/tables';
+import type { ConfigurationTableData } from './types/realTimeAgents/tables';
 import { MOCK_AGENTS } from './MOCK_AGENT';
 
 export interface SyncsIrmParams {
@@ -103,7 +103,7 @@ export class ApiService {
 
   static async getAgentConfig(
     agentId: string
-  ): Promise<ConfigurationPayload> {
+  ): Promise<ConfigurationTableData> {
     const response = await fetch(`${API_BASE_URL}/manager/agents/${agentId}/config`,{
         headers:{
           'Authorization': `Bearer ${VITE_API_TOKEN}`
@@ -119,8 +119,8 @@ export class ApiService {
 
   static async updateAgentConfig(
     agentId: string,
-    config: ConfigurationPayload
-  ): Promise<ConfigurationPayload> {
+    config: ConfigurationTableData
+  ): Promise<ConfigurationTableData> {
     const response = await fetch(`${API_BASE_URL}/agents/${agentId}/configuration`, {
       method: 'PUT',
       headers: { 

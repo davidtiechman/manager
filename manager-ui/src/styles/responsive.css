@@ -3,6 +3,11 @@
     grid-template-columns: 1fr;
   }
 
+  .home-layout.no-selected-agent .agents-grid,
+  .home-layout.no-selected-agent .agents-grid.agents-list {
+    grid-template-columns: 1fr;
+  }
+
   .agents-pane {
     max-height: none;
   }
@@ -12,8 +17,8 @@
   }
 
   .agent-card.list-view {
-    align-items: flex-start;
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
   .list-view .agent-info {
@@ -22,5 +27,15 @@
 
   .details-tables-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 521px) and (max-width: 900px) {
+  .agent-card.list-view {
+    grid-template-columns: minmax(130px, 0.8fr) minmax(0, 2fr);
+  }
+
+  .list-view .agent-info {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

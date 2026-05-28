@@ -8,31 +8,18 @@ interface Props {
 }
 
 export default function LinkQualityTable({ agent }: Props) {
-  const fields = toLinkQualityTable(agent);
-
-  function renderValue(key: string, value: unknown) {
-    if (key === 'linkTimestamp' && value) {
-      return formatDate(value as string | number | Date);
-    }
-
-    if (typeof value === 'boolean') {
-      return String(value);
-    }
-
-    return String(value ?? '');
-  }
-
+  const link = toLinkQualityTable(agent);
   return (
     <section className="details-section">
       <h3>Link Quality</h3>
       <table className="details-table">
         <tbody>
-          {fields.map((field) => (
-            <tr key={field.key}>
-              <td>{field.label}</td>
-              <td>{renderValue(field.key, field.value)}</td>
-            </tr>
-          ))}
+          <tr><td>link type</td><td>{link.linkType}</td></tr>
+          <tr><td>available</td><td>{String(link.linkAvailable)}</td></tr>
+          <tr><td>quality</td><td>{link.linkQuality}</td></tr>
+          <tr><td>latency</td><td>{link.latency}</td></tr>
+          <tr><td>reliability</td><td>{link.reliability}</td></tr>
+          <tr><td>timestamp</td><td>{formatDate(link.linkTimestamp)}</td></tr>
         </tbody>
       </table>
     </section>
