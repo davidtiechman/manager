@@ -27,12 +27,15 @@ import ModeNavigationLink from '../ModeNavigationLink';
 
 import {
   BLOCK_SIZE,
-  LS_COL_KEY,
   COLUMN_LABELS,
   GROUP_COLORS,
   buildColumnDefs,
 } from './syncGrid.columns';
 import { SyncDetailPanel } from './SyncDetailPanel';
+import {
+  loadColumnState,
+  saveColumnState,
+} from './gridStatePersistence';
 
 interface AgentSyncsListProps {
   agentId?: string;
@@ -218,24 +221,25 @@ export default function AgentSyncsList({
     },
   }), [agentId]);
 
-  // ── Persist column state to localStorage ───────────────────────────
+  // ── Persist column layout to localStorage (debounced) ──────────────
+  // Bursty events (resize drags, multi-column moves) collapse into one write.
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveColState = useCallback(() => {
-    const state = gridRef.current?.api?.getColumnState();
-    if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      const api = gridRef.current?.api;
+      if (api) saveColumnState(api);
+    }, 200);
+  }, []);
+
+  useEffect(() => () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
   }, []);
 
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
       event.api.updateGridOptions({ datasource: buildDatasource() });
-      const saved = localStorage.getItem(LS_COL_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved) as Array<{ colId: string; hide?: boolean }>;
-          event.api.applyColumnState({ state: parsed, applyOrder: true });
-        } catch {
-          localStorage.removeItem(LS_COL_KEY);
-        }
-      }
+      loadColumnState(event.api);
       // Seed the "Columns" badge with the current hidden count.
       const cols = event.api.getColumns();
       if (cols) setHiddenCount(cols.filter((c) => !c.isVisible()).length);

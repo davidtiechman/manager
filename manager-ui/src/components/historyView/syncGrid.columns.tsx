@@ -25,7 +25,6 @@ import {
 // ── Grid constants ──────────────────────────────────────────────────
 
 export const BLOCK_SIZE  = 100;
-export const LS_COL_KEY  = 'snc-col-state';
 
 // ── Column groups ───────────────────────────────────────────────────
 // Each column declares a `group`. buildColumnDefs() wraps columns into
