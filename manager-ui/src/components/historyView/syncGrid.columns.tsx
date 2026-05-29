@@ -5,10 +5,10 @@
  *
  * To add a column:
  *   1. Add ONE entry inside buildColumnDefs() using the col() factory.
- *      - Set `group` to place it in the picker panel.
+ *      - Set `group` for logical grouping metadata.
  *      - `minWidth` is auto-calculated from headerName — override only
  *        when you need a specific value.
- *   2. That's it. COLUMN_LABELS and COLUMN_GROUPS are derived automatically.
+ *   2. That's it. COLUMN_LABELS is derived automatically.
  *
  * Nothing here knows about React state, routing, or the AG Grid API instance.
  */
@@ -27,20 +27,13 @@ import {
 export const BLOCK_SIZE  = 100;
 export const LS_COL_KEY  = 'snc-col-state';
 
-/** Columns hidden by default (first load, no saved state) */
-export const DEFAULT_HIDDEN: string[] = [
-  'nextDeliveryTime',
-  'geoData',
-  'serverLut',
-  'reliability',
-  'linkTimestamp',
-];
-
 // ── Column metadata ─────────────────────────────────────────────────
+// `group` is app-level metadata kept on each column (in context.group).
+// Retained as a logical grouping for future use; not currently read by
+// the Enterprise Columns tool panel.
 
-/** Picker panel group names — order here controls render order */
+/** Logical column groups */
 export type ColGroup = 'General' | 'Sync Details' | 'Link Quality';
-const GROUP_ORDER: ColGroup[] = ['General', 'Sync Details', 'Link Quality'];
 
 /** Allowed shapes for the `enum` field on a column definition. */
 type EnumSource = Record<string, string> | readonly (string | boolean)[];
@@ -384,7 +377,7 @@ export function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
 
 /**
  * colId → headerName map, derived from column definitions.
- * Used by filter chips and the picker panel.
+ * Used by the active-filter chips in the toolbar.
  */
 export function buildColumnLabels(
   defs: SyncColDef[]
@@ -396,21 +389,6 @@ export function buildColumnLabels(
   );
 }
 
-/**
- * Picker groups in GROUP_ORDER, derived from each column's `context.group`.
- */
-export function buildColumnGroups(
-  defs: SyncColDef[]
-): Array<{ label: string; cols: string[] }> {
-  return GROUP_ORDER.map((label) => ({
-    label,
-    cols: defs
-      .filter((d) => d.context?.group === label)
-      .map((d) => (d.colId ?? d.field) as string)
-      .filter(Boolean),
-  }));
-}
-
 // ── Singleton exports ───────────────────────────────────────────────
 // Evaluated once at module load. Safe because defs never change at runtime.
 
@@ -418,6 +396,3 @@ const _defs = buildColumnDefsInternal();
 
 /** colId → human label (e.g. 'selectedLink' → 'Selected Link') */
 export const COLUMN_LABELS = buildColumnLabels(_defs);
-
-/** Picker panel groups with their column ids */
-export const COLUMN_GROUPS = buildColumnGroups(_defs);

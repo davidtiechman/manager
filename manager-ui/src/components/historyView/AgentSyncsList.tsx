@@ -7,6 +7,8 @@ import type {
   IGetRowsParams,
   GridReadyEvent,
   ColumnResizedEvent,
+  MenuItemDef,
+  SideBarDef,
 } from 'ag-grid-community';
 
 import 'ag-grid-community/styles/ag-grid.css';
@@ -14,6 +16,8 @@ import 'ag-grid-community/styles/ag-theme-quartz.css';
 import './AgentSyncsList.css';
 import './syncGrid.theme.css';
 import './syncGrid.cells.css';
+// Reused for the toolbar button styles (.snc-col-picker-btn); the dropdown
+// picker panel itself was replaced by the Enterprise Columns tool panel.
 import './ColumnPicker.css';
 
 import { ApiService } from '../../api';
@@ -23,12 +27,9 @@ import ModeNavigationLink from '../ModeNavigationLink';
 import {
   BLOCK_SIZE,
   LS_COL_KEY,
-  DEFAULT_HIDDEN,
   COLUMN_LABELS,
-  COLUMN_GROUPS,
   buildColumnDefs,
 } from './syncGrid.columns';
-import { useColumnSelection } from './useColumnSelection';
 
 interface AgentSyncsListProps {
   agentId?: string;
@@ -61,16 +62,42 @@ export default function AgentSyncsList({
     []
   );
 
+  // ── Enterprise: Tool Panels (Columns + Filters sidebar) ────────────
+  // Replaces the hand-rolled column-picker dropdown. Gives column
+  // show/hide, drag-to-reorder, search, and a per-column filters panel.
+  const sideBar = useMemo<SideBarDef>(
+    () => ({
+      toolPanels: [
+        {
+          id: 'columns',
+          labelDefault: 'Columns',
+          labelKey: 'columns',
+          iconKey: 'columns',
+          toolPanel: 'agColumnsToolPanel',
+          toolPanelParams: {
+            suppressRowGroups: true,
+            suppressValues: true,
+            suppressPivots: true,
+            suppressPivotMode: true,
+          },
+        },
+        {
+          id: 'filters',
+          labelDefault: 'Filters',
+          labelKey: 'filters',
+          iconKey: 'filter',
+          toolPanel: 'agFiltersToolPanel',
+        },
+      ],
+    }),
+    []
+  );
+
   // ── State ──────────────────────────────────────────────────────────
   const [filterModel, setFilterModel] = useState<Record<string, unknown>>({});
   const [totalRows, setTotalRows] = useState<number | null>(null);
-  const [hiddenCols, setHiddenCols] = useState<string[]>(DEFAULT_HIDDEN);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; colId: string } | null>(null);
 
   // ── Refs ────────────────────────────────────────────────────────────
-  const gridWrapperRef = useRef<HTMLDivElement>(null);
-  const pickerRef = useRef<HTMLDivElement>(null);
   const maxIdRef = useRef<number | null>(null);
 
   // ── Filter callbacks ───────────────────────────────────────────────
@@ -156,9 +183,6 @@ export default function AgentSyncsList({
         try {
           const parsed = JSON.parse(saved) as Array<{ colId: string; hide?: boolean }>;
           event.api.applyColumnState({ state: parsed, applyOrder: true });
-          // Sync hiddenCols React state with restored column visibility
-          const restored = parsed.filter((s) => s.hide === true).map((s) => s.colId);
-          setHiddenCols(restored);
         } catch {
           localStorage.removeItem(LS_COL_KEY);
         }
@@ -175,81 +199,48 @@ export default function AgentSyncsList({
     [saveColState]
   );
 
-  // ── Close context menu on outside pointer-down ─────────────────────
-  useEffect(() => {
-    if (!ctxMenu) return;
-    const close = () => setCtxMenu(null);
-    window.addEventListener('pointerdown', close);
-    return () => window.removeEventListener('pointerdown', close);
-  }, [ctxMenu]);
-
-  // ── Close column picker on outside pointer-down ────────────────────
-  useEffect(() => {
-    if (!pickerOpen) return;
-    const close = (e: PointerEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
-        setPickerOpen(false);
-      }
-    };
-    window.addEventListener('pointerdown', close);
-    return () => window.removeEventListener('pointerdown', close);
-  }, [pickerOpen]);
-
-  // ── Column visibility helpers ───────────────────────────────────────
-
-  /** Toggle a single column on/off from the picker panel */
-  const toggleColVisibility = useCallback(
-    (colId: string) => {
-      const api = gridRef.current?.api;
-      if (!api) return;
-      const isHidden = hiddenCols.includes(colId);
-      api.setColumnsVisible([colId], isHidden); // show if currently hidden
-      const next = isHidden
-        ? hiddenCols.filter((c) => c !== colId)
-        : [...hiddenCols, colId];
-      setHiddenCols(next);
-      const state = api.getColumnState();
-      if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
-    },
-    [hiddenCols]
-  );
-
-  /** Restore all defaults via the picker's reset link */
-  const resetColsToDefault = useCallback(() => {
-    const api = gridRef.current?.api;
-    if (!api) return;
-    const allCols = COLUMN_GROUPS.flatMap((g) => g.cols);
-    api.setColumnsVisible(allCols, true);
-    api.setColumnsVisible(DEFAULT_HIDDEN, false);
-    setHiddenCols([...DEFAULT_HIDDEN]);
-    const state = api.getColumnState();
-    if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
-  }, []);
-
-  // ── Context menu on header right-click ─────────────────────────────
-  const handleGridContextMenu = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const cell = (e.target as Element).closest('[col-id].ag-header-cell');
-      if (!cell) return;
-      e.preventDefault();
-      const colId = cell.getAttribute('col-id') ?? '';
-      if (!colId) return;
-      setCtxMenu({ x: e.clientX, y: e.clientY, colId });
-    },
+  // ── Enterprise: right-click context menu ───────────────────────────
+  // Replaces the hand-rolled context menu. Adds clipboard copy + export.
+  const getContextMenuItems = useCallback(
+    (): (string | MenuItemDef)[] => [
+      'copy',
+      'copyWithHeaders',
+      'separator',
+      'export', // built-in submenu: CSV Export + Excel Export
+      'separator',
+      'autoSizeThis',
+      'autoSizeAll',
+    ],
     []
   );
 
-  // ── Column-selection strip (drag-select, CSS highlight, hide) ──────
-  const onHideSelection = useCallback((ids: string[]) => {
-    setHiddenCols((prev) => [...prev, ...ids.filter((id) => !prev.includes(id))]);
+  // ── Export helpers (toolbar buttons) ───────────────────────────────
+  // NOTE (Infinite Row Model): exports the rows currently loaded into the
+  // grid's cache, not the entire server-side dataset.
+  const exportExcel = useCallback(() => {
+    gridRef.current?.api?.exportDataAsExcel({
+      fileName: `sync-history-${agentId ?? 'export'}.xlsx`,
+    });
+  }, [agentId]);
+
+  const exportCsv = useCallback(() => {
+    gridRef.current?.api?.exportDataAsCsv({
+      fileName: `sync-history-${agentId ?? 'export'}.csv`,
+    });
+  }, [agentId]);
+
+  // ── Toggle the Columns tool panel from the toolbar button ──────────
+  const toggleColumnsPanel = useCallback(() => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+    if (api.getOpenedToolPanel() === 'columns') api.closeToolPanel();
+    else api.openToolPanel('columns');
   }, []);
 
-  const { selectedCols, onStripMouseDown, hideSelectedCols } = useColumnSelection({
-    gridWrapperRef,
-    gridRef,
-    onHide: onHideSelection,
-    saveColState,
-  });
+  // ── Persist column visibility / order / pin changes ────────────────
+  const onColumnStateChanged = useCallback(() => {
+    saveColState();
+  }, [saveColState]);
 
   // ── No agentId guard ────────────────────────────────────────────────
 
@@ -264,13 +255,7 @@ export default function AgentSyncsList({
   // ── Shared grid element ─────────────────────────────────────────────
 
   const gridEl = (
-    <div
-      ref={gridWrapperRef}
-      className="snc-grid-wrapper ag-theme-quartz"
-      onContextMenu={handleGridContextMenu}
-    >
-      {/* Column-selection strip — 8px hover zone at top of header */}
-      <div className="snc-col-select-strip" onMouseDown={onStripMouseDown} />
+    <div className="snc-grid-wrapper ag-theme-quartz">
       <AgGridReact<AgentHistoryRecord>
         ref={gridRef}
         columnDefs={columnDefs}
@@ -279,12 +264,17 @@ export default function AgentSyncsList({
         cacheBlockSize={BLOCK_SIZE}
         cacheOverflowSize={2}
         maxConcurrentDatasourceRequests={2}
+        sideBar={sideBar}
+        getContextMenuItems={getContextMenuItems}
+        enableRangeSelection
         onGridReady={onGridReady}
         onColumnResized={onColumnResized}
+        onColumnVisible={onColumnStateChanged}
+        onColumnPinned={onColumnStateChanged}
+        onColumnMoved={onColumnStateChanged}
         onFilterChanged={onFilterChanged}
         suppressCellFocus={false}
         rowSelection={{ mode: 'singleRow', checkboxes: false, enableClickSelection: true }}
-        enableCellTextSelection
         tooltipShowDelay={400}
         overlayNoRowsTemplate='<span class="snc-no-rows">אין רשומות עבור agent זה</span>'
       />
@@ -366,89 +356,56 @@ export default function AgentSyncsList({
 
       </header>
 
-      {/* ── Toolbar: columns · active filters · row count ──────── */}
+      {/* ── Toolbar: columns · export · active filters · row count ── */}
       <div className="snc-toolbar">
 
         <div className="snc-toolbar-start">
 
-          {/* Column picker */}
-          <div className="snc-col-picker-wrap" ref={pickerRef}>
-            <button
-              type="button"
-              className="snc-col-picker-btn"
-              onClick={() => setPickerOpen((o) => !o)}
-              aria-expanded={pickerOpen}
-              aria-haspopup="true"
-            >
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <rect x="1"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-                <rect x="6"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-                <rect x="11" y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-              </svg>
-              Columns
-              {hiddenCols.length > 0 && (
-                <span className="snc-col-picker-badge">{hiddenCols.length}</span>
-              )}
-              <svg className="snc-col-picker-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.7"
-                  strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+          {/* Columns tool-panel toggle */}
+          <button
+            type="button"
+            className="snc-col-picker-btn"
+            onClick={toggleColumnsPanel}
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <rect x="1"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+              <rect x="6"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+              <rect x="11" y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+            </svg>
+            Columns
+          </button>
 
-            {pickerOpen && (
-              <div className="snc-col-picker-panel">
-                <div className="snc-col-picker-scroll">
-                  {COLUMN_GROUPS.map((group) => (
-                    <div key={group.label} className="snc-col-picker-group">
-                      <div className="snc-col-picker-group-label">{group.label}</div>
-                      {group.cols.map((colId) => {
-                        const isVisible = !hiddenCols.includes(colId);
-                        return (
-                          <div
-                            key={colId}
-                            className="snc-col-picker-row"
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => toggleColVisibility(colId)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                toggleColVisibility(colId);
-                              }
-                            }}
-                          >
-                            <span className="snc-col-picker-name">
-                              {COLUMN_LABELS[colId] ?? colId}
-                            </span>
-                            <span
-                              role="switch"
-                              aria-checked={isVisible}
-                              className={`snc-col-picker-toggle${isVisible ? ' snc-col-picker-toggle--on' : ''}`}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-                <div className="snc-col-picker-footer">
-                  <button
-                    type="button"
-                    className="snc-col-picker-reset"
-                    onClick={resetColsToDefault}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <path d="M13 8A5 5 0 1 1 8 3c1.4 0 2.6.5 3.5 1.4L13 6V2"
-                        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Reset to default
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Export buttons */}
+          <button
+            type="button"
+            className="snc-col-picker-btn"
+            onClick={exportExcel}
+            title="Export loaded rows to Excel"
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 1v9M4.5 6.5L8 10l3.5-3.5" stroke="currentColor"
+                strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 12v2h12v-2" stroke="currentColor" strokeWidth="1.5"
+                strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Excel
+          </button>
+          <button
+            type="button"
+            className="snc-col-picker-btn"
+            onClick={exportCsv}
+            title="Export loaded rows to CSV"
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 1v9M4.5 6.5L8 10l3.5-3.5" stroke="currentColor"
+                strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M2 12v2h12v-2" stroke="currentColor" strokeWidth="1.5"
+                strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            CSV
+          </button>
 
-          {/* Active filter chips (appear inline after picker) */}
+          {/* Active filter chips (appear inline after buttons) */}
           {activeColIds.length > 0 && (
             <>
               <div className="snc-toolbar-vr" aria-hidden="true" />
@@ -502,92 +459,6 @@ export default function AgentSyncsList({
 
       {/* ── Grid ─────────────────────────────────────────────────── */}
       <div className="snc-grid-outer">{gridEl}</div>
-
-      {/* ── Right-click context menu ─────────────────────────────── */}
-      {ctxMenu && (
-        <div
-          className="snc-ctx-menu"
-          style={{ left: ctxMenu.x, top: ctxMenu.y }}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            className="snc-ctx-item"
-            onClick={() => {
-              gridRef.current?.api?.applyColumnState({
-                state: [{ colId: ctxMenu.colId, sort: 'asc', sortIndex: 0 }],
-                defaultState: { sort: null },
-              });
-              setCtxMenu(null);
-            }}
-          >
-            <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M8 13V3M4.5 6.5L8 3l3.5 3.5"
-                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Sort Ascending
-          </button>
-          <button
-            type="button"
-            className="snc-ctx-item"
-            onClick={() => {
-              gridRef.current?.api?.applyColumnState({
-                state: [{ colId: ctxMenu.colId, sort: 'desc', sortIndex: 0 }],
-                defaultState: { sort: null },
-              });
-              setCtxMenu(null);
-            }}
-          >
-            <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M8 3v10M4.5 9.5L8 13l3.5-3.5"
-                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Sort Descending
-          </button>
-          <div className="snc-ctx-sep" />
-          <button
-            type="button"
-            className="snc-ctx-item"
-            onClick={() => { clearFilter(ctxMenu.colId); setCtxMenu(null); }}
-          >
-            <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M2 4h12M5 8h6M7 12h2"
-                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-            Clear Filter
-          </button>
-          <div className="snc-ctx-sep" />
-          {selectedCols.size > 0 && (
-            <button
-              type="button"
-              className="snc-ctx-item snc-ctx-item--muted"
-              onClick={() => { hideSelectedCols(); setCtxMenu(null); }}
-            >
-              <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M2 2l12 12M6.8 6.9a2.5 2.5 0 0 0 2.3 2.3M4 4.3A7.5 7.5 0 0 0 1.5 8c1.3 2.7 4 4.5 6.5 4.5 1 0 2-.3 2.8-.7M10.6 5.4A7.4 7.4 0 0 1 14.5 8c-1.3 2.7-4 4.5-6.5 4.5"
-                  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Hide {selectedCols.size} selected columns
-            </button>
-          )}
-          <button
-            type="button"
-            className="snc-ctx-item snc-ctx-item--muted"
-            onClick={() => {
-              gridRef.current?.api?.setColumnsVisible([ctxMenu.colId], false);
-              setHiddenCols((prev) => [...prev, ctxMenu.colId]);
-              saveColState();
-              setCtxMenu(null);
-            }}
-          >
-            <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M2 2l12 12M6.8 6.9a2.5 2.5 0 0 0 2.3 2.3M4 4.3A7.5 7.5 0 0 0 1.5 8c1.3 2.7 4 4.5 6.5 4.5 1 0 2-.3 2.8-.7M10.6 5.4A7.4 7.4 0 0 1 14.5 8c-1.3 2.7-4 4.5-6.5 4.5"
-                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Hide Column
-          </button>
-        </div>
-      )}
 
     </div>
   );
