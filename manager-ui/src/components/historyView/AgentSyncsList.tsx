@@ -7,6 +7,7 @@ import type {
   IGetRowsParams,
   GridReadyEvent,
   ColumnResizedEvent,
+  RowClickedEvent,
   MenuItemDef,
   SideBarDef,
 } from 'ag-grid-community';
@@ -31,6 +32,7 @@ import {
   GROUP_COLORS,
   buildColumnDefs,
 } from './syncGrid.columns';
+import { SyncDetailPanel } from './SyncDetailPanel';
 
 interface AgentSyncsListProps {
   agentId?: string;
@@ -57,7 +59,7 @@ export default function AgentSyncsList({
     () => ({
       sortable: true,
       resizable: true,
-      floatingFilter: false,
+      floatingFilter: true,
       suppressMovable: false,
     }),
     []
@@ -116,6 +118,7 @@ export default function AgentSyncsList({
   const [filterModel, setFilterModel] = useState<Record<string, unknown>>({});
   const [totalRows, setTotalRows] = useState<number | null>(null);
   const [hiddenCount, setHiddenCount] = useState(0);
+  const [detailRecord, setDetailRecord] = useState<AgentHistoryRecord | null>(null);
 
   // ── Refs ────────────────────────────────────────────────────────────
   const maxIdRef = useRef<number | null>(null);
@@ -264,6 +267,13 @@ export default function AgentSyncsList({
     []
   );
 
+  // ── Open the detail side panel on row click ───────────────────────
+  const onRowClicked = useCallback((e: RowClickedEvent<AgentHistoryRecord>) => {
+    if (e.data) setDetailRecord(e.data);
+  }, []);
+
+  const closeDetail = useCallback(() => setDetailRecord(null), []);
+
   // ── Toggle a tool panel from the toolbar buttons ───────────────────
   const toggleToolPanel = useCallback((panelId: 'columns' | 'filters') => {
     const api = gridRef.current?.api;
@@ -319,11 +329,13 @@ export default function AgentSyncsList({
         onColumnPinned={onColumnStateChanged}
         onColumnMoved={onColumnStateChanged}
         onFilterChanged={onFilterChanged}
+        onRowClicked={onRowClicked}
         suppressCellFocus={false}
         rowSelection={{ mode: 'singleRow', checkboxes: false, enableClickSelection: true }}
         tooltipShowDelay={400}
         overlayNoRowsTemplate='<span class="snc-no-rows">אין רשומות עבור agent זה</span>'
       />
+      <SyncDetailPanel record={detailRecord} onClose={closeDetail} />
     </div>
   );
 

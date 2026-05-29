@@ -15,6 +15,7 @@
 
 import type { ColDef, ColGroupDef, ICellRendererParams } from 'ag-grid-community';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
+import { LinkQualityTooltip } from './SyncDetailPanel';
 import {
   LinkQualityType,
   LinkType,
@@ -245,6 +246,10 @@ function buildColumnDefsInternal(): SyncColDef[] {
       width: 160,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
+      // Hover this (always-visible, pinned) cell to preview the row's
+      // link-quality summary via the LinkQualityTooltip component.
+      tooltipValueGetter: () => ' ',
+      tooltipComponent: LinkQualityTooltip,
     }),
     col({
       group: 'General',
