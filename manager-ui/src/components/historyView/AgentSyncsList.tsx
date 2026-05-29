@@ -8,7 +8,6 @@ import type {
   GridReadyEvent,
   ColumnResizedEvent,
   MenuItemDef,
-  GetContextMenuItemsParams,
   SideBarDef,
 } from 'ag-grid-community';
 
@@ -204,67 +203,20 @@ export default function AgentSyncsList({
     [saveColState]
   );
 
-  // ── Export ONLY the selected cell range to CSV ─────────────────────
-  // The built-in 'export' item ignores the selection and dumps every loaded
-  // row, so we build a custom item that reads the active cell range
-  // (api.getCellRanges()) and exports just those rows + columns.
-  const exportSelectionCsv = useCallback(() => {
-    const api = gridRef.current?.api;
-    if (!api) return;
-    const ranges = api.getCellRanges();
-    if (!ranges || ranges.length === 0) return;
-
-    // Union of selected columns + row-index span across all ranges.
-    const columnKeys = new Set<string>();
-    let minRow = Infinity;
-    let maxRow = -Infinity;
-    for (const r of ranges) {
-      r.columns.forEach((c) => columnKeys.add(c.getColId()));
-      if (r.startRow && r.endRow) {
-        minRow = Math.min(minRow, r.startRow.rowIndex, r.endRow.rowIndex);
-        maxRow = Math.max(maxRow, r.startRow.rowIndex, r.endRow.rowIndex);
-      }
-    }
-    if (!Number.isFinite(minRow)) return;
-
-    const rowPositions = [];
-    for (let i = minRow; i <= maxRow; i++) {
-      rowPositions.push({ rowIndex: i, rowPinned: null });
-    }
-
-    api.exportDataAsCsv({
-      fileName: `sync-history-${agentId ?? 'export'}-selection.csv`,
-      columnKeys: [...columnKeys],
-      rowPositions,
-      // Skip the column-group header row ("General", …) — keep just the
-      // column headers + data for a clean selection export.
-      skipColumnGroupHeaders: true,
-    });
-  }, [agentId]);
-
   // ── Enterprise: right-click context menu ───────────────────────────
-  // Replaces the hand-rolled context menu. "Export Selection" exports ONLY
-  // the highlighted cell range; it is disabled when nothing is selected.
+  // Replaces the hand-rolled context menu. No export: the dataset lives in
+  // the DB (hundreds of thousands of rows) and the grid only holds the
+  // loaded blocks, so any client-side export would be misleading. Copy still
+  // works on the selected cell range for quick ad-hoc grabs.
   const getContextMenuItems = useCallback(
-    (params: GetContextMenuItemsParams): (string | MenuItemDef)[] => {
-      const ranges = params.api.getCellRanges();
-      const hasSelection = !!ranges && ranges.length > 0;
-      return [
-        'copy',
-        'copyWithHeaders',
-        'separator',
-        {
-          name: 'Export Selection (CSV)',
-          disabled: !hasSelection,
-          action: exportSelectionCsv,
-          icon: '<span class="ag-icon ag-icon-save" role="presentation"></span>',
-        },
-        'separator',
-        'autoSizeThis',
-        'autoSizeAll',
-      ];
-    },
-    [exportSelectionCsv]
+    (): (string | MenuItemDef)[] => [
+      'copy',
+      'copyWithHeaders',
+      'separator',
+      'autoSizeThis',
+      'autoSizeAll',
+    ],
+    []
   );
 
   // ── Toggle a tool panel from the toolbar buttons ───────────────────
