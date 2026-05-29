@@ -383,6 +383,11 @@ export default function AgentSyncsList({
         cacheBlockSize={BLOCK_SIZE}
         cacheOverflowSize={2}
         maxConcurrentDatasourceRequests={2}
+        // Cap cached blocks so memory stays flat on deep scrolling through a
+        // very large dataset. 10 blocks × 100 rows = ~1,000 rows kept in RAM;
+        // blocks scrolled far out of view are discarded and refetched if the
+        // user returns to them.
+        maxBlocksInCache={10}
         sideBar={sideBar}
         getContextMenuItems={getContextMenuItems}
         getMainMenuItems={getMainMenuItems}
