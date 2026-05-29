@@ -9,6 +9,7 @@ import type {
   ColumnResizedEvent,
   RowDoubleClickedEvent,
   MenuItemDef,
+  GetMainMenuItemsParams,
   SideBarDef,
 } from 'ag-grid-community';
 
@@ -35,6 +36,7 @@ import { SyncDetailPanel } from './SyncDetailPanel';
 import {
   loadColumnState,
   saveColumnState,
+  clearColumnState,
 } from './gridStatePersistence';
 
 interface AgentSyncsListProps {
@@ -255,6 +257,13 @@ export default function AgentSyncsList({
     [saveColState]
   );
 
+  // ── Track hidden-column count for the "Columns" badge ──────────────
+  const refreshHiddenCount = useCallback(() => {
+    const cols = gridRef.current?.api?.getColumns();
+    if (!cols) return;
+    setHiddenCount(cols.filter((c) => !c.isVisible()).length);
+  }, []);
+
   // ── Enterprise: right-click context menu ───────────────────────────
   // Replaces the hand-rolled context menu. No export: the dataset lives in
   // the DB (hundreds of thousands of rows) and the grid only holds the
@@ -269,6 +278,54 @@ export default function AgentSyncsList({
       'autoSizeAll',
     ],
     []
+  );
+
+  // ── Reset columns to their default layout ──────────────────────────
+  // Re-applies the column defs' built-in defaults (default-hidden columns,
+  // original widths/order/pinning), then clears persisted state. The clear
+  // runs after a tick so the column-change events fired by resetColumnState
+  // (which re-save via the debounced saver) settle first — otherwise the
+  // save would race ahead and re-persist the just-cleared layout.
+  const resetColumns = useCallback(() => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+    api.resetColumnState();
+    refreshHiddenCount();
+    // Outlast the 200ms save debounce, then wipe persisted state.
+    setTimeout(clearColumnState, 300);
+  }, [refreshHiddenCount]);
+
+  // ── Enterprise: custom column header menu (the ☰ button) ───────────
+  // Augments the default menu with quick layout actions + a Reset that
+  // also clears the persisted localStorage layout. All client-side.
+  const getMainMenuItems = useCallback(
+    (params: GetMainMenuItemsParams): (string | MenuItemDef)[] => {
+      const colId = params.column?.getColId();
+      const isPinned = !!params.column?.isPinned();
+      return [
+        {
+          name: isPinned ? 'Unpin Column' : 'Pin Left',
+          icon: '<span class="ag-icon ag-icon-pin" role="presentation"></span>',
+          action: () => {
+            params.api.applyColumnState({
+              state: [{ colId: colId!, pinned: isPinned ? null : 'left' }],
+            });
+          },
+        },
+        'separator',
+        'autoSizeThis',
+        'autoSizeAll',
+        'separator',
+        // Built-in: opens the Columns tool panel focused here.
+        'columnChooser',
+        {
+          name: 'Reset Columns',
+          icon: '<span class="ag-icon ag-icon-columns" role="presentation"></span>',
+          action: resetColumns,
+        },
+      ];
+    },
+    [resetColumns]
   );
 
   // ── Detail side panel: double-click opens, single click closes ─────
@@ -294,13 +351,6 @@ export default function AgentSyncsList({
     if (!api) return;
     if (api.getOpenedToolPanel() === panelId) api.closeToolPanel();
     else api.openToolPanel(panelId);
-  }, []);
-
-  // ── Track hidden-column count for the "Columns" badge ──────────────
-  const refreshHiddenCount = useCallback(() => {
-    const cols = gridRef.current?.api?.getColumns();
-    if (!cols) return;
-    setHiddenCount(cols.filter((c) => !c.isVisible()).length);
   }, []);
 
   // ── Persist column state + refresh hidden count on any change ──────
@@ -335,6 +385,7 @@ export default function AgentSyncsList({
         maxConcurrentDatasourceRequests={2}
         sideBar={sideBar}
         getContextMenuItems={getContextMenuItems}
+        getMainMenuItems={getMainMenuItems}
         cellSelection
         groupHeaderHeight={0}
         onGridReady={onGridReady}
