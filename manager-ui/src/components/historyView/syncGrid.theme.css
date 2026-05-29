@@ -206,3 +206,23 @@
 .snc-grid-wrapper .ag-header-cell-sorted-desc.snc-hdr-group {
   box-shadow: inset 0 -2px 0 0 #374151 !important;
 }
+
+/* ── Columns tool panel — make GROUP titles read as headings ──────────
+   Group rows (General / Sync Details / Link Quality) should clearly stand
+   apart from the leaf column rows beneath them. */
+.snc-grid-wrapper .ag-column-select-column-group {
+  margin-top: 2px;
+}
+
+.snc-grid-wrapper .ag-column-select-column-group .ag-column-select-column-label {
+  font-weight: 700;
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: #1f2937;
+  text-transform: uppercase;
+}
+
+/* Indent the leaf columns a touch so the hierarchy reads at a glance */
+.snc-grid-wrapper .ag-column-select-column .ag-column-select-column-label {
+  color: #4b5563;
+}
