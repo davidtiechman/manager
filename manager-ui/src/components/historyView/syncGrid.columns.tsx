@@ -36,6 +36,11 @@ export const LS_COL_KEY  = 'snc-col-state';
 export type ColGroup = 'General' | 'Sync Details' | 'Link Quality';
 const GROUP_ORDER: ColGroup[] = ['General', 'Sync Details', 'Link Quality'];
 
+/** Group name → CSS slug, e.g. 'Sync Details' → 'sync-details'. */
+function groupSlug(group: string): string {
+  return group.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+}
+
 /** Allowed shapes for the `enum` field on a column definition. */
 type EnumSource = Record<string, string> | readonly (string | boolean)[];
 
@@ -126,8 +131,7 @@ function col(def: SyncColDefInput): SyncColDef {
 
   // Tag the header cell with its group so CSS can draw a thin colored
   // underline per group (the group header row itself is hidden in the grid).
-  const groupSlug = group.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const headerClass = `snc-hdr-group snc-hdr-group--${groupSlug}`;
+  const headerClass = `snc-hdr-group snc-hdr-group--${groupSlug(group)}`;
 
   return {
     ...rest,
@@ -382,16 +386,20 @@ function buildColumnDefsInternal(): SyncColDef[] {
  *
  * Flat columns are wrapped into AG Grid column groups (ColGroupDef) keyed by
  * each column's `context.group`, in GROUP_ORDER. The grouping drives the
- * tree in the Columns tool panel. In the GRID header the group row itself is
- * collapsed (groupHeaderHeight={0}); each leaf header instead gets a thin
- * colored underline per group via headerClass (see col() + CSS). Empty
- * groups are dropped.
+ * tree in BOTH tool panels (Columns + Filters). In the GRID header the group
+ * row itself is collapsed (groupHeaderHeight={0}); each leaf header instead
+ * gets a thin colored underline per group via headerClass (see col() + CSS).
+ *
+ * `toolPanelClass` tags each group row in the tool panels with
+ * `snc-tp-group--{slug}` so CSS can color the group title to match its
+ * underline. Empty groups are dropped.
  */
 export function buildColumnDefs(): (ColDef<AgentHistoryRecord> | ColGroupDef<AgentHistoryRecord>)[] {
   const defs = buildColumnDefsInternal();
   return GROUP_ORDER.map((groupName) => ({
     headerName: groupName,
     groupId: groupName,
+    toolPanelClass: `snc-tp-group snc-tp-group--${groupSlug(groupName)}`,
     children: defs.filter((d) => d.context?.group === groupName),
   })).filter((g) => g.children.length > 0);
 }
