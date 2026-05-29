@@ -191,21 +191,15 @@
   display: none !important;
 }
 
-/* Per-group accent colors — defined ONCE here, reused by the header
-   underline AND by the group titles in both tool panels. */
-.snc-grid-wrapper {
-  --snc-group-general: #0284c7;      /* sky    */
-  --snc-group-sync-details: #7c3aed; /* violet */
-  --snc-group-link-quality: #059669; /* emerald */
-}
-
+/* ── Per-group header underline ──────────────────────────────────────
+   Each leaf header carries class `snc-hdr-group--{slug}`. The matching
+   color comes from a CSS variable `--snc-group-{slug}` that the component
+   injects on .snc-grid-wrapper from GROUP_DEFS (single source of truth).
+   The generic rule below reads `--snc-group-color`, which each leaf sets
+   to its own group's variable — see the slug rule note. */
 .snc-grid-wrapper .ag-header-cell.snc-hdr-group {
   box-shadow: inset 0 -3px 0 0 var(--snc-group-color, transparent);
 }
-
-.snc-grid-wrapper .snc-hdr-group--general      { --snc-group-color: var(--snc-group-general); }
-.snc-grid-wrapper .snc-hdr-group--sync-details  { --snc-group-color: var(--snc-group-sync-details); }
-.snc-grid-wrapper .snc-hdr-group--link-quality  { --snc-group-color: var(--snc-group-link-quality); }
 
 /* Sorted state already draws its own dark underline — let it win so the
    group color doesn't fight the sort indicator. */
@@ -216,9 +210,9 @@
 
 /* ═══════════════════════════════════════════════════════════════
    Tool-panel GROUP titles (Columns + Filters)
-   Group rows should read as headings: bold, uppercase, and colored to
-   match the group's header underline. Leaf rows stay regular/muted.
-   The per-group color comes from `toolPanelClass` (snc-tp-group--{slug}).
+   Group rows read as headings: bold + uppercase. Their COLOR is applied
+   at runtime by the component (colorFilterPanelGroups + the columns-panel
+   rule below) so adding a category needs zero CSS edits.
    ═══════════════════════════════════════════════════════════════ */
 
 /* Shared heading treatment for group titles in BOTH panels */
@@ -236,33 +230,4 @@
 /* Leaf rows — regular weight, muted, so the hierarchy reads at a glance */
 .snc-grid-wrapper .ag-column-select-column .ag-column-select-column-label {
   color: #4b5563;
-}
-
-/* ── Per-group title colors: COLUMNS panel ───────────────────────────
-   The group row carries the toolPanelClass (snc-tp-group--{slug}) directly,
-   so we can key colors to the actual group regardless of order. */
-.snc-grid-wrapper .snc-tp-group--general .ag-column-select-column-label {
-  color: var(--snc-group-general);
-}
-.snc-grid-wrapper .snc-tp-group--sync-details .ag-column-select-column-label {
-  color: var(--snc-group-sync-details);
-}
-.snc-grid-wrapper .snc-tp-group--link-quality .ag-column-select-column-label {
-  color: var(--snc-group-link-quality);
-}
-
-/* ── Per-group title colors: FILTERS panel ───────────────────────────
-   AG Grid does NOT apply toolPanelClass to filter-panel group rows, so we
-   key off render order instead. The groups render in GROUP_ORDER
-   (General, Sync Details, Link Quality) as direct siblings under
-   .ag-filter-list-panel — keep this nth-of-type list in sync with
-   GROUP_ORDER in syncGrid.columns.tsx if you add/reorder groups. */
-.snc-grid-wrapper .ag-filter-list-panel .ag-filter-toolpanel-group-wrapper:nth-of-type(1) .ag-filter-toolpanel-group-title {
-  color: var(--snc-group-general);
-}
-.snc-grid-wrapper .ag-filter-list-panel .ag-filter-toolpanel-group-wrapper:nth-of-type(2) .ag-filter-toolpanel-group-title {
-  color: var(--snc-group-sync-details);
-}
-.snc-grid-wrapper .ag-filter-list-panel .ag-filter-toolpanel-group-wrapper:nth-of-type(3) .ag-filter-toolpanel-group-title {
-  color: var(--snc-group-link-quality);
 }

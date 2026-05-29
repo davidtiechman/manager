@@ -28,6 +28,7 @@ import {
   BLOCK_SIZE,
   LS_COL_KEY,
   COLUMN_LABELS,
+  GROUP_COLORS,
   buildColumnDefs,
 } from './syncGrid.columns';
 
@@ -93,6 +94,24 @@ export default function AgentSyncsList({
     []
   );
 
+  // ── Per-group color CSS, generated from GROUP_DEFS ─────────────────
+  // One source of truth: adding a category in syncGrid.columns.tsx flows
+  // through here with no CSS edits. We emit, per group slug:
+  //   • the header-underline color (.snc-hdr-group--{slug})
+  //   • the Columns-panel title color (.snc-tp-group--{slug})
+  // The Filters panel is colored separately in JS (no toolPanelClass there).
+  const groupColorCss = useMemo(
+    () =>
+      Object.entries(GROUP_COLORS)
+        .map(
+          ([slug, color]) =>
+            `.snc-grid-wrapper .snc-hdr-group--${slug}{--snc-group-color:${color}}` +
+            `.snc-grid-wrapper .snc-tp-group--${slug} .ag-column-select-column-label{color:${color}}`
+        )
+        .join('\n'),
+    []
+  );
+
   // ── State ──────────────────────────────────────────────────────────
   const [filterModel, setFilterModel] = useState<Record<string, unknown>>({});
   const [totalRows, setTotalRows] = useState<number | null>(null);
@@ -100,6 +119,7 @@ export default function AgentSyncsList({
 
   // ── Refs ────────────────────────────────────────────────────────────
   const maxIdRef = useRef<number | null>(null);
+  const gridWrapperRef = useRef<HTMLDivElement>(null);
 
   // ── Filter callbacks ───────────────────────────────────────────────
   const onFilterChanged = useCallback(() => {
@@ -118,6 +138,31 @@ export default function AgentSyncsList({
 
   const clearAllFilters = useCallback(() => {
     gridRef.current?.api?.setFilterModel(null);
+  }, []);
+
+  // ── Color the Filters tool-panel group titles by group NAME ────────
+  // AG Grid doesn't apply toolPanelClass to filter-panel rows (unlike the
+  // Columns panel, which we color via CSS). The panel DOM is built lazily,
+  // so a MutationObserver colors each group title as it appears — matching
+  // the title text to its slug → GROUP_COLORS. No timing assumptions.
+  useEffect(() => {
+    const wrapper = gridWrapperRef.current;
+    if (!wrapper) return;
+    const paint = () => {
+      wrapper
+        .querySelectorAll<HTMLElement>('.ag-filter-toolpanel-group-title')
+        .forEach((el) => {
+          const slug = (el.textContent?.trim() ?? '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-');
+          const color = GROUP_COLORS[slug];
+          if (color) el.style.color = color;
+        });
+    };
+    const observer = new MutationObserver(paint);
+    observer.observe(wrapper, { childList: true, subtree: true });
+    paint();
+    return () => observer.disconnect();
   }, []);
 
   // ── Reset snapshot + count when agentId changes ────────────────────
@@ -253,7 +298,9 @@ export default function AgentSyncsList({
   // ── Shared grid element ─────────────────────────────────────────────
 
   const gridEl = (
-    <div className="snc-grid-wrapper ag-theme-quartz">
+    <div ref={gridWrapperRef} className="snc-grid-wrapper ag-theme-quartz">
+      {/* Per-group colors generated from GROUP_DEFS (single source of truth) */}
+      <style>{groupColorCss}</style>
       <AgGridReact<AgentHistoryRecord>
         ref={gridRef}
         columnDefs={columnDefs}

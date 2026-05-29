@@ -27,19 +27,39 @@ import {
 export const BLOCK_SIZE  = 100;
 export const LS_COL_KEY  = 'snc-col-state';
 
-// ── Column metadata ─────────────────────────────────────────────────
+// ── Column groups ───────────────────────────────────────────────────
 // Each column declares a `group`. buildColumnDefs() wraps columns into
 // AG Grid column groups (ColGroupDef) by that value, so the grouping shows
-// in BOTH the grid header and the Enterprise Columns tool panel.
+// in the grid header AND in both Enterprise tool panels (Columns + Filters).
+//
+// ┌─────────────────────────────────────────────────────────────────┐
+// │ TO ADD A CATEGORY: add ONE entry to GROUP_DEFS below (name+color).│
+// │ Everything else — order, header underline color, tool-panel title │
+// │ color in BOTH panels — is derived automatically. No CSS edits.    │
+// └─────────────────────────────────────────────────────────────────┘
 
-/** Column group names — order here controls header + tool-panel order */
-export type ColGroup = 'General' | 'Sync Details' | 'Link Quality';
-const GROUP_ORDER: ColGroup[] = ['General', 'Sync Details', 'Link Quality'];
+/** Single source of truth for groups: declaration order = render order. */
+export const GROUP_DEFS = [
+  { name: 'General',      color: '#0284c7' }, // sky
+  { name: 'Sync Details', color: '#7c3aed' }, // violet
+  { name: 'Link Quality', color: '#059669' }, // emerald
+] as const;
+
+export type ColGroup = (typeof GROUP_DEFS)[number]['name'];
+const GROUP_ORDER: ColGroup[] = GROUP_DEFS.map((g) => g.name);
 
 /** Group name → CSS slug, e.g. 'Sync Details' → 'sync-details'. */
 function groupSlug(group: string): string {
   return group.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 }
+
+/**
+ * slug → color map, consumed by the component to inject per-group CSS
+ * variables (used by the header underline + tool-panel group titles).
+ */
+export const GROUP_COLORS: Record<string, string> = Object.fromEntries(
+  GROUP_DEFS.map((g) => [groupSlug(g.name), g.color])
+);
 
 /** Allowed shapes for the `enum` field on a column definition. */
 type EnumSource = Record<string, string> | readonly (string | boolean)[];
