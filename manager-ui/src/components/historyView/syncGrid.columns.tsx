@@ -416,40 +416,12 @@ function buildColumnDefsInternal(): SyncColDef[] {
  */
 export function buildColumnDefs(): (ColDef<AgentHistoryRecord> | ColGroupDef<AgentHistoryRecord>)[] {
   const defs = buildColumnDefsInternal();
-  const groups = GROUP_ORDER.map((groupName) => ({
+  return GROUP_ORDER.map((groupName) => ({
     headerName: groupName,
     groupId: groupName,
     toolPanelClass: `snc-tp-group snc-tp-group--${groupSlug(groupName)}`,
     children: defs.filter((d) => d.context?.group === groupName),
   })).filter((g) => g.children.length > 0);
-
-  return [rowNumberColumn(), ...groups];
-}
-
-/**
- * Excel-style row-number gutter: a very narrow, pinned-left, non-interactive
- * column showing the row's position in the grid (1-based). With the Infinite
- * Row Model this reflects the current scroll position, like a spreadsheet.
- */
-function rowNumberColumn(): ColDef<AgentHistoryRecord> {
-  return {
-    colId: 'rowNum',
-    headerName: '',
-    valueGetter: (p) => (p.node?.rowIndex != null ? p.node.rowIndex + 1 : ''),
-    width: 48,
-    minWidth: 40,
-    maxWidth: 64,
-    pinned: 'left',
-    sortable: false,
-    resizable: false,
-    filter: false,
-    suppressMovable: true,
-    lockPosition: 'left',
-    suppressNavigable: true,
-    suppressHeaderMenuButton: true,
-    cellClass: 'snc-rownum',
-    headerClass: 'snc-rownum-header',
-  };
 }
 
 /**
