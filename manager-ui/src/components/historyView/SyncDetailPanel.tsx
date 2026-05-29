@@ -1,13 +1,5 @@
-/**
- * SyncDetailPanel.tsx
- *
- * Drill-down UI for a single sync record: a slide-in side drawer showing
- * every field of the selected sync (details + link_quality), grouped and
- * formatted. Used instead of AG Grid Master/Detail, which doesn't support
- * the Infinite Row Model this grid uses.
- *
- * Pure presentation — it receives an AgentHistoryRecord and renders.
- */
+// Slide-in side drawer showing all fields of one sync, grouped. Used instead
+// of AG Grid Master/Detail, which doesn't support the Infinite Row Model.
 
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
 import './SyncDetailPanel.css';

@@ -18,8 +18,7 @@ import 'ag-grid-community/styles/ag-theme-quartz.css';
 import './AgentSyncsList.css';
 import './syncGrid.theme.css';
 import './syncGrid.cells.css';
-// Reused for the toolbar button styles (.snc-col-picker-btn); the dropdown
-// picker panel itself was replaced by the Enterprise Columns tool panel.
+// Reused for the toolbar button styles (.snc-col-picker-btn).
 import './ColumnPicker.css';
 
 import { ApiService } from '../../api';
@@ -70,9 +69,7 @@ export default function AgentSyncsList({
     []
   );
 
-  // ── Enterprise: Tool Panels (Columns + Filters sidebar) ────────────
-  // Replaces the hand-rolled column-picker dropdown. Gives column
-  // show/hide, drag-to-reorder, search, and a per-column filters panel.
+  // ── Tool Panels (Columns + Filters sidebar) ───────────────────────
   const sideBar = useMemo<SideBarDef>(
     () => ({
       toolPanels: [
@@ -102,11 +99,8 @@ export default function AgentSyncsList({
   );
 
   // ── Per-group color CSS, generated from GROUP_DEFS ─────────────────
-  // One source of truth: adding a category in syncGrid.columns.tsx flows
-  // through here with no CSS edits. We emit, per group slug:
-  //   • the header-underline color (.snc-hdr-group--{slug})
-  //   • the Columns-panel title color (.snc-tp-group--{slug})
-  // The Filters panel is colored separately in JS (no toolPanelClass there).
+  // Header-underline + Columns-panel title color per group slug. (The
+  // Filters panel is colored separately in JS — no toolPanelClass there.)
   const groupColorCss = useMemo(
     () =>
       Object.entries(GROUP_COLORS)
@@ -149,10 +143,8 @@ export default function AgentSyncsList({
   }, []);
 
   // ── Color the Filters tool-panel group titles by group NAME ────────
-  // AG Grid doesn't apply toolPanelClass to filter-panel rows (unlike the
-  // Columns panel, which we color via CSS). The panel DOM is built lazily,
-  // so a MutationObserver colors each group title as it appears — matching
-  // the title text to its slug → GROUP_COLORS. No timing assumptions.
+  // AG Grid doesn't apply toolPanelClass there, so a MutationObserver
+  // colors each group title by matching its text to GROUP_COLORS.
   useEffect(() => {
     const wrapper = gridWrapperRef.current;
     if (!wrapper) return;
@@ -224,7 +216,6 @@ export default function AgentSyncsList({
   }), [agentId]);
 
   // ── Persist column layout to localStorage (debounced) ──────────────
-  // Bursty events (resize drags, multi-column moves) collapse into one write.
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveColState = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -264,11 +255,8 @@ export default function AgentSyncsList({
     setHiddenCount(cols.filter((c) => !c.isVisible()).length);
   }, []);
 
-  // ── Enterprise: right-click context menu ───────────────────────────
-  // Replaces the hand-rolled context menu. No export: the dataset lives in
-  // the DB (hundreds of thousands of rows) and the grid only holds the
-  // loaded blocks, so any client-side export would be misleading. Copy still
-  // works on the selected cell range for quick ad-hoc grabs.
+  // ── Right-click context menu ───────────────────────────────────────
+  // No export — the grid only holds loaded blocks, so it'd be misleading.
   const getContextMenuItems = useCallback(
     (): (string | MenuItemDef)[] => [
       'copy',
@@ -281,23 +269,16 @@ export default function AgentSyncsList({
   );
 
   // ── Reset columns to their default layout ──────────────────────────
-  // Re-applies the column defs' built-in defaults (default-hidden columns,
-  // original widths/order/pinning), then clears persisted state. The clear
-  // runs after a tick so the column-change events fired by resetColumnState
-  // (which re-save via the debounced saver) settle first — otherwise the
-  // save would race ahead and re-persist the just-cleared layout.
   const resetColumns = useCallback(() => {
     const api = gridRef.current?.api;
     if (!api) return;
     api.resetColumnState();
     refreshHiddenCount();
-    // Outlast the 200ms save debounce, then wipe persisted state.
+    // Outlast the save debounce, then wipe persisted state.
     setTimeout(clearColumnState, 300);
   }, [refreshHiddenCount]);
 
-  // ── Enterprise: custom column header menu (the ☰ button) ───────────
-  // Augments the default menu with quick layout actions + a Reset that
-  // also clears the persisted localStorage layout. All client-side.
+  // ── Custom column header menu (the ☰ button) ───────────────────────
   const getMainMenuItems = useCallback(
     (params: GetMainMenuItemsParams): (string | MenuItemDef)[] => {
       const colId = params.column?.getColId();
@@ -336,9 +317,7 @@ export default function AgentSyncsList({
     []
   );
 
-  // A single click anywhere on a row closes the panel if it's open (so the
-  // double-click that opens it doesn't immediately close on its 1st click —
-  // we only close when a panel is already showing from a previous open).
+  // Single click closes the panel only when already open.
   const onRowClicked = useCallback(() => {
     setDetailRecord((cur) => (cur ? null : cur));
   }, []);
@@ -383,10 +362,7 @@ export default function AgentSyncsList({
         cacheBlockSize={BLOCK_SIZE}
         cacheOverflowSize={2}
         maxConcurrentDatasourceRequests={2}
-        // Cap cached blocks so memory stays flat on deep scrolling through a
-        // very large dataset. 10 blocks × 100 rows = ~1,000 rows kept in RAM;
-        // blocks scrolled far out of view are discarded and refetched if the
-        // user returns to them.
+        // Keep ~1,000 rows in memory; far blocks are evicted and refetched.
         maxBlocksInCache={10}
         sideBar={sideBar}
         getContextMenuItems={getContextMenuItems}

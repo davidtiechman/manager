@@ -1,17 +1,6 @@
-/**
- * syncGrid.columns.tsx
- *
- * Single source of truth for every column in the sync-history grid.
- *
- * To add a column:
- *   1. Add ONE entry inside buildColumnDefs() using the col() factory.
- *      - Set `group` for logical grouping metadata.
- *      - `minWidth` is auto-calculated from headerName — override only
- *        when you need a specific value.
- *   2. That's it. COLUMN_LABELS is derived automatically.
- *
- * Nothing here knows about React state, routing, or the AG Grid API instance.
- */
+// Single source of truth for every column in the sync-history grid.
+// To add a column: add one col() entry in buildColumnDefs() (set `group`).
+// To add a category: add one entry to GROUP_DEFS (name + color).
 
 import type { ColDef, ColGroupDef, ICellRendererParams } from 'ag-grid-community';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
@@ -27,17 +16,7 @@ import {
 export const BLOCK_SIZE  = 100;
 
 // ── Column groups ───────────────────────────────────────────────────
-// Each column declares a `group`. buildColumnDefs() wraps columns into
-// AG Grid column groups (ColGroupDef) by that value, so the grouping shows
-// in the grid header AND in both Enterprise tool panels (Columns + Filters).
-//
-// ┌─────────────────────────────────────────────────────────────────┐
-// │ TO ADD A CATEGORY: add ONE entry to GROUP_DEFS below (name+color).│
-// │ Everything else — order, header underline color, tool-panel title │
-// │ color in BOTH panels — is derived automatically. No CSS edits.    │
-// └─────────────────────────────────────────────────────────────────┘
-
-/** Single source of truth for groups: declaration order = render order. */
+// Add a category here (name + color); order/colors derive automatically.
 export const GROUP_DEFS = [
   { name: 'General',      color: '#0284c7' }, // sky
   { name: 'Sync Details', color: '#7c3aed' }, // violet
@@ -52,10 +31,7 @@ function groupSlug(group: string): string {
   return group.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 }
 
-/**
- * slug → color map, consumed by the component to inject per-group CSS
- * variables (used by the header underline + tool-panel group titles).
- */
+/** slug → color map, used by the component for per-group CSS. */
 export const GROUP_COLORS: Record<string, string> = Object.fromEntries(
   GROUP_DEFS.map((g) => [groupSlug(g.name), g.color])
 );
@@ -63,14 +39,7 @@ export const GROUP_COLORS: Record<string, string> = Object.fromEntries(
 /** Allowed shapes for the `enum` field on a column definition. */
 type EnumSource = Record<string, string> | readonly (string | boolean)[];
 
-/**
- * Input shape for `col()` — `group` is flat for readability at call site.
- *
- * `group` is moved into `context.group` so AG Grid doesn't see a custom root prop.
- * `enum` is consumed by the `col()` factory only — when set, the column
- * gets `filter: 'agSetColumnFilter'` with the enum values as options.
- * `col()` strips `enum` before returning so AG Grid never sees it.
- */
+// Input for col(): `group` → context.group; `enum` → set filter, stripped.
 interface SyncColDefInput extends Omit<ColDef<AgentHistoryRecord>, 'context'> {
   group: ColGroup;
   enum?: EnumSource;
@@ -98,11 +67,7 @@ const BLANKS_LABEL = '(Blanks)';
 
 type SetFilterValueFormatter = (params: { value: unknown }) => string;
 
-/**
- * Compose a filter-dropdown formatter so that null/undefined always shows as
- * "(Blanks)" regardless of any user-supplied formatter (which only sees
- * non-null values).
- */
+/** Show null/undefined as "(Blanks)" in the filter dropdown. */
 function withBlanksFormatter(
   userFormatter: SetFilterValueFormatter | undefined
 ): SetFilterValueFormatter {
@@ -113,18 +78,8 @@ function withBlanksFormatter(
   };
 }
 
-/**
- * Wraps a column definition and:
- *   - fills in `minWidth` from `headerName` when not provided,
- *   - translates `enum` → `agSetColumnFilter` + `filterParams.values`
- *     (unless the caller already set a different `filter`). The values
- *     list always includes `null` so users can filter blank/missing rows;
- *     `null` is displayed as `(Blanks)` in the dropdown.
- *   - injects `EnumChipCell` as the cell renderer when `enum` is set
- *     and no `cellRenderer` is provided.
- *
- * `enum` is stripped from the output so AG Grid never sees an unknown property.
- */
+// Auto-fills minWidth, maps `enum` → set filter (+ Blanks) and EnumChipCell,
+// and tags the header with its group class. `enum` is stripped from output.
 function col(def: SyncColDefInput): SyncColDef {
   const { group, enum: enumDef, ...rest } = def;
   const autoMin = rest.headerName
@@ -148,8 +103,7 @@ function col(def: SyncColDefInput): SyncColDef {
   const chipRendererFromEnum =
     enumDef && !rest.cellRenderer ? { cellRenderer: EnumChipCell } : null;
 
-  // Tag the header cell with its group so CSS can draw a thin colored
-  // underline per group (the group header row itself is hidden in the grid).
+  // Group class → CSS draws the per-group header underline.
   const headerClass = `snc-hdr-group snc-hdr-group--${groupSlug(group)}`;
 
   return {
@@ -212,11 +166,7 @@ function TextCell({ value }: ICellRendererParams) {
   );
 }
 
-/**
- * Renders a colored chip for any enum-backed value.
- * Class shape: `snc-chip snc-chip--{colId}-{value-slug}`.
- * Unknown values still render — they just hit the neutral base style.
- */
+/** Colored chip for enum values: snc-chip snc-chip--{colId}-{value-slug}. */
 function EnumChipCell({ value, column }: ICellRendererParams) {
   if (value == null || value === '') return <span className="snc-null">—</span>;
   const colId = column?.getColId();
@@ -400,19 +350,8 @@ function buildColumnDefsInternal(): SyncColDef[] {
 
 // ── Public API ──────────────────────────────────────────────────────
 
-/**
- * Column definitions for <AgGridReact columnDefs={...}>.
- *
- * Flat columns are wrapped into AG Grid column groups (ColGroupDef) keyed by
- * each column's `context.group`, in GROUP_ORDER. The grouping drives the
- * tree in BOTH tool panels (Columns + Filters). In the GRID header the group
- * row itself is collapsed (groupHeaderHeight={0}); each leaf header instead
- * gets a thin colored underline per group via headerClass (see col() + CSS).
- *
- * `toolPanelClass` tags each group row in the tool panels with
- * `snc-tp-group--{slug}` so CSS can color the group title to match its
- * underline. Empty groups are dropped.
- */
+// Wraps flat columns into ColGroupDefs by context.group (drives the tool
+// panels). The grid's group header row is collapsed via groupHeaderHeight={0}.
 export function buildColumnDefs(): (ColDef<AgentHistoryRecord> | ColGroupDef<AgentHistoryRecord>)[] {
   const defs = buildColumnDefsInternal();
   return GROUP_ORDER.map((groupName) => ({
@@ -423,10 +362,7 @@ export function buildColumnDefs(): (ColDef<AgentHistoryRecord> | ColGroupDef<Age
   })).filter((g) => g.children.length > 0);
 }
 
-/**
- * colId → headerName map, derived from column definitions.
- * Used by the active-filter chips in the toolbar.
- */
+/** colId → headerName map, used by the toolbar's active-filter chips. */
 export function buildColumnLabels(
   defs: SyncColDef[]
 ): Record<string, string> {
