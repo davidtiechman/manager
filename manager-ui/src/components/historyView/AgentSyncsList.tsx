@@ -7,7 +7,7 @@ import type {
   IGetRowsParams,
   GridReadyEvent,
   ColumnResizedEvent,
-  RowClickedEvent,
+  RowDoubleClickedEvent,
   MenuItemDef,
   SideBarDef,
 } from 'ag-grid-community';
@@ -59,7 +59,7 @@ export default function AgentSyncsList({
     () => ({
       sortable: true,
       resizable: true,
-      floatingFilter: true,
+      floatingFilter: false,
       suppressMovable: false,
     }),
     []
@@ -267,9 +267,19 @@ export default function AgentSyncsList({
     []
   );
 
-  // ── Open the detail side panel on row click ───────────────────────
-  const onRowClicked = useCallback((e: RowClickedEvent<AgentHistoryRecord>) => {
-    if (e.data) setDetailRecord(e.data);
+  // ── Detail side panel: double-click opens, single click closes ─────
+  const onRowDoubleClicked = useCallback(
+    (e: RowDoubleClickedEvent<AgentHistoryRecord>) => {
+      if (e.data) setDetailRecord(e.data);
+    },
+    []
+  );
+
+  // A single click anywhere on a row closes the panel if it's open (so the
+  // double-click that opens it doesn't immediately close on its 1st click —
+  // we only close when a panel is already showing from a previous open).
+  const onRowClicked = useCallback(() => {
+    setDetailRecord((cur) => (cur ? null : cur));
   }, []);
 
   const closeDetail = useCallback(() => setDetailRecord(null), []);
@@ -330,6 +340,7 @@ export default function AgentSyncsList({
         onColumnMoved={onColumnStateChanged}
         onFilterChanged={onFilterChanged}
         onRowClicked={onRowClicked}
+        onRowDoubleClicked={onRowDoubleClicked}
         suppressCellFocus={false}
         rowSelection={{ mode: 'singleRow', checkboxes: false, enableClickSelection: true }}
         tooltipShowDelay={400}

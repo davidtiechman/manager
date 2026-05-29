@@ -1,18 +1,14 @@
 /**
  * SyncDetailPanel.tsx
  *
- * Drill-down UI for a single sync record. Two exports:
- *   - SyncDetailPanel: a slide-in side drawer showing every field of the
- *     selected sync (details + link_quality), grouped and formatted. Used
- *     instead of AG Grid Master/Detail, which doesn't support the Infinite
- *     Row Model this grid uses.
- *   - LinkQualityTooltip: a compact AG Grid tooltip component that previews
- *     the link-quality summary on row hover.
+ * Drill-down UI for a single sync record: a slide-in side drawer showing
+ * every field of the selected sync (details + link_quality), grouped and
+ * formatted. Used instead of AG Grid Master/Detail, which doesn't support
+ * the Infinite Row Model this grid uses.
  *
- * Both are pure presentation — they receive an AgentHistoryRecord and render.
+ * Pure presentation — it receives an AgentHistoryRecord and renders.
  */
 
-import type { ITooltipParams } from 'ag-grid-community';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
 import './SyncDetailPanel.css';
 
@@ -157,33 +153,3 @@ export function SyncDetailPanel({ record, onClose }: SyncDetailPanelProps) {
   );
 }
 
-// ── Link-quality hover tooltip ──────────────────────────────────────
-
-export function LinkQualityTooltip(params: ITooltipParams) {
-  const data = params.data as AgentHistoryRecord | undefined;
-  const lq = data?.link_quality;
-  if (!lq) return null;
-
-  const qualitySlug = String(lq.quality ?? '').toLowerCase();
-
-  return (
-    <div className="snc-tt">
-      <div className="snc-tt-head">
-        <span className="snc-tt-title">Link Quality</span>
-        <span className={`snc-tt-quality snc-tt-quality--${qualitySlug}`}>
-          {formatValue(lq.quality)}
-        </span>
-      </div>
-      <div className="snc-tt-grid">
-        <span className="snc-tt-k">Type</span>
-        <span className="snc-tt-v">{formatValue(lq.type)}</span>
-        <span className="snc-tt-k">Available</span>
-        <span className="snc-tt-v">{formatValue(lq.available)}</span>
-        <span className="snc-tt-k">Latency</span>
-        <span className="snc-tt-v">{formatValue(lq.latency)} ms</span>
-        <span className="snc-tt-k">Reliability</span>
-        <span className="snc-tt-v">{formatValue(lq.reliability)}</span>
-      </div>
-    </div>
-  );
-}

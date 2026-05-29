@@ -15,7 +15,6 @@
 
 import type { ColDef, ColGroupDef, ICellRendererParams } from 'ag-grid-community';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
-import { LinkQualityTooltip } from './SyncDetailPanel';
 import {
   LinkQualityType,
   LinkType,
@@ -246,10 +245,6 @@ function buildColumnDefsInternal(): SyncColDef[] {
       width: 160,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
-      // Hover this (always-visible, pinned) cell to preview the row's
-      // link-quality summary via the LinkQualityTooltip component.
-      tooltipValueGetter: () => ' ',
-      tooltipComponent: LinkQualityTooltip,
     }),
     col({
       group: 'General',
@@ -421,12 +416,40 @@ function buildColumnDefsInternal(): SyncColDef[] {
  */
 export function buildColumnDefs(): (ColDef<AgentHistoryRecord> | ColGroupDef<AgentHistoryRecord>)[] {
   const defs = buildColumnDefsInternal();
-  return GROUP_ORDER.map((groupName) => ({
+  const groups = GROUP_ORDER.map((groupName) => ({
     headerName: groupName,
     groupId: groupName,
     toolPanelClass: `snc-tp-group snc-tp-group--${groupSlug(groupName)}`,
     children: defs.filter((d) => d.context?.group === groupName),
   })).filter((g) => g.children.length > 0);
+
+  return [rowNumberColumn(), ...groups];
+}
+
+/**
+ * Excel-style row-number gutter: a very narrow, pinned-left, non-interactive
+ * column showing the row's position in the grid (1-based). With the Infinite
+ * Row Model this reflects the current scroll position, like a spreadsheet.
+ */
+function rowNumberColumn(): ColDef<AgentHistoryRecord> {
+  return {
+    colId: 'rowNum',
+    headerName: '',
+    valueGetter: (p) => (p.node?.rowIndex != null ? p.node.rowIndex + 1 : ''),
+    width: 48,
+    minWidth: 40,
+    maxWidth: 64,
+    pinned: 'left',
+    sortable: false,
+    resizable: false,
+    filter: false,
+    suppressMovable: true,
+    lockPosition: 'left',
+    suppressNavigable: true,
+    suppressHeaderMenuButton: true,
+    cellClass: 'snc-rownum',
+    headerClass: 'snc-rownum-header',
+  };
 }
 
 /**
