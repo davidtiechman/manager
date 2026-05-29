@@ -96,6 +96,7 @@ export default function AgentSyncsList({
   // ── State ──────────────────────────────────────────────────────────
   const [filterModel, setFilterModel] = useState<Record<string, unknown>>({});
   const [totalRows, setTotalRows] = useState<number | null>(null);
+  const [hiddenCount, setHiddenCount] = useState(0);
 
   // ── Refs ────────────────────────────────────────────────────────────
   const maxIdRef = useRef<number | null>(null);
@@ -187,6 +188,9 @@ export default function AgentSyncsList({
           localStorage.removeItem(LS_COL_KEY);
         }
       }
+      // Seed the "Columns" badge with the current hidden count.
+      const cols = event.api.getColumns();
+      if (cols) setHiddenCount(cols.filter((c) => !c.isVisible()).length);
     },
     [buildDatasource]
   );
@@ -200,13 +204,14 @@ export default function AgentSyncsList({
   );
 
   // ── Enterprise: right-click context menu ───────────────────────────
-  // Replaces the hand-rolled context menu. Adds clipboard copy + export.
+  // Replaces the hand-rolled context menu. `export` is a built-in submenu
+  // (CSV / Excel); with cell selection active it exports the selected range.
   const getContextMenuItems = useCallback(
     (): (string | MenuItemDef)[] => [
       'copy',
       'copyWithHeaders',
       'separator',
-      'export', // built-in submenu: CSV Export + Excel Export
+      'export',
       'separator',
       'autoSizeThis',
       'autoSizeAll',
@@ -214,33 +219,26 @@ export default function AgentSyncsList({
     []
   );
 
-  // ── Export helpers (toolbar buttons) ───────────────────────────────
-  // NOTE (Infinite Row Model): exports the rows currently loaded into the
-  // grid's cache, not the entire server-side dataset.
-  const exportExcel = useCallback(() => {
-    gridRef.current?.api?.exportDataAsExcel({
-      fileName: `sync-history-${agentId ?? 'export'}.xlsx`,
-    });
-  }, [agentId]);
-
-  const exportCsv = useCallback(() => {
-    gridRef.current?.api?.exportDataAsCsv({
-      fileName: `sync-history-${agentId ?? 'export'}.csv`,
-    });
-  }, [agentId]);
-
-  // ── Toggle the Columns tool panel from the toolbar button ──────────
-  const toggleColumnsPanel = useCallback(() => {
+  // ── Toggle a tool panel from the toolbar buttons ───────────────────
+  const toggleToolPanel = useCallback((panelId: 'columns' | 'filters') => {
     const api = gridRef.current?.api;
     if (!api) return;
-    if (api.getOpenedToolPanel() === 'columns') api.closeToolPanel();
-    else api.openToolPanel('columns');
+    if (api.getOpenedToolPanel() === panelId) api.closeToolPanel();
+    else api.openToolPanel(panelId);
   }, []);
 
-  // ── Persist column visibility / order / pin changes ────────────────
+  // ── Track hidden-column count for the "Columns" badge ──────────────
+  const refreshHiddenCount = useCallback(() => {
+    const cols = gridRef.current?.api?.getColumns();
+    if (!cols) return;
+    setHiddenCount(cols.filter((c) => !c.isVisible()).length);
+  }, []);
+
+  // ── Persist column state + refresh hidden count on any change ──────
   const onColumnStateChanged = useCallback(() => {
     saveColState();
-  }, [saveColState]);
+    refreshHiddenCount();
+  }, [saveColState, refreshHiddenCount]);
 
   // ── No agentId guard ────────────────────────────────────────────────
 
@@ -266,7 +264,8 @@ export default function AgentSyncsList({
         maxConcurrentDatasourceRequests={2}
         sideBar={sideBar}
         getContextMenuItems={getContextMenuItems}
-        enableRangeSelection
+        cellSelection
+        groupHeaderHeight={0}
         onGridReady={onGridReady}
         onColumnResized={onColumnResized}
         onColumnVisible={onColumnStateChanged}
@@ -365,7 +364,7 @@ export default function AgentSyncsList({
           <button
             type="button"
             className="snc-col-picker-btn"
-            onClick={toggleColumnsPanel}
+            onClick={() => toggleToolPanel('columns')}
           >
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <rect x="1"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
@@ -373,36 +372,22 @@ export default function AgentSyncsList({
               <rect x="11" y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
             </svg>
             Columns
+            {hiddenCount > 0 && (
+              <span className="snc-col-picker-badge">{hiddenCount}</span>
+            )}
           </button>
 
-          {/* Export buttons */}
+          {/* Filters tool-panel toggle */}
           <button
             type="button"
             className="snc-col-picker-btn"
-            onClick={exportExcel}
-            title="Export loaded rows to Excel"
+            onClick={() => toggleToolPanel('filters')}
           >
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M8 1v9M4.5 6.5L8 10l3.5-3.5" stroke="currentColor"
-                strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12v2h12v-2" stroke="currentColor" strokeWidth="1.5"
-                strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M1.5 3h13l-5 6v4l-3 1.5V9l-5-6z" stroke="currentColor"
+                strokeWidth="1.3" strokeLinejoin="round"/>
             </svg>
-            Excel
-          </button>
-          <button
-            type="button"
-            className="snc-col-picker-btn"
-            onClick={exportCsv}
-            title="Export loaded rows to CSV"
-          >
-            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M8 1v9M4.5 6.5L8 10l3.5-3.5" stroke="currentColor"
-                strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M2 12v2h12v-2" stroke="currentColor" strokeWidth="1.5"
-                strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            CSV
+            Filters
           </button>
 
           {/* Active filter chips (appear inline after buttons) */}

@@ -13,7 +13,7 @@
  * Nothing here knows about React state, routing, or the AG Grid API instance.
  */
 
-import type { ColDef, ICellRendererParams } from 'ag-grid-community';
+import type { ColDef, ColGroupDef, ICellRendererParams } from 'ag-grid-community';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
 import {
   LinkQualityType,
@@ -28,12 +28,13 @@ export const BLOCK_SIZE  = 100;
 export const LS_COL_KEY  = 'snc-col-state';
 
 // ── Column metadata ─────────────────────────────────────────────────
-// `group` is app-level metadata kept on each column (in context.group).
-// Retained as a logical grouping for future use; not currently read by
-// the Enterprise Columns tool panel.
+// Each column declares a `group`. buildColumnDefs() wraps columns into
+// AG Grid column groups (ColGroupDef) by that value, so the grouping shows
+// in BOTH the grid header and the Enterprise Columns tool panel.
 
-/** Logical column groups */
+/** Column group names — order here controls header + tool-panel order */
 export type ColGroup = 'General' | 'Sync Details' | 'Link Quality';
+const GROUP_ORDER: ColGroup[] = ['General', 'Sync Details', 'Link Quality'];
 
 /** Allowed shapes for the `enum` field on a column definition. */
 type EnumSource = Record<string, string> | readonly (string | boolean)[];
@@ -123,10 +124,16 @@ function col(def: SyncColDefInput): SyncColDef {
   const chipRendererFromEnum =
     enumDef && !rest.cellRenderer ? { cellRenderer: EnumChipCell } : null;
 
+  // Tag the header cell with its group so CSS can draw a thin colored
+  // underline per group (the group header row itself is hidden in the grid).
+  const groupSlug = group.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const headerClass = `snc-hdr-group snc-hdr-group--${groupSlug}`;
+
   return {
     ...rest,
     ...(setFilterFromEnum ?? {}),
     ...(chipRendererFromEnum ?? {}),
+    headerClass: rest.headerClass ?? headerClass,
     minWidth: rest.minWidth ?? autoMin,
     context: { group },
   };
@@ -370,9 +377,23 @@ function buildColumnDefsInternal(): SyncColDef[] {
 
 // ── Public API ──────────────────────────────────────────────────────
 
-/** Column definitions for <AgGridReact columnDefs={...}> */
-export function buildColumnDefs(): ColDef<AgentHistoryRecord>[] {
-  return buildColumnDefsInternal();
+/**
+ * Column definitions for <AgGridReact columnDefs={...}>.
+ *
+ * Flat columns are wrapped into AG Grid column groups (ColGroupDef) keyed by
+ * each column's `context.group`, in GROUP_ORDER. The grouping drives the
+ * tree in the Columns tool panel. In the GRID header the group row itself is
+ * collapsed (groupHeaderHeight={0}); each leaf header instead gets a thin
+ * colored underline per group via headerClass (see col() + CSS). Empty
+ * groups are dropped.
+ */
+export function buildColumnDefs(): (ColDef<AgentHistoryRecord> | ColGroupDef<AgentHistoryRecord>)[] {
+  const defs = buildColumnDefsInternal();
+  return GROUP_ORDER.map((groupName) => ({
+    headerName: groupName,
+    groupId: groupName,
+    children: defs.filter((d) => d.context?.group === groupName),
+  })).filter((g) => g.children.length > 0);
 }
 
 /**
