@@ -73,6 +73,56 @@
   color: #4b5563;
 }
 
+/* ── Per-type header icons (v33 custom header content) ──────────
+   A small icon before the header text, picked by column type via the
+   snc-hdr-type--* class added in col(). Icons are inline SVG masks so
+   they inherit the header text color. */
+.snc-grid-wrapper [class*='snc-hdr-type--'] .ag-header-cell-text::before {
+  content: '';
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin-right: 6px;
+  vertical-align: -2px;
+  background-color: #94a3b8;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  flex-shrink: 0;
+}
+
+.snc-grid-wrapper .ag-header-cell:hover [class*='snc-hdr-type--'] .ag-header-cell-text::before,
+.snc-grid-wrapper [class*='snc-hdr-type--']:hover .ag-header-cell-text::before {
+  background-color: #475569;
+}
+
+/* date → calendar */
+.snc-grid-wrapper .snc-hdr-type--date .ag-header-cell-text::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='3' width='12' height='11' rx='1.5' fill='none' stroke='black' stroke-width='1.4'/%3E%3Cpath d='M2 6h12M5.5 1.5v3M10.5 1.5v3' stroke='black' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='3' width='12' height='11' rx='1.5' fill='none' stroke='black' stroke-width='1.4'/%3E%3Cpath d='M2 6h12M5.5 1.5v3M10.5 1.5v3' stroke='black' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* number → hash */
+.snc-grid-wrapper .snc-hdr-type--number .ag-header-cell-text::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 2L4.5 14M11.5 2L10 14M2.5 5.5h12M2 10.5h12' stroke='black' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 2L4.5 14M11.5 2L10 14M2.5 5.5h12M2 10.5h12' stroke='black' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* enum → tag/list */
+.snc-grid-wrapper .snc-hdr-type--enum .ag-header-cell-text::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 4h2M2 8h2M2 12h2M6 4h8M6 8h8M6 12h8' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 4h2M2 8h2M2 12h2M6 4h8M6 8h8M6 12h8' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* text → letter */
+.snc-grid-wrapper .snc-hdr-type--text .ag-header-cell-text::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 13L7 3h2l4 10M4.5 9.5h7' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 13L7 3h2l4 10M4.5 9.5h7' fill='none' stroke='black' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
 .snc-grid-wrapper .ag-header-cell:hover {
   background: #eaecf0 !important;
 }

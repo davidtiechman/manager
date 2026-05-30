@@ -99,7 +99,8 @@ function col(def: SyncColDefInput): SyncColDef {
   const chipRendererFromEnum =
     enumDef && !rest.cellRenderer ? { cellRenderer: EnumChipCell } : null;
 
-  const headerClass = `snc-hdr-group snc-hdr-group--${groupSlug(group)}`;
+  const typeClass = headerTypeClass(enumDef, rest.filter);
+  const headerClass = `snc-hdr-group snc-hdr-group--${groupSlug(group)} ${typeClass}`;
 
   return {
     ...rest,
@@ -109,6 +110,18 @@ function col(def: SyncColDefInput): SyncColDef {
     minWidth: rest.minWidth ?? autoMin,
     context: { group },
   };
+}
+
+/** Picks a header type class (→ CSS icon) from the column's enum/filter. */
+function headerTypeClass(
+  enumDef: EnumSource | undefined,
+  filter: ColDef['filter']
+): string {
+  if (enumDef) return 'snc-hdr-type--enum';
+  if (filter === 'agDateColumnFilter') return 'snc-hdr-type--date';
+  if (filter === 'agNumberColumnFilter') return 'snc-hdr-type--number';
+  if (filter === 'agTextColumnFilter') return 'snc-hdr-type--text';
+  return 'snc-hdr-type--text';
 }
 
 // ── Cell renderers (internal) ───────────────────────────────────────
