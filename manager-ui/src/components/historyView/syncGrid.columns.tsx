@@ -39,13 +39,11 @@ export const GROUP_COLORS: Record<string, string> = Object.fromEntries(
 /** Allowed shapes for the `enum` field on a column definition. */
 type EnumSource = Record<string, string> | readonly (string | boolean)[];
 
-// Input for col(): `group` → context.group; `enum` → set filter, stripped.
 interface SyncColDefInput extends Omit<ColDef<AgentHistoryRecord>, 'context'> {
   group: ColGroup;
   enum?: EnumSource;
 }
 
-/** Output of `col()` — `group` lives in `context` (AG Grid's place for app data). */
 type SyncColDef = ColDef<AgentHistoryRecord> & {
   context: { group: ColGroup };
 };
@@ -78,8 +76,6 @@ function withBlanksFormatter(
   };
 }
 
-// Auto-fills minWidth, maps `enum` → set filter (+ Blanks) and EnumChipCell,
-// and tags the header with its group class. `enum` is stripped from output.
 function col(def: SyncColDefInput): SyncColDef {
   const { group, enum: enumDef, ...rest } = def;
   const autoMin = rest.headerName
@@ -103,7 +99,6 @@ function col(def: SyncColDefInput): SyncColDef {
   const chipRendererFromEnum =
     enumDef && !rest.cellRenderer ? { cellRenderer: EnumChipCell } : null;
 
-  // Group class → CSS draws the per-group header underline.
   const headerClass = `snc-hdr-group snc-hdr-group--${groupSlug(group)}`;
 
   return {
@@ -298,7 +293,6 @@ function buildColumnDefsInternal(): SyncColDef[] {
       flex: 1,
       cellRenderer: AvailabilityCell,
       enum: [true, false],
-      // Render booleans as Yes/No inside the filter dropdown (column cells use AvailabilityCell).
       filterParams: {
         valueFormatter: (p: { value: unknown }) =>
           p.value === true || p.value === 'true' ? 'Yes' : 'No',
@@ -374,7 +368,6 @@ export function buildColumnLabels(
 }
 
 // ── Singleton exports ───────────────────────────────────────────────
-// Evaluated once at module load. Safe because defs never change at runtime.
 
 const _defs = buildColumnDefsInternal();
 

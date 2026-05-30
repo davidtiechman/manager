@@ -99,8 +99,6 @@ export default function AgentSyncsList({
   );
 
   // ── Per-group color CSS, generated from GROUP_DEFS ─────────────────
-  // Header-underline + Columns-panel title color per group slug. (The
-  // Filters panel is colored separately in JS — no toolPanelClass there.)
   const groupColorCss = useMemo(
     () =>
       Object.entries(GROUP_COLORS)
@@ -142,9 +140,7 @@ export default function AgentSyncsList({
     gridRef.current?.api?.setFilterModel(null);
   }, []);
 
-  // ── Color the Filters tool-panel group titles by group NAME ────────
-  // AG Grid doesn't apply toolPanelClass there, so a MutationObserver
-  // colors each group title by matching its text to GROUP_COLORS.
+  // ── Color the Filters tool-panel group titles by group name ────────
   useEffect(() => {
     const wrapper = gridWrapperRef.current;
     if (!wrapper) return;
@@ -233,7 +229,6 @@ export default function AgentSyncsList({
     (event: GridReadyEvent) => {
       event.api.updateGridOptions({ datasource: buildDatasource() });
       loadColumnState(event.api);
-      // Seed the "Columns" badge with the current hidden count.
       const cols = event.api.getColumns();
       if (cols) setHiddenCount(cols.filter((c) => !c.isVisible()).length);
     },
@@ -256,7 +251,6 @@ export default function AgentSyncsList({
   }, []);
 
   // ── Right-click context menu ───────────────────────────────────────
-  // No export — the grid only holds loaded blocks, so it'd be misleading.
   const getContextMenuItems = useCallback(
     (): (string | MenuItemDef)[] => [
       'copy',
@@ -274,7 +268,6 @@ export default function AgentSyncsList({
     if (!api) return;
     api.resetColumnState();
     refreshHiddenCount();
-    // Outlast the save debounce, then wipe persisted state.
     setTimeout(clearColumnState, 300);
   }, [refreshHiddenCount]);
 
@@ -297,7 +290,6 @@ export default function AgentSyncsList({
         'autoSizeThis',
         'autoSizeAll',
         'separator',
-        // Built-in: opens the Columns tool panel focused here.
         'columnChooser',
         {
           name: 'Reset Columns',
@@ -317,7 +309,6 @@ export default function AgentSyncsList({
     []
   );
 
-  // Single click closes the panel only when already open.
   const onRowClicked = useCallback(() => {
     setDetailRecord((cur) => (cur ? null : cur));
   }, []);
@@ -352,7 +343,6 @@ export default function AgentSyncsList({
 
   const gridEl = (
     <div ref={gridWrapperRef} className="snc-grid-wrapper ag-theme-quartz">
-      {/* Per-group colors generated from GROUP_DEFS (single source of truth) */}
       <style>{groupColorCss}</style>
       <AgGridReact<AgentHistoryRecord>
         ref={gridRef}
@@ -362,7 +352,6 @@ export default function AgentSyncsList({
         cacheBlockSize={BLOCK_SIZE}
         cacheOverflowSize={2}
         maxConcurrentDatasourceRequests={2}
-        // Keep ~1,000 rows in memory; far blocks are evicted and refetched.
         maxBlocksInCache={10}
         sideBar={sideBar}
         getContextMenuItems={getContextMenuItems}
@@ -461,7 +450,7 @@ export default function AgentSyncsList({
 
       </header>
 
-      {/* ── Toolbar: columns · export · active filters · row count ── */}
+      {/* ── Toolbar ───────────────────────────────────────────────── */}
       <div className="snc-toolbar">
 
         <div className="snc-toolbar-start">
