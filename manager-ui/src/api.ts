@@ -15,6 +15,8 @@ export interface SyncsIrmParams {
 export interface SyncsIrmResponse {
   rows: AgentHistoryRecord[];
   lastRow: number | null;
+  /** Total rows matching the query; returned on the first block only. */
+  rowCount?: number;
 }
 
 const VITE_API_TOKEN = import.meta.env.VITE_API_TOKEN || 'test';
@@ -98,7 +100,8 @@ export class ApiService {
     const data = await response.json() as Record<string, unknown>;
     const rows = (data.rows ?? data.items ?? []) as AgentHistoryRecord[];
     const lastRow = (data.lastRow ?? null) as number | null;
-    return { rows, lastRow };
+    const rowCount = typeof data.rowCount === 'number' ? data.rowCount : undefined;
+    return { rows, lastRow, rowCount };
   }
 
   static async getAgentConfig(

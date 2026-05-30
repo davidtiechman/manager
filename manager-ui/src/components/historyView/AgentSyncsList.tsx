@@ -191,7 +191,7 @@ export default function AgentSyncsList({
         filterModel: params.filterModel as Record<string, unknown>,
         maxId: maxIdRef.current,
       })
-        .then(({ rows, lastRow }) => {
+        .then(({ rows, lastRow, rowCount }) => {
           const safeRows = Array.isArray(rows) ? rows : [];
           if (params.startRow === 0 && safeRows.length > 0 && maxIdRef.current === null) {
             maxIdRef.current = safeRows[0].id;
@@ -199,7 +199,9 @@ export default function AgentSyncsList({
           const blockSize = params.endRow - params.startRow;
           const knownEnd =
             safeRows.length < blockSize ? params.startRow + safeRows.length : undefined;
-          const resolvedTotal = lastRow ?? knownEnd;
+          // Prefer the server's total count (returned on the first block);
+          // fall back to lastRow / a short final block.
+          const resolvedTotal = rowCount ?? lastRow ?? knownEnd;
           if (params.startRow === 0 && resolvedTotal !== undefined) {
             setTotalRows(resolvedTotal);
           }
