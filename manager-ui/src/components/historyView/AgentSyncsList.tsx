@@ -9,6 +9,7 @@ import type {
   ColumnResizedEvent,
   RowDoubleClickedEvent,
   MenuItemDef,
+  DefaultMenuItem,
   GetMainMenuItemsParams,
   SideBarDef,
 } from 'ag-grid-community';
@@ -252,7 +253,7 @@ export default function AgentSyncsList({
 
   // ── Right-click context menu ───────────────────────────────────────
   const getContextMenuItems = useCallback(
-    (): (string | MenuItemDef)[] => [
+    (): (DefaultMenuItem | MenuItemDef)[] => [
       'copy',
       'copyWithHeaders',
       'separator',
@@ -273,7 +274,7 @@ export default function AgentSyncsList({
 
   // ── Custom column header menu (the ☰ button) ───────────────────────
   const getMainMenuItems = useCallback(
-    (params: GetMainMenuItemsParams): (string | MenuItemDef)[] => {
+    (params: GetMainMenuItemsParams): (DefaultMenuItem | MenuItemDef)[] => {
       const colId = params.column?.getColId();
       const isPinned = !!params.column?.isPinned();
       return [
@@ -348,6 +349,7 @@ export default function AgentSyncsList({
         ref={gridRef}
         columnDefs={columnDefs}
         defaultColDef={defaultColDef}
+        theme="legacy"
         rowModelType="infinite"
         cacheBlockSize={BLOCK_SIZE}
         cacheOverflowSize={2}
