@@ -185,6 +185,31 @@
   color: #6b7280;
 }
 
+/* ── Skeleton loading bar (shown while an Infinite block loads) ── */
+.snc-skel {
+  display: inline-block;
+  height: 11px;
+  border-radius: 5px;
+  background: #e8edf2;
+  background-image: linear-gradient(
+    90deg,
+    #e8edf2 0%,
+    #f3f6f9 40%,
+    #e8edf2 80%
+  );
+  background-size: 200% 100%;
+  animation: snc-skel-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes snc-skel-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .snc-skel { animation: none; }
+}
+
 /* ── Header right-click context menu ────────────────────────── */
 .snc-ctx-menu {
   position: fixed;

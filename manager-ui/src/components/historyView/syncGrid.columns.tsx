@@ -96,16 +96,19 @@ function col(def: SyncColDefInput): SyncColDef {
         }
       : null;
 
-  const chipRendererFromEnum =
-    enumDef && !rest.cellRenderer ? { cellRenderer: EnumChipCell } : null;
-
   const typeClass = headerTypeClass(enumDef, rest.filter);
   const headerClass = `snc-hdr-group snc-hdr-group--${groupSlug(group)} ${typeClass}`;
+
+  // Resolve the base renderer (explicit, enum chip, or plain text), then wrap
+  // it so unloaded Infinite-scroll rows show a skeleton instead of blank.
+  const baseRenderer =
+    (rest.cellRenderer as ((p: ICellRendererParams) => JSX.Element) | undefined) ??
+    (enumDef ? EnumChipCell : TextCell);
 
   return {
     ...rest,
     ...(setFilterFromEnum ?? {}),
-    ...(chipRendererFromEnum ?? {}),
+    cellRenderer: withSkeleton(baseRenderer),
     headerClass: rest.headerClass ?? headerClass,
     minWidth: rest.minWidth ?? autoMin,
     context: { group },
@@ -125,6 +128,27 @@ function headerTypeClass(
 }
 
 // ── Cell renderers (internal) ───────────────────────────────────────
+
+/**
+ * Renders the real cell content, or a shimmering skeleton bar while the
+ * Infinite Row Model block for this row is still loading (data === undefined).
+ * Wrap any column's renderer with this to get per-cell loading state.
+ */
+function withSkeleton(
+  Renderer: (p: ICellRendererParams) => JSX.Element
+): (p: ICellRendererParams) => JSX.Element {
+  return (params) => {
+    if (params.data === undefined) {
+      // Vary width a little per column so the skeleton looks organic.
+      const widths = [40, 55, 70, 60, 45];
+      const seed = (params.column?.getColId()?.length ?? 0) % widths.length;
+      return (
+        <span className="snc-skel" style={{ width: `${widths[seed]}%` }} aria-hidden="true" />
+      );
+    }
+    return Renderer(params);
+  };
+}
 
 function StatusCell({ value }: ICellRendererParams) {
   if (value == null || value === '') return <span className="snc-null">—</span>;
