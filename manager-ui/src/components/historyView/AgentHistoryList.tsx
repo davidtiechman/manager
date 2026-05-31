@@ -115,7 +115,7 @@ export default function AgentHistoryList() {
                   </div>
 
                   <div className="agent-info">
-                    <div className='info-item'>נוצר: {formatHistoryDate(agent.createdAt)}</div>
+                    <div className='info-item'>Created: {formatHistoryDate(agent.createdAt)}</div>
                   </div>
                 </div>
               </button>

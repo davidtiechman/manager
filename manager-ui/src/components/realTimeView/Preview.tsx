@@ -132,7 +132,7 @@ export default function Preview() {
   };
 
   function getAgentLabel(agent: AgentPreviewData) {
-    return agent.call_sign || agent.zayad_id || agent.unit_code || agent.id;
+    return agent.unit_code || agent.zayad_id || agent.id;
   }
 
   if (loading) {
@@ -153,147 +153,147 @@ export default function Preview() {
 
   return (
     <div className="page">
-      <div className="top-bar">
-        <ModeNavigationLink
-          to="/history"
-          label="למעבר להיסטוריה"
-          variant="history"
-        />
-        <h1 className="top-bar-title">ניטור סוכנים בזמן אמת</h1>
-      </div>
-
-      <div className={`page-header ${selectedAgent ? '' : 'main-preview-header'}`}>
-        <p className="muted">
-          {viewMode === 'icon'
-            ? 'לחץ על אייקון כדי לראות פרטים'
-            : 'לחץ על שורה כדי לראות פרטים'}
-        </p>
-        {!selectedAgent && (
-          <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
-            <button
-              type="button"
-              className={`view-toggle-button ${viewMode === 'icon' ? 'active' : ''}`}
-              onClick={() => setViewMode('icon')}
-            >
-              אייקונים
-            </button>
-
-            <button
-              type="button"
-              className={`view-toggle-button ${viewMode === 'list' ? 'active' : ''}`}
-              onClick={() => setViewMode('list')}
-            >
-              רשימה
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div
-        className={`home-layout ${
-          selectedAgent ? 'has-selected-agent' : 'no-selected-agent'
-        }`}
-        style={
-          selectedAgent
-            ? {
-                gridTemplateColumns: `${sidebarWidth}px ${RESIZE_HANDLE_WIDTH}px minmax(${DETAILS_MIN_WIDTH}px, 1fr)`,
-              }
-            : undefined
-        }
-      >
-        <aside className="agents-sidebar">
-          <FilterAgents agents={agents}>
-            {(filteredAgents) => (
-              <div
-                className={`agents-grid ${
-                  !selectedAgent && viewMode === 'list' ? 'agents-list' : ''
-                }`}
-              >
-                {filteredAgents.map((agent) => {
-                  const previewAgent = toAgentPreview(agent);
-
-                  return (
-                    <button
-                      key={previewAgent.id}
-                      type="button"
-                      className={`agent-card ${previewAgent.status} ${
-                        !selectedAgent && viewMode === 'list' ? 'list-view' : ''
-                      } ${selectedAgentId === previewAgent.id ? 'selected' : ''}`}
-                      onClick={() => {
-                        setSelectedAgentId(previewAgent.id);
-                        setConfigurationMessage('');
-                        navigate(`/agents/${previewAgent.id}`);
-                      }}
-                    >
-                      <div className="tank-icon">
-                        <TankIcon status={previewAgent.status} />
-                      </div>
-
-                      <div className="agent-content">
-                        <div className="agent-label">{getAgentLabel(previewAgent)}</div>
-
-                        <div className="agent-info">
-                          <div className="info-item">ID: {previewAgent.id}</div>
-                          <div className="info-item">סטטוס: {previewAgent.status}</div>
-                          <div className="info-item">שם סוכן: {previewAgent.call_sign}</div>
-                          <div className="info-item">יחידה: {previewAgent.unit}</div>
-                          <div className="info-item">
-                            פלטפורמה ID: {previewAgent.platformId}
-                          </div>
-                          <div className="info-item">צייד ID: {previewAgent.zayad_id}</div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </FilterAgents>
-        </aside>
-
-        {selectedAgent && (
+      <FilterAgents agents={agents}>
+        {(filteredAgents, statusFilter, filtersPanel) => (
           <>
-            <div
-              className="resize-handle"
-              onMouseDown={(event) => {
-                event.preventDefault();
-
-                const startX = event.clientX;
-                const startWidth = sidebarWidth;
-
-                const handleMouseMove = (moveEvent: MouseEvent) => {
-                  const nextWidth = startWidth + (moveEvent.clientX - startX);
-                  setSidebarWidth(clampSidebarWidth(nextWidth));
-                };
-
-                const handleMouseUp = () => {
-                  window.removeEventListener('mousemove', handleMouseMove);
-                  window.removeEventListener('mouseup', handleMouseUp);
-                };
-
-                window.addEventListener('mousemove', handleMouseMove);
-                window.addEventListener('mouseup', handleMouseUp);
-              }}
-            />
-
-            <main className="details-pane">
-              <Details
-                agent={selectedAgent}
-                onClose={() => {
-                  setSelectedAgentId(null);
-                  setIsConfigurationEditing(false);
-                  setConfigurationMessage('');
-                  navigate('/');
-                }}
-                onConfigurationEditChange={setIsConfigurationEditing}
-                onConfigurationSaved={updateAgentConfiguration}
-                configurationMessage={configurationMessage}
-                onConfigurationMessageChange={setConfigurationMessage}
+            <div className="top-bar">
+              <ModeNavigationLink
+                to="/history"
+                label="למעבר להיסטוריה"
+                variant="history"
               />
-            </main>
+              <div className="top-bar-status">{statusFilter}</div>
+              <h1 className="top-bar-title">ניטור סוכנים בזמן אמת</h1>
+              <div className="top-bar-actions">
+                <p className="top-bar-hint">
+                  {viewMode === 'icon'
+                    ? 'לחץ על אייקון כדי לראות פרטים'
+                    : 'לחץ על שורה כדי לראות פרטים'}
+                </p>
+                {!selectedAgent && (
+                  <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
+                    <button
+                      type="button"
+                      className={`view-toggle-button ${viewMode === 'icon' ? 'active' : ''}`}
+                      onClick={() => setViewMode('icon')}
+                    >
+                      אייקונים
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`view-toggle-button ${viewMode === 'list' ? 'active' : ''}`}
+                      onClick={() => setViewMode('list')}
+                    >
+                      רשימה
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div
+              className={`home-layout ${
+                selectedAgent ? 'has-selected-agent' : 'no-selected-agent'
+              }`}
+              style={
+                selectedAgent
+                  ? {
+                      gridTemplateColumns: `${sidebarWidth}px ${RESIZE_HANDLE_WIDTH}px minmax(${DETAILS_MIN_WIDTH}px, 1fr)`,
+                    }
+                  : undefined
+              }
+            >
+              <aside className="agents-sidebar">
+                {filtersPanel}
+                <div
+                  className={`agents-grid ${
+                    !selectedAgent && viewMode === 'list' ? 'agents-list' : ''
+                  }`}
+                >
+                  {filteredAgents.map((agent) => {
+                    const previewAgent = toAgentPreview(agent);
+
+                    return (
+                      <button
+                        key={previewAgent.id}
+                        type="button"
+                        className={`agent-card ${previewAgent.status} ${
+                          !selectedAgent && viewMode === 'list' ? 'list-view' : ''
+                        } ${selectedAgentId === previewAgent.id ? 'selected' : ''}`}
+                        onClick={() => {
+                          setSelectedAgentId(previewAgent.id);
+                          setConfigurationMessage('');
+                          navigate(`/agents/${previewAgent.id}`);
+                        }}
+                      >
+                        <div className="tank-icon">
+                          <TankIcon status={previewAgent.status} />
+                        </div>
+
+                        <div className="agent-content">
+                          <div className="agent-label">{getAgentLabel(previewAgent)}</div>
+                          <div className="agent-info">
+                            <div className="info-item">Status: {previewAgent.status}</div>
+                            <div className="info-item">Unit: {previewAgent.unit}</div>
+                            <div className="info-item">Call Sign: {previewAgent.call_sign}</div>
+                            <div className="info-item">Platform ID: {previewAgent.platformId}</div>
+                            <div className="info-item">Zayad ID: {previewAgent.zayad_id}</div>
+                            <div className="info-item info-item-id">ID: {previewAgent.id}</div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </aside>
+
+              {selectedAgent && (
+                <>
+                  <div
+                    className="resize-handle"
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+
+                      const startX = event.clientX;
+                      const startWidth = sidebarWidth;
+
+                      const handleMouseMove = (moveEvent: MouseEvent) => {
+                        const nextWidth = startWidth + (moveEvent.clientX - startX);
+                        setSidebarWidth(clampSidebarWidth(nextWidth));
+                      };
+
+                      const handleMouseUp = () => {
+                        window.removeEventListener('mousemove', handleMouseMove);
+                        window.removeEventListener('mouseup', handleMouseUp);
+                      };
+
+                      window.addEventListener('mousemove', handleMouseMove);
+                      window.addEventListener('mouseup', handleMouseUp);
+                    }}
+                  />
+
+                  <main className="details-pane">
+                    <Details
+                      agent={selectedAgent}
+                      onClose={() => {
+                        setSelectedAgentId(null);
+                        setIsConfigurationEditing(false);
+                        setConfigurationMessage('');
+                        navigate('/');
+                      }}
+                      onConfigurationEditChange={setIsConfigurationEditing}
+                      onConfigurationSaved={updateAgentConfiguration}
+                      configurationMessage={configurationMessage}
+                      onConfigurationMessageChange={setConfigurationMessage}
+                    />
+                  </main>
+                </>
+              )}
+            </div>
           </>
         )}
-      </div>
+      </FilterAgents>
     </div>
   );
 }

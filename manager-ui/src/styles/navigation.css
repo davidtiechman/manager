@@ -78,3 +78,17 @@
   background: #0f172a;
   color: #fff;
 }
+
+.top-bar .view-toggle {
+  margin-top: 0;
+  background: #1e293b;
+}
+
+.top-bar .view-toggle-button {
+  color: #cbd5e1;
+}
+
+.top-bar .view-toggle-button.active {
+  background: #ffffff;
+  color: #0f172a;
+}
