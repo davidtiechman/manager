@@ -397,27 +397,47 @@ async function handleLoadHistoryAgents(req, res) {
 }
 
 // Allowed columns for sort/filter — whitelist prevents SQL injection
+// Values are prefixed with the agent_syncs alias `s.` because the syncs query
+// LEFT JOINs agent_config / platform_data, which share column names
+// (created_at, selected_link, scheduler_mode) — unqualified refs are ambiguous.
 const SYNCS_SORTABLE_COLUMNS = new Map([
-    ['id',                  'id'],
-    ['status',              'status'],
-    ['createdAt',           'created_at'],
-    ['selectedLink',        'selected_link'],
-    ['schedulerMode',       'scheduler_mode'],
-    ['messagesInQueue',     'messages_in_queue'],
-    ['nextDeliveryTime',    'next_delivery_time'],
-    ['geoData',             'geo_data'],
-    ['serverLut',           'server_lut'],
-    ['linkType',            'link_type'],
-    ['linkAvailable',       'link_available'],
-    ['linkQuality',         'link_quality'],
-    ['latency',             'latency'],
-    ['reliability',         'reliability'],
-    ['linkTimestamp',       'link_timestamp'],
+    ['id',                  's.id'],
+    ['status',              's.status'],
+    ['createdAt',           's.created_at'],
+    ['selectedLink',        's.selected_link'],
+    ['schedulerMode',       's.scheduler_mode'],
+    ['messagesInQueue',     's.messages_in_queue'],
+    ['nextDeliveryTime',    's.next_delivery_time'],
+    ['geoData',             's.geo_data'],
+    ['serverLut',           's.server_lut'],
+    ['linkType',            's.link_type'],
+    ['linkAvailable',       's.link_available'],
+    ['linkQuality',         's.link_quality'],
+    ['latency',             's.latency'],
+    ['reliability',         's.reliability'],
+    ['linkTimestamp',       's.link_timestamp'],
+    // Agent Config (joined as ac) — sort/filter on nested config fields
+    ['cfgSchedulerMode',    'ac.scheduler_mode'],
+    ['cfgSelectedLink',     'ac.selected_link'],
+    ['intervalMs',          'ac.interval_ms'],
+    ['maxRetries',          'ac.max_retries'],
+    ['batchSize',           'ac.batch_size'],
+    ['isManualMode',        'ac.is_manual_mode'],
+    ['sparkProxyUrl',       'ac.spark_proxy_url'],
+    ['token',               'ac.token'],
+    ['cfgCreatedAt',        'ac.created_at'],
+    // Platform Data (joined as pd)
+    ['unit',                'pd.unit'],
+    ['unitCode',            'pd.unit_code'],
+    ['zayadId',             'pd.zayad_id'],
+    ['platform',            'pd.platform'],
+    ['platformId',          'pd.platform_id'],
+    ['platCreatedAt',       'pd.created_at'],
 ]);
 
 function buildSyncsOrderBy(sortModel) {
     if (!Array.isArray(sortModel) || sortModel.length === 0) {
-        return 'ORDER BY created_at DESC';
+        return 'ORDER BY s.created_at DESC';
     }
 
     const parts = sortModel
@@ -428,12 +448,12 @@ function buildSyncsOrderBy(sortModel) {
             return `${col} ${dir}`;
         });
 
-    return parts.length > 0 ? `ORDER BY ${parts.join(', ')}` : 'ORDER BY created_at DESC';
+    return parts.length > 0 ? `ORDER BY ${parts.join(', ')}` : 'ORDER BY s.created_at DESC';
 }
 
 function buildSyncsWhere(agentId, filterModel, params) {
     // params already has agentId at $1
-    const conditions = ['agent_id = $1'];
+    const conditions = ['s.agent_id = $1'];
 
     if (!filterModel || typeof filterModel !== 'object') {
         return conditions.join(' AND ');
@@ -496,7 +516,7 @@ function buildSyncsWhere(agentId, filterModel, params) {
                 params.push(new Date(dateTo).toISOString());
                 conditions.push(`${col} <= $${params.length}`);
             }
-        } else if (filterType === 'boolean' || col === 'link_available') {
+        } else if (filterType === 'boolean' || col === 's.link_available' || col === 'ac.is_manual_mode') {
             const bool = value === 'true' || value === true;
             params.push(bool);
             conditions.push(`${col} = $${params.length}`);
@@ -520,7 +540,7 @@ function buildSyncsWhere(agentId, filterModel, params) {
 
             if (nonNullValues.length > 0) {
                 const placeholders = nonNullValues.map((v) => {
-                    if (col === 'link_available') {
+                    if (col === 's.link_available' || col === 'ac.is_manual_mode') {
                         params.push(v === true || v === 'true');
                     } else {
                         params.push(String(v));
@@ -576,29 +596,52 @@ async function handleLoadHistoryAgentSyncs(req, res) {
         const result = await historyDb.query(
             `
             SELECT
-                id,
-                agent_id AS "agentId",
-                status,
-                created_at AS "createdAt",
+                s.id,
+                s.agent_id AS "agentId",
+                s.status,
+                s.created_at AS "createdAt",
                 json_build_object(
-                    'id', id,
-                    'selectedLink',     selected_link,
-                    'schedulerMode',    scheduler_mode,
-                    'messagesInQueue',  messages_in_queue,
-                    'nextDeliveryTime', next_delivery_time,
-                    'geoData',          geo_data,
-                    'serverLut',        server_lut
+                    'id', s.id,
+                    'selectedLink',     s.selected_link,
+                    'schedulerMode',    s.scheduler_mode,
+                    'messagesInQueue',  s.messages_in_queue,
+                    'nextDeliveryTime', s.next_delivery_time,
+                    'geoData',          s.geo_data,
+                    'serverLut',        s.server_lut,
+                    'agentConfig', CASE WHEN ac.id IS NULL THEN NULL ELSE json_build_object(
+                        'id',            ac.id,
+                        'schedulerMode', ac.scheduler_mode,
+                        'selectedLink',  ac.selected_link,
+                        'intervalMs',    ac.interval_ms,
+                        'maxRetries',    ac.max_retries,
+                        'sparkProxyUrl', ac.spark_proxy_url,
+                        'token',         ac.token,
+                        'batchSize',     ac.batch_size,
+                        'isManualMode',  ac.is_manual_mode,
+                        'createdAt',     ac.created_at
+                    ) END,
+                    'platfromData', CASE WHEN pd.id IS NULL THEN NULL ELSE json_build_object(
+                        'id',         pd.id,
+                        'unit',       pd.unit,
+                        'unitCode',   pd.unit_code,
+                        'zayadId',    pd.zayad_id,
+                        'platform',   pd.platform,
+                        'platformId', pd.platform_id,
+                        'createdAt',  pd.created_at
+                    ) END
                 ) AS details,
                 json_build_object(
-                    'id',          id,
-                    'type',        link_type,
-                    'available',   link_available,
-                    'quality',     link_quality,
-                    'latency',     latency,
-                    'reliability', reliability,
-                    'timestamp',   link_timestamp
+                    'id',          s.id,
+                    'type',        s.link_type,
+                    'available',   s.link_available,
+                    'quality',     s.link_quality,
+                    'latency',     s.latency,
+                    'reliability', s.reliability,
+                    'timestamp',   s.link_timestamp
                 ) AS link_quality
-            FROM agent_syncs
+            FROM agent_syncs s
+            LEFT JOIN agent_config  ac ON ac.id = s.agent_config_id
+            LEFT JOIN platform_data pd ON pd.id = s.platform_data_id
             WHERE ${whereClause}
             ${orderBy}
             LIMIT $${limitIdx} OFFSET $${offsetIdx}
@@ -618,7 +661,11 @@ async function handleLoadHistoryAgentSyncs(req, res) {
             let rowCount;
             if (startRow === 0) {
                 const countRes = await historyDb.query(
-                    `SELECT count(*)::bigint AS total FROM agent_syncs WHERE ${whereClause}`,
+                    `SELECT count(*)::bigint AS total
+                     FROM agent_syncs s
+                     LEFT JOIN agent_config  ac ON ac.id = s.agent_config_id
+                     LEFT JOIN platform_data pd ON pd.id = s.platform_data_id
+                     WHERE ${whereClause}`,
                     params
                 );
                 rowCount = Number(countRes.rows[0]?.total ?? 0);
