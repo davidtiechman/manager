@@ -1,7 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════
-   Sync History — Column visibility picker
-   Button, dropdown panel, group labels, toggle switches, footer
-   ═══════════════════════════════════════════════════════════════ */
+/* Sync History — column visibility picker (button, panel, toggles). */
 
 .snc-col-picker-wrap {
   position: relative;

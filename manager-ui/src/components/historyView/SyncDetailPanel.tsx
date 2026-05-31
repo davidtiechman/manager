@@ -1,12 +1,11 @@
-// Slide-in side drawer showing all fields of one sync, grouped. Used instead
-// of AG Grid Master/Detail, which doesn't support the Infinite Row Model.
+// Slide-in drawer showing all fields of one sync, grouped by category.
 
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
 import './SyncDetailPanel.css';
 
 // ── Shared formatting helpers ───────────────────────────────────────
 
-/** Format an epoch (s or ms) or ISO string as a he-IL date-time. */
+// Format an epoch (s or ms) or ISO string as a he-IL date-time.
 function formatDate(value: string | number | null | undefined): string {
   if (value == null || value === '') return '—';
   const raw =
@@ -19,6 +18,7 @@ function formatDate(value: string | number | null | undefined): string {
   }).format(date);
 }
 
+// Format any scalar for display (booleans → Yes/No, blanks → —).
 function formatValue(value: unknown): string {
   if (value == null || value === '') return '—';
   if (typeof value === 'boolean') return value ? 'Yes' : 'No';
@@ -35,10 +35,10 @@ interface SyncDetailPanelProps {
 interface FieldRow {
   label: string;
   value: string;
-  /** Optional class for value emphasis (e.g. status / quality chips). */
   className?: string;
 }
 
+// Render the detail drawer for the selected sync record.
 export function SyncDetailPanel({ record, onClose }: SyncDetailPanelProps) {
   const open = record != null;
 

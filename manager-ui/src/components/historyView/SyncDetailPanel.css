@@ -1,7 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════
-   Sync detail side panel (drawer) + link-quality hover tooltip
-   Matches the Quartz light palette used by the grid.
-   ═══════════════════════════════════════════════════════════════ */
+/* Sync detail side panel (drawer), Quartz light palette. */
 
 /* ── Backdrop ────────────────────────────────────────────────────── */
 .snc-dp-backdrop {
@@ -101,7 +98,7 @@
   /* color comes from .snc-tp-group--{slug} (injected per group) */
 }
 
-/* Fallback colors so the panel still reads if the injected vars are absent */
+/* Fallback group colors */
 .snc-dp-section-title.snc-tp-group--general       { color: #0284c7; } /* sky     */
 .snc-dp-section-title.snc-tp-group--sync-details   { color: #7c3aed; } /* violet  */
 .snc-dp-section-title.snc-tp-group--agent-config   { color: #d97706; } /* amber   */

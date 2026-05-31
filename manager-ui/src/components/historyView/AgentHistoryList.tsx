@@ -4,6 +4,7 @@ import { HistoryAgent } from '../../types/history/historyAgent';
 import { useNavigate } from 'react-router-dom';
 import ModeNavigationLink from '../ModeNavigationLink';
 
+// Format an ISO date as a short he-IL date-time.
 function formatHistoryDate(value: string) {
   const date = new Date(value);
 
@@ -17,6 +18,7 @@ function formatHistoryDate(value: string) {
   }).format(date);
 }
 
+// List of history agents with icon/list view toggle.
 export default function AgentHistoryList() {
   const [agents, setAgents] = useState<HistoryAgent[]>([]);
   const [loading, setLoading] = useState(true);

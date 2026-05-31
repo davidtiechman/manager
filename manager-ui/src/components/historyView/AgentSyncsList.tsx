@@ -199,8 +199,7 @@ export default function AgentSyncsList({
           const blockSize = params.endRow - params.startRow;
           const knownEnd =
             safeRows.length < blockSize ? params.startRow + safeRows.length : undefined;
-          // Prefer the server's total count (returned on the first block);
-          // fall back to lastRow / a short final block.
+          // Server total (first block) → lastRow → short final block.
           const resolvedTotal = rowCount ?? lastRow ?? knownEnd;
           if (params.startRow === 0 && resolvedTotal !== undefined) {
             setTotalRows(resolvedTotal);

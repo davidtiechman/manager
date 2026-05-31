@@ -1,7 +1,4 @@
-/* ═══════════════════════════════════════════════════════════════
-   Sync History — AG Grid layout container + theme / overrides
-   Quartz theme, light header (Google Sheets style)
-   ═══════════════════════════════════════════════════════════════ */
+/* Sync History — grid container + Quartz light-theme overrides. */
 
 /* ── Grid outer — fills remaining height, outer breathing room ─ */
 .snc-grid-outer {
@@ -73,10 +70,7 @@
   color: #4b5563;
 }
 
-/* ── Per-type header icons (v33 custom header content) ──────────
-   A small icon before the header text, picked by column type via the
-   snc-hdr-type--* class added in col(). Icons are inline SVG masks so
-   they inherit the header text color. */
+/* ── Per-type header icons (SVG mask, picked by snc-hdr-type--* class) ── */
 .snc-grid-wrapper [class*='snc-hdr-type--'] .ag-header-cell-text::before {
   content: '';
   display: inline-block;
@@ -151,9 +145,7 @@
   font-weight: 700 !important;
 }
 
-/* ── Column menu / filter button — no space at rest, fades in on hover */
-/*    Quartz hides it with opacity:0 but still reserves the width.      */
-/*    We collapse the width so the header text gets its full space.      */
+/* ── Column menu / filter button — collapsed at rest, fades in on hover ── */
 .snc-grid-wrapper .ag-header-cell-menu-button,
 .snc-grid-wrapper .ag-header-cell-filter-button {
   opacity: 0;
@@ -228,45 +220,25 @@
 }
 
 
-/* ═══════════════════════════════════════════════════════════════
-   Column-group affordance
-   The columns are wrapped in AG Grid column groups so the Columns
-   tool panel shows a grouped tree. In the GRID we DON'T want the
-   second (group) header row — it's collapsed via groupHeaderHeight={0}.
-   Instead each leaf header carries a thin colored underline keyed to
-   its group, giving a subtle visual grouping without a second row.
-   ═══════════════════════════════════════════════════════════════ */
+/* ── Column-group affordance — thin colored underline per group ── */
 
-/* Belt-and-suspenders: ensure the collapsed group header row takes no space */
+/* Collapse the second (group) header row to zero space */
 .snc-grid-wrapper .ag-header-row-column-group {
   display: none !important;
 }
 
-/* ── Per-group header underline ──────────────────────────────────────
-   Each leaf header carries class `snc-hdr-group--{slug}`. The matching
-   color comes from a CSS variable `--snc-group-{slug}` that the component
-   injects on .snc-grid-wrapper from GROUP_DEFS (single source of truth).
-   The generic rule below reads `--snc-group-color`, which each leaf sets
-   to its own group's variable — see the slug rule note. */
+/* Per-group header underline; color injected via --snc-group-color */
 .snc-grid-wrapper .ag-header-cell.snc-hdr-group {
   box-shadow: inset 0 -3px 0 0 var(--snc-group-color, transparent);
 }
 
-/* Sorted state already draws its own dark underline — let it win so the
-   group color doesn't fight the sort indicator. */
+/* Sorted state keeps its own dark underline */
 .snc-grid-wrapper .ag-header-cell-sorted-asc.snc-hdr-group,
 .snc-grid-wrapper .ag-header-cell-sorted-desc.snc-hdr-group {
   box-shadow: inset 0 -2px 0 0 #374151 !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   Tool-panel GROUP titles (Columns + Filters)
-   Group rows read as headings: bold + uppercase. Their COLOR is applied
-   at runtime by the component (colorFilterPanelGroups + the columns-panel
-   rule below) so adding a category needs zero CSS edits.
-   ═══════════════════════════════════════════════════════════════ */
-
-/* Shared heading treatment for group titles in BOTH panels */
+/* ── Tool-panel group titles (Columns + Filters); color set at runtime ── */
 .snc-grid-wrapper .ag-column-select-column-group .ag-column-select-column-label,
 .snc-grid-wrapper .ag-filter-toolpanel-group-title {
   font-weight: 700;
@@ -278,7 +250,7 @@
 /* Add a bit of separation above each group */
 .snc-grid-wrapper .ag-column-select-column-group { margin-top: 2px; }
 
-/* Leaf rows — regular weight, muted, so the hierarchy reads at a glance */
+/* Leaf rows — regular weight, muted */
 .snc-grid-wrapper .ag-column-select-column .ag-column-select-column-label {
   color: #4b5563;
 }

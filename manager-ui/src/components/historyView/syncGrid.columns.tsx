@@ -1,6 +1,4 @@
-// Single source of truth for every column in the sync-history grid.
-// To add a column: add one col() entry in buildColumnDefs() (set `group`).
-// To add a category: add one entry to GROUP_DEFS (name + color).
+// Column definitions for the sync-history grid.
 
 import type { ColDef, ColGroupDef, ICellRendererParams } from 'ag-grid-community';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
@@ -15,28 +13,28 @@ import {
 
 export const BLOCK_SIZE  = 100;
 
-// ── Column groups ───────────────────────────────────────────────────
-// Add a category here (name + color); order/colors derive automatically.
+// Column groups (name + color); order and colors derive from here.
 export const GROUP_DEFS = [
-  { name: 'General',      color: '#0284c7' }, // sky
-  { name: 'Sync Details', color: '#7c3aed' }, // violet
-  { name: 'Link Quality', color: '#059669' }, // emerald
+  { name: 'General',       color: '#0284c7' }, // sky
+  { name: 'Sync Details',  color: '#7c3aed' }, // violet
+  { name: 'Agent Config',  color: '#d97706' }, // amber
+  { name: 'Platform Data', color: '#db2777' }, // rose
+  { name: 'Link Quality',  color: '#059669' }, // emerald
 ] as const;
 
 export type ColGroup = (typeof GROUP_DEFS)[number]['name'];
 const GROUP_ORDER: ColGroup[] = GROUP_DEFS.map((g) => g.name);
 
-/** Group name → CSS slug, e.g. 'Sync Details' → 'sync-details'. */
+// Group name → CSS slug ('Sync Details' → 'sync-details').
 function groupSlug(group: string): string {
   return group.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 }
 
-/** slug → color map, used by the component for per-group CSS. */
+// slug → color map, for per-group CSS.
 export const GROUP_COLORS: Record<string, string> = Object.fromEntries(
   GROUP_DEFS.map((g) => [groupSlug(g.name), g.color])
 );
 
-/** Allowed shapes for the `enum` field on a column definition. */
 type EnumSource = Record<string, string> | readonly (string | boolean)[];
 
 interface SyncColDefInput extends Omit<ColDef<AgentHistoryRecord>, 'context'> {
@@ -50,22 +48,19 @@ type SyncColDef = ColDef<AgentHistoryRecord> & {
 
 // ── Auto-minWidth factory ───────────────────────────────────────────
 
-/** Approximate px per character at 12.5 px / weight-600 Inter */
-const CHAR_WIDTH    = 7.5;
-/** Sort icon + cell padding shared by every header cell */
-const HDR_OVERHEAD  = 44;
+const CHAR_WIDTH    = 7.5; // px per char (12.5px weight-600 Inter)
+const HDR_OVERHEAD  = 44;  // sort icon + cell padding
 
-/** Extract the runtime values from an EnumSource (string-enum object or array). */
+// Runtime values from an EnumSource (enum object or array).
 function enumValues(source: EnumSource): (string | boolean)[] {
   return Array.isArray(source) ? [...source] : Object.values(source);
 }
 
-/** Label shown in the set-filter dropdown for null/undefined values. */
 const BLANKS_LABEL = '(Blanks)';
 
 type SetFilterValueFormatter = (params: { value: unknown }) => string;
 
-/** Show null/undefined as "(Blanks)" in the filter dropdown. */
+// Show null/undefined as "(Blanks)" in the filter dropdown.
 function withBlanksFormatter(
   userFormatter: SetFilterValueFormatter | undefined
 ): SetFilterValueFormatter {
@@ -76,6 +71,7 @@ function withBlanksFormatter(
   };
 }
 
+// Normalize one column input into a full ColDef (filter, icon, skeleton).
 function col(def: SyncColDefInput): SyncColDef {
   const { group, enum: enumDef, ...rest } = def;
   const autoMin = rest.headerName
@@ -99,8 +95,7 @@ function col(def: SyncColDefInput): SyncColDef {
   const typeClass = headerTypeClass(enumDef, rest.filter);
   const headerClass = `snc-hdr-group snc-hdr-group--${groupSlug(group)} ${typeClass}`;
 
-  // Resolve the base renderer (explicit, enum chip, or plain text), then wrap
-  // it so unloaded Infinite-scroll rows show a skeleton instead of blank.
+  // Base renderer (explicit, enum chip, or plain text), wrapped with skeleton.
   const baseRenderer =
     (rest.cellRenderer as ((p: ICellRendererParams) => JSX.Element) | undefined) ??
     (enumDef ? EnumChipCell : TextCell);
@@ -115,7 +110,7 @@ function col(def: SyncColDefInput): SyncColDef {
   };
 }
 
-/** Picks a header type class (→ CSS icon) from the column's enum/filter. */
+// Pick a header type class (→ CSS icon) from the column's enum/filter.
 function headerTypeClass(
   enumDef: EnumSource | undefined,
   filter: ColDef['filter']
@@ -129,17 +124,12 @@ function headerTypeClass(
 
 // ── Cell renderers (internal) ───────────────────────────────────────
 
-/**
- * Renders the real cell content, or a shimmering skeleton bar while the
- * Infinite Row Model block for this row is still loading (data === undefined).
- * Wrap any column's renderer with this to get per-cell loading state.
- */
+// Show a skeleton bar while the row's Infinite block is still loading.
 function withSkeleton(
   Renderer: (p: ICellRendererParams) => JSX.Element
 ): (p: ICellRendererParams) => JSX.Element {
   return (params) => {
     if (params.data === undefined) {
-      // Vary width a little per column so the skeleton looks organic.
       const widths = [40, 55, 70, 60, 45];
       const seed = (params.column?.getColId()?.length ?? 0) % widths.length;
       return (
@@ -150,12 +140,14 @@ function withSkeleton(
   };
 }
 
+// Colored status badge.
 function StatusCell({ value }: ICellRendererParams) {
   if (value == null || value === '') return <span className="snc-null">—</span>;
   const key = String(value).toLowerCase();
   return <span className={`snc-status snc-status--${key}`}>{value}</span>;
 }
 
+// Yes/No availability badge.
 function AvailabilityCell({ value }: ICellRendererParams) {
   if (value == null) return <span className="snc-null">—</span>;
   const isYes = value === true || value === 'true';
@@ -166,6 +158,7 @@ function AvailabilityCell({ value }: ICellRendererParams) {
   );
 }
 
+// Format an epoch (s or ms) or ISO string as a he-IL date-time.
 function DateCell({ value }: ICellRendererParams) {
   if (value == null || value === '') return <span className="snc-null">—</span>;
   const raw =
@@ -184,11 +177,13 @@ function DateCell({ value }: ICellRendererParams) {
   );
 }
 
+// Right-aligned numeric value.
 function NumericCell({ value }: ICellRendererParams) {
   if (value == null || value === '') return <span className="snc-null">—</span>;
   return <span className="snc-num">{String(value)}</span>;
 }
 
+// Plain text with ellipsis + tooltip.
 function TextCell({ value }: ICellRendererParams) {
   if (value == null || value === '') return <span className="snc-null">—</span>;
   return (
@@ -198,7 +193,7 @@ function TextCell({ value }: ICellRendererParams) {
   );
 }
 
-/** Colored chip for enum values: snc-chip snc-chip--{colId}-{value-slug}. */
+// Colored chip for enum values.
 function EnumChipCell({ value, column }: ICellRendererParams) {
   if (value == null || value === '') return <span className="snc-null">—</span>;
   const colId = column?.getColId();
@@ -212,8 +207,8 @@ function EnumChipCell({ value, column }: ICellRendererParams) {
 }
 
 // ── Column definitions ──────────────────────────────────────────────
-// Add a new column here ONLY. Labels and groups are derived below.
 
+// All columns; labels and groups are derived from this list.
 function buildColumnDefsInternal(): SyncColDef[] {
   return [
     // ── General ──────────────────────────────────────────────────
@@ -376,13 +371,183 @@ function buildColumnDefsInternal(): SyncColDef[] {
       filter: 'agDateColumnFilter',
       hide: true,
     }),
+
+    // ── Agent Config (nested in details.agentConfig) — hidden by default ──
+    col({
+      group: 'Agent Config',
+      colId: 'cfgSchedulerMode',
+      headerName: 'Cfg Scheduler',
+      headerTooltip: 'Agent Config — Scheduler Mode',
+      valueGetter: (p) => p.data?.details?.agentConfig?.schedulerMode,
+      flex: 1.2,
+      enum: SchedulerMode,
+      hide: true,
+    }),
+    col({
+      group: 'Agent Config',
+      colId: 'cfgSelectedLink',
+      headerName: 'Cfg Link',
+      headerTooltip: 'Agent Config — Selected Link',
+      valueGetter: (p) => p.data?.details?.agentConfig?.selectedLink,
+      flex: 1,
+      enum: LinkType,
+      hide: true,
+    }),
+    col({
+      group: 'Agent Config',
+      colId: 'intervalMs',
+      headerName: 'Interval (ms)',
+      headerTooltip: 'Agent Config — Interval (ms)',
+      valueGetter: (p) => p.data?.details?.agentConfig?.intervalMs,
+      flex: 1,
+      filter: 'agNumberColumnFilter',
+      cellRenderer: NumericCell,
+      hide: true,
+    }),
+    col({
+      group: 'Agent Config',
+      colId: 'maxRetries',
+      headerName: 'Max Retries',
+      headerTooltip: 'Agent Config — Max Retries',
+      valueGetter: (p) => p.data?.details?.agentConfig?.maxRetries,
+      flex: 1,
+      filter: 'agNumberColumnFilter',
+      cellRenderer: NumericCell,
+      hide: true,
+    }),
+    col({
+      group: 'Agent Config',
+      colId: 'batchSize',
+      headerName: 'Batch Size',
+      headerTooltip: 'Agent Config — Batch Size',
+      valueGetter: (p) => p.data?.details?.agentConfig?.batchSize,
+      flex: 1,
+      filter: 'agNumberColumnFilter',
+      cellRenderer: NumericCell,
+      hide: true,
+    }),
+    col({
+      group: 'Agent Config',
+      colId: 'isManualMode',
+      headerName: 'Manual Mode',
+      headerTooltip: 'Agent Config — Manual Mode',
+      valueGetter: (p) => p.data?.details?.agentConfig?.isManualMode,
+      flex: 1,
+      cellRenderer: AvailabilityCell,
+      enum: [true, false],
+      filterParams: {
+        valueFormatter: (p: { value: unknown }) =>
+          p.value === true || p.value === 'true' ? 'Yes' : 'No',
+      },
+      hide: true,
+    }),
+    col({
+      group: 'Agent Config',
+      colId: 'sparkProxyUrl',
+      headerName: 'Spark Proxy URL',
+      headerTooltip: 'Agent Config — Spark Proxy URL',
+      valueGetter: (p) => p.data?.details?.agentConfig?.sparkProxyUrl,
+      flex: 2,
+      cellRenderer: TextCell,
+      filter: 'agTextColumnFilter',
+      hide: true,
+    }),
+    col({
+      group: 'Agent Config',
+      colId: 'token',
+      headerName: 'Token',
+      headerTooltip: 'Agent Config — Token',
+      valueGetter: (p) => p.data?.details?.agentConfig?.token,
+      flex: 1.5,
+      cellRenderer: TextCell,
+      filter: 'agTextColumnFilter',
+      hide: true,
+    }),
+    col({
+      group: 'Agent Config',
+      colId: 'cfgCreatedAt',
+      headerName: 'Cfg Created At',
+      headerTooltip: 'Agent Config — Created At',
+      valueGetter: (p) => p.data?.details?.agentConfig?.createdAt,
+      flex: 2,
+      cellRenderer: DateCell,
+      filter: 'agDateColumnFilter',
+      hide: true,
+    }),
+
+    // ── Platform Data (nested in details.platfromData) — hidden by default ──
+    col({
+      group: 'Platform Data',
+      colId: 'unit',
+      headerName: 'Unit',
+      headerTooltip: 'Platform — Unit',
+      valueGetter: (p) => p.data?.details?.platfromData?.unit,
+      flex: 1.2,
+      cellRenderer: TextCell,
+      filter: 'agTextColumnFilter',
+      hide: true,
+    }),
+    col({
+      group: 'Platform Data',
+      colId: 'unitCode',
+      headerName: 'Unit Code',
+      headerTooltip: 'Platform — Unit Code',
+      valueGetter: (p) => p.data?.details?.platfromData?.unitCode,
+      flex: 1,
+      cellRenderer: TextCell,
+      filter: 'agTextColumnFilter',
+      hide: true,
+    }),
+    col({
+      group: 'Platform Data',
+      colId: 'zayadId',
+      headerName: 'Zayad ID',
+      headerTooltip: 'Platform — Zayad ID',
+      valueGetter: (p) => p.data?.details?.platfromData?.zayadId,
+      flex: 1.2,
+      filter: 'agNumberColumnFilter',
+      cellRenderer: NumericCell,
+      hide: true,
+    }),
+    col({
+      group: 'Platform Data',
+      colId: 'platform',
+      headerName: 'Platform',
+      headerTooltip: 'Platform — Name',
+      valueGetter: (p) => p.data?.details?.platfromData?.platform,
+      flex: 1.2,
+      cellRenderer: TextCell,
+      filter: 'agTextColumnFilter',
+      hide: true,
+    }),
+    col({
+      group: 'Platform Data',
+      colId: 'platformId',
+      headerName: 'Platform ID',
+      headerTooltip: 'Platform — ID',
+      valueGetter: (p) => p.data?.details?.platfromData?.platformId,
+      flex: 1.2,
+      filter: 'agNumberColumnFilter',
+      cellRenderer: NumericCell,
+      hide: true,
+    }),
+    col({
+      group: 'Platform Data',
+      colId: 'platCreatedAt',
+      headerName: 'Plat Created At',
+      headerTooltip: 'Platform — Created At',
+      valueGetter: (p) => p.data?.details?.platfromData?.createdAt,
+      flex: 2,
+      cellRenderer: DateCell,
+      filter: 'agDateColumnFilter',
+      hide: true,
+    }),
   ];
 }
 
 // ── Public API ──────────────────────────────────────────────────────
 
-// Wraps flat columns into ColGroupDefs by context.group (drives the tool
-// panels). The grid's group header row is collapsed via groupHeaderHeight={0}.
+// Wrap flat columns into ColGroupDefs by group (drives the tool panels).
 export function buildColumnDefs(): (ColDef<AgentHistoryRecord> | ColGroupDef<AgentHistoryRecord>)[] {
   const defs = buildColumnDefsInternal();
   return GROUP_ORDER.map((groupName) => ({
@@ -393,7 +558,7 @@ export function buildColumnDefs(): (ColDef<AgentHistoryRecord> | ColGroupDef<Age
   })).filter((g) => g.children.length > 0);
 }
 
-/** colId → headerName map, used by the toolbar's active-filter chips. */
+// colId → headerName map, used by the active-filter chips.
 export function buildColumnLabels(
   defs: SyncColDef[]
 ): Record<string, string> {
@@ -408,5 +573,5 @@ export function buildColumnLabels(
 
 const _defs = buildColumnDefsInternal();
 
-/** colId → human label (e.g. 'selectedLink' → 'Selected Link') */
+// colId → human label.
 export const COLUMN_LABELS = buildColumnLabels(_defs);
