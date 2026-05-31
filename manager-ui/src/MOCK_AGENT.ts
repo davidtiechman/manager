@@ -16,7 +16,7 @@ export const MOCK_AGENTS: AgentResponse[] = [
             status: StatusAgent.SLOW,
 
             details: {
-                selectedLink: 'lte',
+                selectedLink: LinkType.IP,
                 schedulerMode: SchedulerMode.CONTINUOUS,
                 messagesInQueue: 4,
 
@@ -49,7 +49,7 @@ export const MOCK_AGENTS: AgentResponse[] = [
 
         configuration: {
             schedulerMode: SchedulerMode.CONTINUOUS,
-            selectedLink: 'lte',
+            selectedLink: LinkType.IP,
             intervalMs: 5000,
             maxRetries: 3,
             sparkProxyUrl: 'http://proxy.local',

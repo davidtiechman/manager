@@ -7,6 +7,11 @@ import type {
   IGetRowsParams,
   GridReadyEvent,
   ColumnResizedEvent,
+  RowDoubleClickedEvent,
+  MenuItemDef,
+  DefaultMenuItem,
+  GetMainMenuItemsParams,
+  SideBarDef,
 } from 'ag-grid-community';
 
 import 'ag-grid-community/styles/ag-grid.css';
@@ -14,6 +19,7 @@ import 'ag-grid-community/styles/ag-theme-quartz.css';
 import './AgentSyncsList.css';
 import './syncGrid.theme.css';
 import './syncGrid.cells.css';
+// Reused for the toolbar button styles (.snc-col-picker-btn).
 import './ColumnPicker.css';
 
 import { ApiService } from '../../api';
@@ -22,13 +28,16 @@ import ModeNavigationLink from '../ModeNavigationLink';
 
 import {
   BLOCK_SIZE,
-  LS_COL_KEY,
-  DEFAULT_HIDDEN,
   COLUMN_LABELS,
-  COLUMN_GROUPS,
+  GROUP_COLORS,
   buildColumnDefs,
 } from './syncGrid.columns';
-import { useColumnSelection } from './useColumnSelection';
+import { SyncDetailPanel } from './SyncDetailPanel';
+import {
+  loadColumnState,
+  saveColumnState,
+  clearColumnState,
+} from './gridStatePersistence';
 
 interface AgentSyncsListProps {
   agentId?: string;
@@ -61,17 +70,57 @@ export default function AgentSyncsList({
     []
   );
 
+  // ── Tool Panels (Columns + Filters sidebar) ───────────────────────
+  const sideBar = useMemo<SideBarDef>(
+    () => ({
+      toolPanels: [
+        {
+          id: 'columns',
+          labelDefault: 'Columns',
+          labelKey: 'columns',
+          iconKey: 'columns',
+          toolPanel: 'agColumnsToolPanel',
+          toolPanelParams: {
+            suppressRowGroups: true,
+            suppressValues: true,
+            suppressPivots: true,
+            suppressPivotMode: true,
+          },
+        },
+        {
+          id: 'filters',
+          labelDefault: 'Filters',
+          labelKey: 'filters',
+          iconKey: 'filter',
+          toolPanel: 'agFiltersToolPanel',
+        },
+      ],
+    }),
+    []
+  );
+
+  // ── Per-group color CSS, generated from GROUP_DEFS ─────────────────
+  const groupColorCss = useMemo(
+    () =>
+      Object.entries(GROUP_COLORS)
+        .map(
+          ([slug, color]) =>
+            `.snc-grid-wrapper .snc-hdr-group--${slug}{--snc-group-color:${color}}` +
+            `.snc-grid-wrapper .snc-tp-group--${slug} .ag-column-select-column-label{color:${color}}`
+        )
+        .join('\n'),
+    []
+  );
+
   // ── State ──────────────────────────────────────────────────────────
   const [filterModel, setFilterModel] = useState<Record<string, unknown>>({});
   const [totalRows, setTotalRows] = useState<number | null>(null);
-  const [hiddenCols, setHiddenCols] = useState<string[]>(DEFAULT_HIDDEN);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; colId: string } | null>(null);
+  const [hiddenCount, setHiddenCount] = useState(0);
+  const [detailRecord, setDetailRecord] = useState<AgentHistoryRecord | null>(null);
 
   // ── Refs ────────────────────────────────────────────────────────────
-  const gridWrapperRef = useRef<HTMLDivElement>(null);
-  const pickerRef = useRef<HTMLDivElement>(null);
   const maxIdRef = useRef<number | null>(null);
+  const gridWrapperRef = useRef<HTMLDivElement>(null);
 
   // ── Filter callbacks ───────────────────────────────────────────────
   const onFilterChanged = useCallback(() => {
@@ -90,6 +139,27 @@ export default function AgentSyncsList({
 
   const clearAllFilters = useCallback(() => {
     gridRef.current?.api?.setFilterModel(null);
+  }, []);
+
+  // ── Color the Filters tool-panel group titles by group name ────────
+  useEffect(() => {
+    const wrapper = gridWrapperRef.current;
+    if (!wrapper) return;
+    const paint = () => {
+      wrapper
+        .querySelectorAll<HTMLElement>('.ag-filter-toolpanel-group-title')
+        .forEach((el) => {
+          const slug = (el.textContent?.trim() ?? '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-');
+          const color = GROUP_COLORS[slug];
+          if (color) el.style.color = color;
+        });
+    };
+    const observer = new MutationObserver(paint);
+    observer.observe(wrapper, { childList: true, subtree: true });
+    paint();
+    return () => observer.disconnect();
   }, []);
 
   // ── Reset snapshot + count when agentId changes ────────────────────
@@ -121,7 +191,7 @@ export default function AgentSyncsList({
         filterModel: params.filterModel as Record<string, unknown>,
         maxId: maxIdRef.current,
       })
-        .then(({ rows, lastRow }) => {
+        .then(({ rows, lastRow, rowCount }) => {
           const safeRows = Array.isArray(rows) ? rows : [];
           if (params.startRow === 0 && safeRows.length > 0 && maxIdRef.current === null) {
             maxIdRef.current = safeRows[0].id;
@@ -129,7 +199,9 @@ export default function AgentSyncsList({
           const blockSize = params.endRow - params.startRow;
           const knownEnd =
             safeRows.length < blockSize ? params.startRow + safeRows.length : undefined;
-          const resolvedTotal = lastRow ?? knownEnd;
+          // Prefer the server's total count (returned on the first block);
+          // fall back to lastRow / a short final block.
+          const resolvedTotal = rowCount ?? lastRow ?? knownEnd;
           if (params.startRow === 0 && resolvedTotal !== undefined) {
             setTotalRows(resolvedTotal);
           }
@@ -142,27 +214,26 @@ export default function AgentSyncsList({
     },
   }), [agentId]);
 
-  // ── Persist column state to localStorage ───────────────────────────
+  // ── Persist column layout to localStorage (debounced) ──────────────
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveColState = useCallback(() => {
-    const state = gridRef.current?.api?.getColumnState();
-    if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      const api = gridRef.current?.api;
+      if (api) saveColumnState(api);
+    }, 200);
+  }, []);
+
+  useEffect(() => () => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
   }, []);
 
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
       event.api.updateGridOptions({ datasource: buildDatasource() });
-      const saved = localStorage.getItem(LS_COL_KEY);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved) as Array<{ colId: string; hide?: boolean }>;
-          event.api.applyColumnState({ state: parsed, applyOrder: true });
-          // Sync hiddenCols React state with restored column visibility
-          const restored = parsed.filter((s) => s.hide === true).map((s) => s.colId);
-          setHiddenCols(restored);
-        } catch {
-          localStorage.removeItem(LS_COL_KEY);
-        }
-      }
+      loadColumnState(event.api);
+      const cols = event.api.getColumns();
+      if (cols) setHiddenCount(cols.filter((c) => !c.isVisible()).length);
     },
     [buildDatasource]
   );
@@ -175,81 +246,91 @@ export default function AgentSyncsList({
     [saveColState]
   );
 
-  // ── Close context menu on outside pointer-down ─────────────────────
-  useEffect(() => {
-    if (!ctxMenu) return;
-    const close = () => setCtxMenu(null);
-    window.addEventListener('pointerdown', close);
-    return () => window.removeEventListener('pointerdown', close);
-  }, [ctxMenu]);
-
-  // ── Close column picker on outside pointer-down ────────────────────
-  useEffect(() => {
-    if (!pickerOpen) return;
-    const close = (e: PointerEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
-        setPickerOpen(false);
-      }
-    };
-    window.addEventListener('pointerdown', close);
-    return () => window.removeEventListener('pointerdown', close);
-  }, [pickerOpen]);
-
-  // ── Column visibility helpers ───────────────────────────────────────
-
-  /** Toggle a single column on/off from the picker panel */
-  const toggleColVisibility = useCallback(
-    (colId: string) => {
-      const api = gridRef.current?.api;
-      if (!api) return;
-      const isHidden = hiddenCols.includes(colId);
-      api.setColumnsVisible([colId], isHidden); // show if currently hidden
-      const next = isHidden
-        ? hiddenCols.filter((c) => c !== colId)
-        : [...hiddenCols, colId];
-      setHiddenCols(next);
-      const state = api.getColumnState();
-      if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
-    },
-    [hiddenCols]
-  );
-
-  /** Restore all defaults via the picker's reset link */
-  const resetColsToDefault = useCallback(() => {
-    const api = gridRef.current?.api;
-    if (!api) return;
-    const allCols = COLUMN_GROUPS.flatMap((g) => g.cols);
-    api.setColumnsVisible(allCols, true);
-    api.setColumnsVisible(DEFAULT_HIDDEN, false);
-    setHiddenCols([...DEFAULT_HIDDEN]);
-    const state = api.getColumnState();
-    if (state) localStorage.setItem(LS_COL_KEY, JSON.stringify(state));
+  // ── Track hidden-column count for the "Columns" badge ──────────────
+  const refreshHiddenCount = useCallback(() => {
+    const cols = gridRef.current?.api?.getColumns();
+    if (!cols) return;
+    setHiddenCount(cols.filter((c) => !c.isVisible()).length);
   }, []);
 
-  // ── Context menu on header right-click ─────────────────────────────
-  const handleGridContextMenu = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const cell = (e.target as Element).closest('[col-id].ag-header-cell');
-      if (!cell) return;
-      e.preventDefault();
-      const colId = cell.getAttribute('col-id') ?? '';
-      if (!colId) return;
-      setCtxMenu({ x: e.clientX, y: e.clientY, colId });
+  // ── Right-click context menu ───────────────────────────────────────
+  const getContextMenuItems = useCallback(
+    (): (DefaultMenuItem | MenuItemDef)[] => [
+      'copy',
+      'copyWithHeaders',
+      'separator',
+      'autoSizeThis',
+      'autoSizeAll',
+    ],
+    []
+  );
+
+  // ── Reset columns to their default layout ──────────────────────────
+  const resetColumns = useCallback(() => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+    api.resetColumnState();
+    refreshHiddenCount();
+    setTimeout(clearColumnState, 300);
+  }, [refreshHiddenCount]);
+
+  // ── Custom column header menu (the ☰ button) ───────────────────────
+  const getMainMenuItems = useCallback(
+    (params: GetMainMenuItemsParams): (DefaultMenuItem | MenuItemDef)[] => {
+      const colId = params.column?.getColId();
+      const isPinned = !!params.column?.isPinned();
+      return [
+        {
+          name: isPinned ? 'Unpin Column' : 'Pin Left',
+          icon: '<span class="ag-icon ag-icon-pin" role="presentation"></span>',
+          action: () => {
+            params.api.applyColumnState({
+              state: [{ colId: colId!, pinned: isPinned ? null : 'left' }],
+            });
+          },
+        },
+        'separator',
+        'autoSizeThis',
+        'autoSizeAll',
+        'separator',
+        'columnChooser',
+        {
+          name: 'Reset Columns',
+          icon: '<span class="ag-icon ag-icon-columns" role="presentation"></span>',
+          action: resetColumns,
+        },
+      ];
+    },
+    [resetColumns]
+  );
+
+  // ── Detail side panel: double-click opens, single click closes ─────
+  const onRowDoubleClicked = useCallback(
+    (e: RowDoubleClickedEvent<AgentHistoryRecord>) => {
+      if (e.data) setDetailRecord(e.data);
     },
     []
   );
 
-  // ── Column-selection strip (drag-select, CSS highlight, hide) ──────
-  const onHideSelection = useCallback((ids: string[]) => {
-    setHiddenCols((prev) => [...prev, ...ids.filter((id) => !prev.includes(id))]);
+  const onRowClicked = useCallback(() => {
+    setDetailRecord((cur) => (cur ? null : cur));
   }, []);
 
-  const { selectedCols, onStripMouseDown, hideSelectedCols } = useColumnSelection({
-    gridWrapperRef,
-    gridRef,
-    onHide: onHideSelection,
-    saveColState,
-  });
+  const closeDetail = useCallback(() => setDetailRecord(null), []);
+
+  // ── Toggle a tool panel from the toolbar buttons ───────────────────
+  const toggleToolPanel = useCallback((panelId: 'columns' | 'filters') => {
+    const api = gridRef.current?.api;
+    if (!api) return;
+    if (api.getOpenedToolPanel() === panelId) api.closeToolPanel();
+    else api.openToolPanel(panelId);
+  }, []);
+
+  // ── Persist column state + refresh hidden count on any change ──────
+  const onColumnStateChanged = useCallback(() => {
+    saveColState();
+    refreshHiddenCount();
+  }, [saveColState, refreshHiddenCount]);
 
   // ── No agentId guard ────────────────────────────────────────────────
 
@@ -264,30 +345,37 @@ export default function AgentSyncsList({
   // ── Shared grid element ─────────────────────────────────────────────
 
   const gridEl = (
-    <div
-      ref={gridWrapperRef}
-      className="snc-grid-wrapper ag-theme-quartz"
-      onContextMenu={handleGridContextMenu}
-    >
-      {/* Column-selection strip — 8px hover zone at top of header */}
-      <div className="snc-col-select-strip" onMouseDown={onStripMouseDown} />
+    <div ref={gridWrapperRef} className="snc-grid-wrapper ag-theme-quartz">
+      <style>{groupColorCss}</style>
       <AgGridReact<AgentHistoryRecord>
         ref={gridRef}
         columnDefs={columnDefs}
         defaultColDef={defaultColDef}
+        theme="legacy"
         rowModelType="infinite"
         cacheBlockSize={BLOCK_SIZE}
         cacheOverflowSize={2}
         maxConcurrentDatasourceRequests={2}
+        maxBlocksInCache={10}
+        sideBar={sideBar}
+        getContextMenuItems={getContextMenuItems}
+        getMainMenuItems={getMainMenuItems}
+        cellSelection
+        groupHeaderHeight={0}
         onGridReady={onGridReady}
         onColumnResized={onColumnResized}
+        onColumnVisible={onColumnStateChanged}
+        onColumnPinned={onColumnStateChanged}
+        onColumnMoved={onColumnStateChanged}
         onFilterChanged={onFilterChanged}
+        onRowClicked={onRowClicked}
+        onRowDoubleClicked={onRowDoubleClicked}
         suppressCellFocus={false}
         rowSelection={{ mode: 'singleRow', checkboxes: false, enableClickSelection: true }}
-        enableCellTextSelection
         tooltipShowDelay={400}
         overlayNoRowsTemplate='<span class="snc-no-rows">אין רשומות עבור agent זה</span>'
       />
+      <SyncDetailPanel record={detailRecord} onClose={closeDetail} />
     </div>
   );
 
@@ -366,89 +454,42 @@ export default function AgentSyncsList({
 
       </header>
 
-      {/* ── Toolbar: columns · active filters · row count ──────── */}
+      {/* ── Toolbar ───────────────────────────────────────────────── */}
       <div className="snc-toolbar">
 
         <div className="snc-toolbar-start">
 
-          {/* Column picker */}
-          <div className="snc-col-picker-wrap" ref={pickerRef}>
-            <button
-              type="button"
-              className="snc-col-picker-btn"
-              onClick={() => setPickerOpen((o) => !o)}
-              aria-expanded={pickerOpen}
-              aria-haspopup="true"
-            >
-              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <rect x="1"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-                <rect x="6"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-                <rect x="11" y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
-              </svg>
-              Columns
-              {hiddenCols.length > 0 && (
-                <span className="snc-col-picker-badge">{hiddenCols.length}</span>
-              )}
-              <svg className="snc-col-picker-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.7"
-                  strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-
-            {pickerOpen && (
-              <div className="snc-col-picker-panel">
-                <div className="snc-col-picker-scroll">
-                  {COLUMN_GROUPS.map((group) => (
-                    <div key={group.label} className="snc-col-picker-group">
-                      <div className="snc-col-picker-group-label">{group.label}</div>
-                      {group.cols.map((colId) => {
-                        const isVisible = !hiddenCols.includes(colId);
-                        return (
-                          <div
-                            key={colId}
-                            className="snc-col-picker-row"
-                            role="button"
-                            tabIndex={0}
-                            onClick={() => toggleColVisibility(colId)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                e.preventDefault();
-                                toggleColVisibility(colId);
-                              }
-                            }}
-                          >
-                            <span className="snc-col-picker-name">
-                              {COLUMN_LABELS[colId] ?? colId}
-                            </span>
-                            <span
-                              role="switch"
-                              aria-checked={isVisible}
-                              className={`snc-col-picker-toggle${isVisible ? ' snc-col-picker-toggle--on' : ''}`}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-                <div className="snc-col-picker-footer">
-                  <button
-                    type="button"
-                    className="snc-col-picker-reset"
-                    onClick={resetColsToDefault}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <path d="M13 8A5 5 0 1 1 8 3c1.4 0 2.6.5 3.5 1.4L13 6V2"
-                        stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    Reset to default
-                  </button>
-                </div>
-              </div>
+          {/* Columns tool-panel toggle */}
+          <button
+            type="button"
+            className="snc-col-picker-btn"
+            onClick={() => toggleToolPanel('columns')}
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <rect x="1"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+              <rect x="6"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+              <rect x="11" y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
+            </svg>
+            Columns
+            {hiddenCount > 0 && (
+              <span className="snc-col-picker-badge">{hiddenCount}</span>
             )}
-          </div>
+          </button>
 
-          {/* Active filter chips (appear inline after picker) */}
+          {/* Filters tool-panel toggle */}
+          <button
+            type="button"
+            className="snc-col-picker-btn"
+            onClick={() => toggleToolPanel('filters')}
+          >
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M1.5 3h13l-5 6v4l-3 1.5V9l-5-6z" stroke="currentColor"
+                strokeWidth="1.3" strokeLinejoin="round"/>
+            </svg>
+            Filters
+          </button>
+
+          {/* Active filter chips (appear inline after buttons) */}
           {activeColIds.length > 0 && (
             <>
               <div className="snc-toolbar-vr" aria-hidden="true" />
@@ -502,92 +543,6 @@ export default function AgentSyncsList({
 
       {/* ── Grid ─────────────────────────────────────────────────── */}
       <div className="snc-grid-outer">{gridEl}</div>
-
-      {/* ── Right-click context menu ─────────────────────────────── */}
-      {ctxMenu && (
-        <div
-          className="snc-ctx-menu"
-          style={{ left: ctxMenu.x, top: ctxMenu.y }}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            className="snc-ctx-item"
-            onClick={() => {
-              gridRef.current?.api?.applyColumnState({
-                state: [{ colId: ctxMenu.colId, sort: 'asc', sortIndex: 0 }],
-                defaultState: { sort: null },
-              });
-              setCtxMenu(null);
-            }}
-          >
-            <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M8 13V3M4.5 6.5L8 3l3.5 3.5"
-                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Sort Ascending
-          </button>
-          <button
-            type="button"
-            className="snc-ctx-item"
-            onClick={() => {
-              gridRef.current?.api?.applyColumnState({
-                state: [{ colId: ctxMenu.colId, sort: 'desc', sortIndex: 0 }],
-                defaultState: { sort: null },
-              });
-              setCtxMenu(null);
-            }}
-          >
-            <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M8 3v10M4.5 9.5L8 13l3.5-3.5"
-                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Sort Descending
-          </button>
-          <div className="snc-ctx-sep" />
-          <button
-            type="button"
-            className="snc-ctx-item"
-            onClick={() => { clearFilter(ctxMenu.colId); setCtxMenu(null); }}
-          >
-            <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M2 4h12M5 8h6M7 12h2"
-                stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-            Clear Filter
-          </button>
-          <div className="snc-ctx-sep" />
-          {selectedCols.size > 0 && (
-            <button
-              type="button"
-              className="snc-ctx-item snc-ctx-item--muted"
-              onClick={() => { hideSelectedCols(); setCtxMenu(null); }}
-            >
-              <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                <path d="M2 2l12 12M6.8 6.9a2.5 2.5 0 0 0 2.3 2.3M4 4.3A7.5 7.5 0 0 0 1.5 8c1.3 2.7 4 4.5 6.5 4.5 1 0 2-.3 2.8-.7M10.6 5.4A7.4 7.4 0 0 1 14.5 8c-1.3 2.7-4 4.5-6.5 4.5"
-                  stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Hide {selectedCols.size} selected columns
-            </button>
-          )}
-          <button
-            type="button"
-            className="snc-ctx-item snc-ctx-item--muted"
-            onClick={() => {
-              gridRef.current?.api?.setColumnsVisible([ctxMenu.colId], false);
-              setHiddenCols((prev) => [...prev, ctxMenu.colId]);
-              saveColState();
-              setCtxMenu(null);
-            }}
-          >
-            <svg className="snc-ctx-icon" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M2 2l12 12M6.8 6.9a2.5 2.5 0 0 0 2.3 2.3M4 4.3A7.5 7.5 0 0 0 1.5 8c1.3 2.7 4 4.5 6.5 4.5 1 0 2-.3 2.8-.7M10.6 5.4A7.4 7.4 0 0 1 14.5 8c-1.3 2.7-4 4.5-6.5 4.5"
-                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Hide Column
-          </button>
-        </div>
-      )}
 
     </div>
   );

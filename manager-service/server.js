@@ -611,7 +611,20 @@ async function handleLoadHistoryAgentSyncs(req, res) {
         if (useIrm) {
             // IRM response: lastRow is set only when we know we've hit the end
             const lastRow = rows.length < blockSize ? startRow + rows.length : null;
-            res.json({ rows, lastRow });
+
+            // On the first block, also return the total row count (respecting
+            // the active filter) so the UI can show it without scrolling to the
+            // end. COUNT is fast here thanks to the agent_id index.
+            let rowCount;
+            if (startRow === 0) {
+                const countRes = await historyDb.query(
+                    `SELECT count(*)::bigint AS total FROM agent_syncs WHERE ${whereClause}`,
+                    params
+                );
+                rowCount = Number(countRes.rows[0]?.total ?? 0);
+            }
+
+            res.json({ rows, lastRow, rowCount });
         } else {
             // Legacy response: keep { items, total } shape so nothing else breaks
             res.json({ items: rows, total: rows.length });
