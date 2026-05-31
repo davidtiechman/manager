@@ -25,10 +25,7 @@ import {
 import App from './App';
 import './index.css';
 
-// v33 modularization: register only the features the grid actually uses.
-// FUTURE: the Find feature (FindModule) only supports the Client-Side Row
-// Model. The sync grid uses the Infinite Row Model, so Find is not wired up
-// here — it would require migrating the row model first.
+
 ModuleRegistry.registerModules([
   InfiniteRowModelModule,
   ColumnApiModule,
