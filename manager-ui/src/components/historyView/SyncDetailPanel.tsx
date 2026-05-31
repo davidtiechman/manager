@@ -66,6 +66,33 @@ export function SyncDetailPanel({ record, onClose }: SyncDetailPanelProps) {
       ]
     : [];
 
+  const ac = record?.details?.agentConfig;
+  const agentConfig: FieldRow[] = ac
+    ? [
+        { label: 'Scheduler Mode', value: formatValue(ac.schedulerMode) },
+        { label: 'Selected Link', value: formatValue(ac.selectedLink) },
+        { label: 'Interval (ms)', value: formatValue(ac.intervalMs) },
+        { label: 'Max Retries', value: formatValue(ac.maxRetries) },
+        { label: 'Batch Size', value: formatValue(ac.batchSize) },
+        { label: 'Manual Mode', value: formatValue(ac.isManualMode) },
+        { label: 'Spark Proxy URL', value: formatValue(ac.sparkProxyUrl) },
+        { label: 'Token', value: formatValue(ac.token) },
+        { label: 'Created At', value: formatDate(ac.createdAt) },
+      ]
+    : [];
+
+  const pd = record?.details?.platfromData;
+  const platformData: FieldRow[] = pd
+    ? [
+        { label: 'Unit', value: formatValue(pd.unit) },
+        { label: 'Unit Code', value: formatValue(pd.unitCode) },
+        { label: 'Zayad ID', value: formatValue(pd.zayadId) },
+        { label: 'Platform', value: formatValue(pd.platform) },
+        { label: 'Platform ID', value: formatValue(pd.platformId) },
+        { label: 'Created At', value: formatDate(pd.createdAt) },
+      ]
+    : [];
+
   const linkQuality: FieldRow[] = record
     ? [
         { label: 'Link Type', value: formatValue(record.link_quality?.type) },
@@ -80,8 +107,10 @@ export function SyncDetailPanel({ record, onClose }: SyncDetailPanelProps) {
   const sections: Array<{ title: string; slug: string; rows: FieldRow[] }> = [
     { title: 'General', slug: 'general', rows: general },
     { title: 'Sync Details', slug: 'sync-details', rows: details },
+    { title: 'Agent Config', slug: 'agent-config', rows: agentConfig },
+    { title: 'Platform Data', slug: 'platform-data', rows: platformData },
     { title: 'Link Quality', slug: 'link-quality', rows: linkQuality },
-  ];
+  ].filter((s) => s.rows.length > 0);
 
   return (
     <>

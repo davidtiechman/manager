@@ -102,9 +102,11 @@
 }
 
 /* Fallback colors so the panel still reads if the injected vars are absent */
-.snc-dp-section-title.snc-tp-group--general      { color: #0284c7; }
-.snc-dp-section-title.snc-tp-group--sync-details  { color: #7c3aed; }
-.snc-dp-section-title.snc-tp-group--link-quality  { color: #059669; }
+.snc-dp-section-title.snc-tp-group--general       { color: #0284c7; } /* sky     */
+.snc-dp-section-title.snc-tp-group--sync-details   { color: #7c3aed; } /* violet  */
+.snc-dp-section-title.snc-tp-group--agent-config   { color: #d97706; } /* amber   */
+.snc-dp-section-title.snc-tp-group--platform-data  { color: #db2777; } /* rose    */
+.snc-dp-section-title.snc-tp-group--link-quality   { color: #059669; } /* emerald */
 
 .snc-dp-list {
   margin: 0;

@@ -12,6 +12,9 @@ export interface AgentHistoryRecord {
     nextDeliveryTime: string | null;
     geoData: string | null;
     serverLut: string | null;
+    agentConfig?: AgentConfig | null;
+    // NOTE: "platfrom" matches the server's (misspelled) field name.
+    platfromData?: PlatformData | null;
   };
 
   link_quality: {
@@ -24,6 +27,29 @@ export interface AgentHistoryRecord {
     timestamp: number;
   };
 }
+export interface AgentConfig {
+  id: number;
+  schedulerMode: string;
+  selectedLink: string;
+  intervalMs: number;
+  maxRetries: number;
+  sparkProxyUrl: string;
+  token: string;
+  batchSize: number;
+  isManualMode: boolean;
+  createdAt: string;
+}
+
+export interface PlatformData {
+  id: number;
+  unit: string;
+  unitCode: string;
+  zayadId: number;
+  platform: string;
+  platformId: number;
+  createdAt: string;
+}
+
 export interface AgentHistoryResponse {
   items: AgentHistoryRecord[];
   total: number;
