@@ -5,6 +5,7 @@ const { Pool } = require('pg');
 const fs = require('fs');
 const app = express();
 const path = require('path');
+const crypto = require('crypto');
 
 function loadEnvFile(filePath) {
     if (!fs.existsSync(filePath)) {
@@ -372,26 +373,72 @@ async function handleLoadAgentHistory(req, res) {
     }
 }
 
+// ── History agents mock data ────────────────────────────────────────
+// The history list is served from a generated, in-memory dataset so the
+// UI has ~1000 diverse agents to sort / filter / group. Generated once
+// per process and cached for the server's lifetime.
+
+const HISTORY_UNITS = [
+    { unit: 'Golani',    unitCode: '101' },
+    { unit: 'Givati',    unitCode: '204' },
+    { unit: 'Nahal',     unitCode: '330' },
+    { unit: 'Tzanhanim', unitCode: '890' },
+    { unit: 'Kfir',      unitCode: '900' },
+    { unit: 'Harel',     unitCode: '500' },
+    { unit: 'Egoz',      unitCode: '621' },
+];
+
+const HISTORY_PLATFORMS = ['matest', 'prod-a', 'prod-b', 'staging', 'edge-1', 'sat-link'];
+
+const HISTORY_AGENTS_COUNT = 1000;
+
+// Deterministic, collision-free index into an array (avoids the modulo
+// pitfall when count shares a factor with the array length).
+function pickIndex(i, salt, length) {
+    let h = ((i + 1) * 2654435761 + salt * 40503) >>> 0;
+    h = (h ^ (h >>> 15)) >>> 0;
+    return h % length;
+}
+
+function buildHistoryAgents(count = HISTORY_AGENTS_COUNT) {
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const agents = [];
+
+    for (let i = 0; i < count; i += 1) {
+        const unitDef = HISTORY_UNITS[pickIndex(i, 1, HISTORY_UNITS.length)];
+        const platform = HISTORY_PLATFORMS[pickIndex(i, 2, HISTORY_PLATFORMS.length)];
+        // Spread createdAt over roughly the last 90 days.
+        const createdAt = new Date(
+            now - ((i * 37) % 90) * dayMs - (i % 24) * 60 * 60 * 1000
+        ).toISOString();
+
+        agents.push({
+            id: crypto.randomUUID(),
+            callsign: `test${String(i + 1).padStart(4, '0')}`,
+            createdAt,
+            platfrom: {
+                id: i + 1,
+                unit: unitDef.unit,
+                unitCode: unitDef.unitCode,
+                zayadId: 10000 + i,
+                platform,
+                platformId: 500000 + i,
+                createdAt,
+            },
+        });
+    }
+
+    return agents;
+}
+
+const HISTORY_AGENTS = buildHistoryAgents();
+
 async function handleLoadHistoryAgents(req, res) {
     try {
-        const result = await historyDb.query(`
-            SELECT
-                id,
-                call_sign AS "callSign",
-                unit,
-                unit_code AS "unitCode",
-                zayad_id AS "zayadId",
-                platform_id AS "platformId",
-                platform,
-                first_seen_at AS "firstSeenAt",
-                last_seen_at AS "lastSeenAt"
-            FROM history_agents
-            ORDER BY last_seen_at DESC
-        `);
-
-        res.json(result.rows);
+        res.json(HISTORY_AGENTS);
     } catch (error) {
-        console.error('Failed to load history agents from Postgres:', error);
+        console.error('Failed to load history agents:', error);
         res.status(500).json({ error: 'Failed to load history agents' });
     }
 }
