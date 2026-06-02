@@ -26,7 +26,7 @@ export default function AgentCard({ agent, onOpen, hideUnit, hidePlatform }: Age
         </span>
         <div className="rstr-card-heading">
           <span className="rstr-card-callsign" title={agent.callsign}>{agent.callsign}</span>
-          <span className="rstr-card-uuid" title={agent.id}>{agent.id.slice(0, 8)}</span>
+          <span className="rstr-card-uuid" title={agent.id}>{agent.id}</span>
         </div>
         <svg className="rstr-card-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />

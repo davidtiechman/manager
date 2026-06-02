@@ -249,6 +249,7 @@
   font-size: 14px; font-weight: 600; color: #0f172a; font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
 }
 .rstr-card-uuid {
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
   font-size: 11px; line-height: 1; color: #6b7280; letter-spacing: 0.02em;
 }

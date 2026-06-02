@@ -24,6 +24,9 @@ import './ColumnPicker.css';
 
 import { ApiService } from '../../api';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
+import type { HistoryAgent } from '../../types/history/historyAgent';
+import { formatRosterDate } from '../rosterView/rosterFormat';
+import { unitDotColor } from '../rosterView/rosterColors';
 import ModeNavigationLink from '../ModeNavigationLink';
 
 import {
@@ -56,6 +59,25 @@ export default function AgentSyncsList({
   const location = useLocation();
   const backTo = location.state?.backTo ?? '/history';
   const navigate = useNavigate();
+
+  // ── Agent identity: prefer nav state, fall back to fetching by id ──
+  const [agent, setAgent] = useState<HistoryAgent | null>(
+    (location.state?.agent as HistoryAgent | undefined) ?? null
+  );
+
+  useEffect(() => {
+    if (!agentId || (agent && agent.id === agentId)) return;
+    let cancelled = false;
+    ApiService.getHistoryAgents()
+      .then((agents) => {
+        if (cancelled) return;
+        setAgent(agents.find((a) => a.id === agentId) ?? null);
+      })
+      .catch((err) => {
+        console.error('[SyncHistory] failed to load agent identity:', err);
+      });
+    return () => { cancelled = true; };
+  }, [agentId, agent]);
 
   const gridRef = useRef<AgGridReact<AgentHistoryRecord>>(null);
   const columnDefs = useMemo(() => buildColumnDefs(), []);
@@ -425,7 +447,7 @@ export default function AgentSyncsList({
   return (
     <div className="snc-page">
 
-      {/* ── Page header ─────────────────────────────────────────── */}
+      {/* ── Page header (single row) ────────────────────────────── */}
       <header className="snc-header">
 
         <div className="snc-header-start">
@@ -438,13 +460,66 @@ export default function AgentSyncsList({
               <path d="M9.5 3L5 7.5L9.5 12" stroke="currentColor"
                 strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            History
+            Back
           </button>
+
           <div className="snc-header-sep" aria-hidden="true" />
+
+          <span className="snc-agent-avatar" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <rect x="4" y="4.5" width="16" height="6" rx="1.6" stroke="currentColor" strokeWidth="1.6" />
+              <rect x="4" y="13.5" width="16" height="6" rx="1.6" stroke="currentColor" strokeWidth="1.6" />
+              <circle cx="7.5" cy="7.5" r="0.95" fill="currentColor" />
+              <circle cx="7.5" cy="16.5" r="0.95" fill="currentColor" />
+            </svg>
+          </span>
+
           <div className="snc-agent-identity">
-            <span className="snc-agent-id-text">{agentId}</span>
-            <span className="snc-page-label">Sync History</span>
+            <div className="snc-agent-identity-line">
+              <span className="snc-agent-callsign" title={agent?.callsign ?? undefined}>
+                {agent?.callsign ?? 'Agent'}
+              </span>
+              <span className="snc-page-label">Sync History</span>
+            </div>
+            <span className="snc-agent-id-text" title={agentId}>{agentId}</span>
           </div>
+
+          {/* ── Inline agent metadata ─────────────────────────── */}
+          {agent && (
+            <div className="snc-meta-row">
+              <div className="snc-meta-item">
+                <span className="snc-meta-label">Unit</span>
+                <span className="snc-meta-value">
+                  <span
+                    className="snc-meta-dot"
+                    style={{ backgroundColor: unitDotColor(agent.platfrom.unit) }}
+                    aria-hidden="true"
+                  />
+                  {agent.platfrom.unit}
+                </span>
+              </div>
+              <div className="snc-meta-item">
+                <span className="snc-meta-label">Platform</span>
+                <span className="snc-meta-value">{agent.platfrom.platform}</span>
+              </div>
+              <div className="snc-meta-item">
+                <span className="snc-meta-label">Zayad ID</span>
+                <span className="snc-meta-value snc-meta-num">{agent.platfrom.zayadId}</span>
+              </div>
+              <div className="snc-meta-item">
+                <span className="snc-meta-label">Platform ID</span>
+                <span className="snc-meta-value snc-meta-num">{agent.platfrom.platformId}</span>
+              </div>
+              <div className="snc-meta-item">
+                <span className="snc-meta-label">Unit Code</span>
+                <span className="snc-meta-value snc-meta-num">{agent.platfrom.unitCode}</span>
+              </div>
+              <div className="snc-meta-item snc-meta-item--created">
+                <span className="snc-meta-label">Created</span>
+                <span className="snc-meta-value">{formatRosterDate(agent.createdAt)}</span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="snc-header-end">

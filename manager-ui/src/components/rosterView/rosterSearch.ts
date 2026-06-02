@@ -1,7 +1,7 @@
 import type { HistoryAgent } from '../../types/history/historyAgent';
 
 export type RosterScope =
-  | 'callsign' | 'zayadId' | 'unit' | 'platform' | 'platformId' | 'unitCode' | 'all';
+  | 'callsign' | 'id' | 'zayadId' | 'unit' | 'platform' | 'platformId' | 'unitCode' | 'all';
 
 export interface ScopeOption {
   value: RosterScope;
@@ -11,6 +11,7 @@ export interface ScopeOption {
 
 export const SCOPE_OPTIONS: ScopeOption[] = [
   { value: 'callsign',   label: 'Call Sign',   placeholder: 'Search call sign…' },
+  { value: 'id',         label: 'Agent ID',    placeholder: 'Search agent id…' },
   { value: 'zayadId',    label: 'Zayad ID',    placeholder: 'Search zayad id…' },
   { value: 'unit',       label: 'Unit',        placeholder: 'Search unit…' },
   { value: 'platform',   label: 'Platform',    placeholder: 'Search platform…' },
@@ -58,10 +59,11 @@ export const GROUP_BY_OPTIONS: { value: RosterGroupBy; label: string }[] = [
 ];
 
 // ── Sort ──────────────────────────────────────────────────────
-export type RosterSortKey = 'callsign' | 'createdAt' | 'zayadId' | 'platformId' | 'unit' | 'platform';
+export type RosterSortKey = 'callsign' | 'id' | 'createdAt' | 'zayadId' | 'platformId' | 'unit' | 'platform';
 
 export const SORT_OPTIONS: { value: RosterSortKey; label: string }[] = [
   { value: 'callsign',   label: 'Call Sign' },
+  { value: 'id',         label: 'Agent ID' },
   { value: 'createdAt',  label: 'Created' },
   { value: 'zayadId',    label: 'Zayad ID' },
   { value: 'platformId', label: 'Platform ID' },
@@ -81,6 +83,7 @@ export function sortAgents(
   const val = (a: HistoryAgent): string | number => {
     switch (sortBy) {
       case 'callsign':   return a.callsign;
+      case 'id':         return a.id;
       case 'createdAt':  return a.createdAt;
       case 'zayadId':    return a.platfrom.zayadId;
       case 'platformId': return a.platfrom.platformId;
@@ -117,13 +120,14 @@ function valuesForScope(agent: HistoryAgent, scope: RosterScope): string[] {
   const p = agent.platfrom;
   switch (scope) {
     case 'callsign':   return [agent.callsign];
+    case 'id':         return [agent.id];
     case 'zayadId':    return [String(p.zayadId)];
     case 'unit':       return [p.unit];
     case 'platform':   return [p.platform];
     case 'platformId': return [String(p.platformId)];
     case 'unitCode':   return [p.unitCode];
     case 'all':
-      return [agent.callsign, p.unit, p.unitCode, p.platform, String(p.platformId), String(p.zayadId)];
+      return [agent.callsign, agent.id, p.unit, p.unitCode, p.platform, String(p.platformId), String(p.zayadId)];
     default:           return [];
   }
 }

@@ -171,7 +171,10 @@ export default function AgentRosterList() {
     setCollapsed(new Set(groupAgents(sorted, groupBy).map((g) => g.key)));
   };
 
-  const openAgent = (id: string) => navigate(`/history/${id}`, { state: { backTo: '/history' } });
+  const openAgent = (id: string) =>
+    navigate(`/history/${id}`, {
+      state: { backTo: '/history', agent: agents.find((a) => a.id === id) },
+    });
 
   const hasFilters =
     debouncedSearch.trim() !== '' || facets.unit.length > 0 || facets.platform.length > 0;
