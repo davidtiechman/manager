@@ -222,6 +222,84 @@
   flex-shrink: 0;
 }
 
+/* ── Tab switcher (Syncs / Messages) — sits in the grid toolbar ── */
+.snc-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 9px;
+  background: #e8edf3;
+}
+
+.snc-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.snc-tab:hover {
+  color: #334155;
+}
+
+.snc-tab--active {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.35);
+}
+
+.snc-tab-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+}
+
+.snc-tab-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.snc-tab:hover .snc-tab-icon {
+  color: #475569;
+}
+
+.snc-tab--active .snc-tab-icon {
+  color: #ffffff;
+}
+
+.snc-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: #d4dbe4;
+  color: #475569;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.15s, color 0.15s;
+}
+
+.snc-tab--active .snc-tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
 /* ── Right nav button — "Live monitoring" override ──────────── */
 .snc-header .mode-navigation-link.real-time {
   position: relative;
@@ -293,12 +371,89 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .snc-toolbar-end {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+}
+
+/* Filter chips fill the available row width; extras collapse into "+N". */
+.snc-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.snc-filter-row > .snc-filter-chip {
+  flex-shrink: 0;
+}
+
+/* Off-screen row used only to measure each chip's natural width. */
+.snc-filter-measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.snc-filter-measure .snc-filter-chip {
+  flex-shrink: 0;
+}
+
+/* Overflow: extra filter chips collapse into a "+N" popover (bar stays one line). */
+.snc-filter-more {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.snc-filter-more-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+
+.snc-filter-more-btn:hover,
+.snc-filter-more-btn[aria-expanded='true'] {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+.snc-filter-more-panel {
+  position: absolute;
+  top: calc(100% + 15px);
+  left: 0;
+  z-index: 50;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  width: max-content;
+  max-width: 380px;
+  padding: 11px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
 }
 
 /* Vertical rule between columns picker and filter chips */
@@ -341,7 +496,7 @@
 /* ── Filter chips ───────────────────────────────────────────── */
 
 .snc-filter-bar-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.05em;
   color: #64748b;
@@ -353,13 +508,13 @@
 .snc-filter-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 8px 3px 10px;
+  gap: 4px;
+  padding: 2px 7px 2px 9px;
   border: 1px solid #93c5fd;
   border-radius: 20px;
   background: #eff6ff;
   color: #1e40af;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;

@@ -1,23 +1,27 @@
 import type { AgentResponse } from './types/realTimeAgents/agentResponse';
 import type { AgentHistoryRecord } from './types/history/agentHistoryRecord';
+import type { AgentMessageRecord } from './types/history/agentMessageRecord';
 import type { HistoryAgent } from './types/history/historyAgent';
 import type { ConfigurationTableData } from './types/realTimeAgents/tables';
 import { MOCK_AGENTS } from './MOCK_AGENT';
 
-export interface SyncsIrmParams {
+// IRM request params.
+export interface IrmParams {
   startRow: number;
   endRow: number;
   sortModel?: Array<{ colId: string; sort: 'asc' | 'desc' }>;
   filterModel?: Record<string, unknown>;
-  maxId?: number | null;
 }
 
-export interface SyncsIrmResponse {
-  rows: AgentHistoryRecord[];
+export interface IrmResponse<T> {
+  rows: T[];
   lastRow: number | null;
-  /** Total rows matching the query; returned on the first block only. */
-  rowCount?: number;
+  rowCount?: number; // first block only
 }
+
+// Back-compat aliases.
+export type SyncsIrmParams = IrmParams;
+export type SyncsIrmResponse = IrmResponse<AgentHistoryRecord>;
 
 const VITE_API_TOKEN = import.meta.env.VITE_API_TOKEN || 'test';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:9000';
@@ -70,38 +74,49 @@ export class ApiService {
     return response.json();
   }
 
-  static async getHistorySyncsIrm(
+  // Generic IRM fetch.
+  private static async fetchHistoryIrm<T>(
+    resource: 'syncs' | 'messages',
     agentId: string,
-    params: SyncsIrmParams
-  ): Promise<SyncsIrmResponse> {
+    params: IrmParams,
+    errorMessage: string
+  ): Promise<IrmResponse<T>> {
     const query = new URLSearchParams({
       startRow:    String(params.startRow),
       endRow:      String(params.endRow),
       sortModel:   JSON.stringify(params.sortModel   ?? []),
       filterModel: JSON.stringify(params.filterModel ?? {}),
-      ...(params.maxId != null ? { maxId: String(params.maxId) } : {}),
     });
 
     const response = await fetch(
-      `${API_BASE_URL}/agent/${encodeURIComponent(agentId)}/syncs?${query}`,
-      {
-        headers: {
-          'Authorization': `Bearer ${VITE_API_TOKEN}`,
-        },
-      }
+      `${API_BASE_URL}/agent/${encodeURIComponent(agentId)}/${resource}?${query}`,
+      { headers: { 'Authorization': `Bearer ${VITE_API_TOKEN}` } }
     );
 
     if (!response.ok) {
-      throw new Error('Failed to load agent sync history');
+      throw new Error(errorMessage);
     }
 
-    // Normalize: accept both IRM format { rows, lastRow }
-    // and legacy format { items, total } (backend not yet restarted)
+    // Accept IRM { rows } or legacy { items }.
     const data = await response.json() as Record<string, unknown>;
-    const rows = (data.rows ?? data.items ?? []) as AgentHistoryRecord[];
+    const rows = (data.rows ?? data.items ?? []) as T[];
     const lastRow = (data.lastRow ?? null) as number | null;
     const rowCount = typeof data.rowCount === 'number' ? data.rowCount : undefined;
     return { rows, lastRow, rowCount };
+  }
+
+  static getHistorySyncsIrm(
+    agentId: string,
+    params: IrmParams
+  ): Promise<IrmResponse<AgentHistoryRecord>> {
+    return this.fetchHistoryIrm('syncs', agentId, params, 'Failed to load agent sync history');
+  }
+
+  static getHistoryMessagesIrm(
+    agentId: string,
+    params: IrmParams
+  ): Promise<IrmResponse<AgentMessageRecord>> {
+    return this.fetchHistoryIrm('messages', agentId, params, 'Failed to load agent messages');
   }
 
   static async getAgentConfig(

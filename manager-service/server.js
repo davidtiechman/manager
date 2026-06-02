@@ -94,6 +94,93 @@ async function initHistoryDb() {
     `);
 }
 
+// ── Messages table ──
+async function initMessagesDb() {
+    await historyDb.query(`
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'messages_content_type_enum') THEN
+                CREATE TYPE messages_content_type_enum AS ENUM ('Json', 'Excel');
+            END IF;
+        END $$;
+
+        CREATE TABLE IF NOT EXISTS messages (
+            id            TEXT PRIMARY KEY,
+            received_at   TIMESTAMPTZ,
+            sent_at       TIMESTAMPTZ,
+            content       TEXT,
+            priority      INTEGER,
+            content_json  JSONB,
+            content_excel TEXT,
+            content_type  messages_content_type_enum,
+            processed     BOOLEAN,
+            agent_id      TEXT REFERENCES history_agents(id)
+        );
+
+        CREATE INDEX IF NOT EXISTS messages_agent_received_idx
+        ON messages (agent_id, received_at DESC);
+    `);
+}
+
+const MESSAGES_PER_AGENT = 100;
+
+// Seed ~100 messages/agent (only when empty).
+async function seedMessages() {
+    const countRes = await historyDb.query('SELECT count(*)::int AS total FROM messages');
+    if (countRes.rows[0].total > 0) return;
+
+    const agentsRes = await historyDb.query('SELECT id FROM history_agents ORDER BY id');
+    const agentIds = agentsRes.rows.map((r) => r.id);
+    if (agentIds.length === 0) return;
+
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const CONTENTS = [
+        'Routine status report', 'Position update', 'Supply request',
+        'Mission acknowledgement', 'Sensor telemetry', 'Heartbeat ping',
+        'Encrypted payload', 'Command received', 'Link handshake', 'Diagnostics dump',
+    ];
+
+    for (const agentId of agentIds) {
+        const values = [];
+        const tuples = [];
+        let p = 0;
+        for (let i = 0; i < MESSAGES_PER_AGENT; i += 1) {
+            const isJson = i % 2 === 0;
+            const contentType = isJson ? 'Json' : 'Excel';
+            const processed = i % 10 < 7; // ~70% processed
+            const receivedAt = new Date(
+                now - ((i * 7) % 30) * dayMs - (i % 24) * 3_600_000 - (i % 60) * 60_000
+            ).toISOString();
+            const sentAt = processed
+                ? new Date(new Date(receivedAt).getTime() + (5 + (i % 30)) * 1000).toISOString()
+                : null;
+            const priority = 1 + (i % 5);
+            const content = `${CONTENTS[i % CONTENTS.length]} #${i + 1}`;
+            const contentJson = isJson
+                ? JSON.stringify({ seq: i + 1, agent: agentId, payload: content, ok: processed })
+                : null;
+            const contentExcel = isJson ? null : `col1,col2,col3\n${i + 1},${priority},${processed}`;
+            const id = `msg-${agentId}-${String(i + 1).padStart(3, '0')}`;
+
+            tuples.push(
+                `($${++p},$${++p},$${++p},$${++p},$${++p},$${++p}::jsonb,$${++p},$${++p}::messages_content_type_enum,$${++p},$${++p})`
+            );
+            values.push(
+                id, receivedAt, sentAt, content, priority,
+                contentJson, contentExcel, contentType, processed, agentId
+            );
+        }
+        await historyDb.query(
+            `INSERT INTO messages
+                (id, received_at, sent_at, content, priority,
+                 content_json, content_excel, content_type, processed, agent_id)
+             VALUES ${tuples.join(',')}`,
+            values
+        );
+    }
+    console.log(`Seeded ${MESSAGES_PER_AGENT} messages for ${agentIds.length} agents`);
+}
+
 function defaultConfig(agentId) {
     return {
         schedulerMode: 'auto',
@@ -372,8 +459,7 @@ async function handleLoadAgentHistory(req, res) {
     }
 }
 
-// Roster source: the real agents that have history, read straight from the
-// history_agents table (the same agents the syncs endpoint has data for).
+// Maps a history_agents row to the roster shape.
 function toHistoryAgentResponse(row) {
     return {
         id: row.id,
@@ -446,35 +532,32 @@ const SYNCS_SORTABLE_COLUMNS = new Map([
     ['platCreatedAt',       'pd.created_at'],
 ]);
 
-function buildSyncsOrderBy(sortModel) {
-    if (!Array.isArray(sortModel) || sortModel.length === 0) {
-        return 'ORDER BY s.created_at DESC';
-    }
+const SYNCS_BOOLEAN_COLS = new Set(['s.link_available', 'ac.is_manual_mode']);
+
+// ── Generic IRM query builders (shared by all history tables) ──
+function buildIrmOrderBy(colMap, sortModel, defaultOrderBy) {
+    if (!Array.isArray(sortModel) || sortModel.length === 0) return defaultOrderBy;
 
     const parts = sortModel
-        .filter((s) => SYNCS_SORTABLE_COLUMNS.has(s.colId))
-        .map((s) => {
-            const col = SYNCS_SORTABLE_COLUMNS.get(s.colId);
-            const dir = s.sort === 'asc' ? 'ASC' : 'DESC';
-            return `${col} ${dir}`;
-        });
+        .filter((s) => colMap.has(s.colId))
+        .map((s) => `${colMap.get(s.colId)} ${s.sort === 'asc' ? 'ASC' : 'DESC'}`);
 
-    return parts.length > 0 ? `ORDER BY ${parts.join(', ')}` : 'ORDER BY s.created_at DESC';
+    return parts.length > 0 ? `ORDER BY ${parts.join(', ')}` : defaultOrderBy;
 }
 
-function buildSyncsWhere(agentId, filterModel, params) {
-    // params already has agentId at $1
-    const conditions = ['s.agent_id = $1'];
+function buildIrmWhere(colMap, baseConditions, filterModel, params, booleanCols = new Set()) {
+    const conditions = [...baseConditions];
 
     if (!filterModel || typeof filterModel !== 'object') {
         return conditions.join(' AND ');
     }
 
     for (const [fieldId, filter] of Object.entries(filterModel)) {
-        const col = SYNCS_SORTABLE_COLUMNS.get(fieldId);
+        const col = colMap.get(fieldId);
         if (!col || !filter || typeof filter !== 'object') continue;
 
         const { filterType, type, filter: value, filterTo, dateFrom, dateTo } = filter;
+        const isBoolean = filterType === 'boolean' || booleanCols.has(col);
 
         if (filterType === 'text') {
             if (type === 'equals') {
@@ -527,16 +610,11 @@ function buildSyncsWhere(agentId, filterModel, params) {
                 params.push(new Date(dateTo).toISOString());
                 conditions.push(`${col} <= $${params.length}`);
             }
-        } else if (filterType === 'boolean' || col === 's.link_available' || col === 'ac.is_manual_mode') {
-            const bool = value === 'true' || value === true;
-            params.push(bool);
+        } else if (isBoolean) {
+            params.push(value === 'true' || value === true);
             conditions.push(`${col} = $${params.length}`);
         } else if (filterType === 'set') {
-            // agSetColumnFilter (Enterprise) sends { filterType: 'set', values: [...] }.
-            // Empty values array  = "no checkbox selected" = match no rows.
-            // Missing values array = skip the filter entirely.
-            // `null` in the values array means the user selected "(Blanks)" →
-            //   becomes `col IS NULL` combined with the IN-list via OR.
+            // empty=none, missing=skip, null=(Blanks)→IS NULL
             if (!Array.isArray(filter.values)) continue;
             if (filter.values.length === 0) {
                 conditions.push('FALSE');
@@ -551,7 +629,7 @@ function buildSyncsWhere(agentId, filterModel, params) {
 
             if (nonNullValues.length > 0) {
                 const placeholders = nonNullValues.map((v) => {
-                    if (col === 's.link_available' || col === 'ac.is_manual_mode') {
+                    if (booleanCols.has(col)) {
                         params.push(v === true || v === 'true');
                     } else {
                         params.push(String(v));
@@ -574,38 +652,70 @@ function buildSyncsWhere(agentId, filterModel, params) {
     return conditions.join(' AND ');
 }
 
-async function handleLoadHistoryAgentSyncs(req, res) {
+// ── Generic IRM request runner (each table supplies its SQL) ──
+async function runIrmQuery(req, res, opts) {
+    const {
+        colMap, baseConditions, booleanCols = new Set(),
+        defaultOrderBy, mainSql, countSql, errorLabel,
+    } = opts;
     try {
-        // Support both IRM params (startRow/endRow) and legacy params (offset/limit)
         const useIrm = req.query.startRow !== undefined;
 
         let startRow, blockSize;
         if (useIrm) {
-            startRow  = Math.max(0, Number(req.query.startRow)  || 0);
+            startRow = Math.max(0, Number(req.query.startRow) || 0);
             const endRow = Math.max(1, Number(req.query.endRow) || 100);
             blockSize = Math.min(endRow - startRow, 500);
         } else {
             const legacyOffset = Math.max(0, Number(req.query.offset) || 0);
-            const legacyLimit  = Math.min(Math.max(Number(req.query.limit) || 50, 1), 500);
-            startRow  = legacyOffset;
+            const legacyLimit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 500);
+            startRow = legacyOffset;
             blockSize = legacyLimit;
         }
 
-        // Parse AG Grid sort/filter models sent as JSON strings
-        let sortModel  = [];
+        let sortModel = [];
         let filterModel = {};
-        try { sortModel  = JSON.parse(req.query.sortModel  || '[]'); } catch { sortModel  = []; }
+        try { sortModel = JSON.parse(req.query.sortModel || '[]'); } catch { sortModel = []; }
         try { filterModel = JSON.parse(req.query.filterModel || '{}'); } catch { filterModel = {}; }
 
         const params = [req.params.id];
-        const whereClause = buildSyncsWhere(req.params.id, filterModel, params);
-        const orderBy     = buildSyncsOrderBy(sortModel);
+        const whereClause = buildIrmWhere(colMap, baseConditions, filterModel, params, booleanCols);
+        const orderBy = buildIrmOrderBy(colMap, sortModel, defaultOrderBy);
 
-        const offsetIdx   = params.length + 1;
-        const limitIdx    = params.length + 2;
+        const offsetIdx = params.length + 1;
+        const limitIdx = params.length + 2;
 
         const result = await historyDb.query(
-            `
+            mainSql(whereClause, orderBy, limitIdx, offsetIdx),
+            [...params, startRow, blockSize]
+        );
+        const rows = result.rows;
+
+        if (useIrm) {
+            const lastRow = rows.length < blockSize ? startRow + rows.length : null;
+            let rowCount;
+            if (startRow === 0) {
+                const countRes = await historyDb.query(countSql(whereClause), params);
+                rowCount = Number(countRes.rows[0]?.total ?? 0);
+            }
+            res.json({ rows, lastRow, rowCount });
+        } else {
+            res.json({ items: rows, total: rows.length });
+        }
+    } catch (error) {
+        console.error(errorLabel, error);
+        res.status(500).json({ error: errorLabel });
+    }
+}
+
+function handleLoadHistoryAgentSyncs(req, res) {
+    return runIrmQuery(req, res, {
+        colMap: SYNCS_SORTABLE_COLUMNS,
+        baseConditions: ['s.agent_id = $1'],
+        booleanCols: SYNCS_BOOLEAN_COLS,
+        defaultOrderBy: 'ORDER BY s.created_at DESC',
+        errorLabel: 'Failed to load agent sync history',
+        mainSql: (where, orderBy, limitIdx, offsetIdx) => `
             SELECT
                 s.id,
                 s.agent_id AS "agentId",
@@ -653,44 +763,62 @@ async function handleLoadHistoryAgentSyncs(req, res) {
             FROM agent_syncs s
             LEFT JOIN agent_config  ac ON ac.id = s.agent_config_id
             LEFT JOIN platform_data pd ON pd.id = s.platform_data_id
-            WHERE ${whereClause}
+            WHERE ${where}
             ${orderBy}
             LIMIT $${limitIdx} OFFSET $${offsetIdx}
-            `,
-            [...params, startRow, blockSize]
-        );
+        `,
+        countSql: (where) => `
+            SELECT count(*)::bigint AS total
+            FROM agent_syncs s
+            LEFT JOIN agent_config  ac ON ac.id = s.agent_config_id
+            LEFT JOIN platform_data pd ON pd.id = s.platform_data_id
+            WHERE ${where}
+        `,
+    });
+}
 
-        const rows = result.rows;
+// Messages sortable columns (enum/jsonb cast to text for filters).
+const MESSAGES_SORTABLE_COLUMNS = new Map([
+    ['id',           'id'],
+    ['receivedAt',   'received_at'],
+    ['sentAt',       'sent_at'],
+    ['content',      'content'],
+    ['priority',     'priority'],
+    ['contentJson',  'content_json::text'],
+    ['contentExcel', 'content_excel'],
+    ['contentType',  'content_type::text'],
+    ['processed',    'processed'],
+    ['agentId',      'agent_id'],
+]);
 
-        if (useIrm) {
-            // IRM response: lastRow is set only when we know we've hit the end
-            const lastRow = rows.length < blockSize ? startRow + rows.length : null;
+const MESSAGES_BOOLEAN_COLS = new Set(['processed']);
 
-            // On the first block, also return the total row count (respecting
-            // the active filter) so the UI can show it without scrolling to the
-            // end. COUNT is fast here thanks to the agent_id index.
-            let rowCount;
-            if (startRow === 0) {
-                const countRes = await historyDb.query(
-                    `SELECT count(*)::bigint AS total
-                     FROM agent_syncs s
-                     LEFT JOIN agent_config  ac ON ac.id = s.agent_config_id
-                     LEFT JOIN platform_data pd ON pd.id = s.platform_data_id
-                     WHERE ${whereClause}`,
-                    params
-                );
-                rowCount = Number(countRes.rows[0]?.total ?? 0);
-            }
-
-            res.json({ rows, lastRow, rowCount });
-        } else {
-            // Legacy response: keep { items, total } shape so nothing else breaks
-            res.json({ items: rows, total: rows.length });
-        }
-    } catch (error) {
-        console.error('Failed to load agent sync history from Postgres:', error);
-        res.status(500).json({ error: 'Failed to load agent sync history' });
-    }
+function handleLoadHistoryAgentMessages(req, res) {
+    return runIrmQuery(req, res, {
+        colMap: MESSAGES_SORTABLE_COLUMNS,
+        baseConditions: ['agent_id = $1'],
+        booleanCols: MESSAGES_BOOLEAN_COLS,
+        defaultOrderBy: 'ORDER BY received_at DESC',
+        errorLabel: 'Failed to load agent messages',
+        mainSql: (where, orderBy, limitIdx, offsetIdx) => `
+            SELECT
+                id,
+                agent_id      AS "agentId",
+                received_at   AS "receivedAt",
+                sent_at       AS "sentAt",
+                content,
+                priority,
+                content_json  AS "contentJson",
+                content_excel AS "contentExcel",
+                content_type  AS "contentType",
+                processed
+            FROM messages
+            WHERE ${where}
+            ${orderBy}
+            LIMIT $${limitIdx} OFFSET $${offsetIdx}
+        `,
+        countSql: (where) => `SELECT count(*)::bigint AS total FROM messages WHERE ${where}`,
+    });
 }
 
 async function handleLoadAgentConfig(req, res) {
@@ -713,6 +841,9 @@ app.get('/agents-history', handleLoadHistoryAgents);
 
 app.get('/api/history/agents/:id/syncs', handleLoadHistoryAgentSyncs);
 app.get('/agent/:id/syncs', handleLoadHistoryAgentSyncs);
+
+app.get('/api/history/agents/:id/messages', handleLoadHistoryAgentMessages);
+app.get('/agent/:id/messages', handleLoadHistoryAgentMessages);
 
 app.get('/api/ui/agents/:id/config', handleLoadAgentConfig);
 app.get('/manager/agents/:id/config', handleLoadAgentConfig);
@@ -759,6 +890,8 @@ async function startServer() {
     try {
         await redis.connect();
         await initHistoryDb();
+        await initMessagesDb();
+        await seedMessages();
         app.listen(port, () => {
             console.log(`Manager service listening on port ${port}`);
         });
