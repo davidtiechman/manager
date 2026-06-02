@@ -145,7 +145,7 @@
   left: 0;
   z-index: 20;
   display: grid;
-  width: min(680px, calc(100vw - 48px));
+  width: min(340px, calc(100vw - 48px));
   max-height: min(70vh, 560px);
   gap: 12px;
   padding: 12px;
@@ -488,7 +488,7 @@
   gap: 8px;
   align-items: center;
   width: fit-content;
-  margin: 0 0 12px;
+  margin: 0 0 16px;
   padding: 6px 10px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -881,7 +881,7 @@
 }
 
 .home-layout.has-selected-agent .agents-grid {
-  grid-template-columns: repeat(auto-fill, 120px);
+  grid-template-columns: repeat(auto-fill, var(--agent-card-size, 118px));
   gap: 8px;
   align-items: start;
   justify-content: center;
@@ -939,23 +939,26 @@
 
 .home-layout.has-selected-agent .agent-card {
   position: relative;
-  width: 120px;
-  min-height: 120px;
-  padding: 10px 8px;
+  width: var(--agent-card-size, 118px);
+  min-height: var(--agent-card-size, 118px);
+  aspect-ratio: 1 / 1;
+  padding: 8px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
+  font-family: "Segoe UI Variable", "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
   text-align: center;
 }
 
 .home-layout.has-selected-agent .agent-card::before {
   content: '';
-  position: static;
-  display: block;
+  position: absolute;
+  top: 8px;
+  left: 8px;
   width: 12px;
   height: 12px;
-  margin-bottom: 5px;
   border-radius: 999px;
 }
 
@@ -977,10 +980,20 @@
 
 .home-layout.has-selected-agent .agent-content {
   width: 100%;
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  padding-inline: 1px;
 }
 
 .home-layout.has-selected-agent .agent-label {
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  padding-inline: 12px 2px;
+  color: #dbeafe;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
   overflow-wrap: anywhere;
   white-space: normal;
 }
@@ -990,14 +1003,21 @@
   flex: 1;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  justify-content: center;
+  gap: 3px;
   width: 100%;
-  font-size: 8px;
-  line-height: 1.2;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
   text-align: center;
 }
 
 .home-layout.has-selected-agent .info-item {
+  display: block;
+  color: inherit;
   margin-bottom: 0;
+  line-height: 1;
   overflow-wrap: anywhere;
+  white-space: normal;
 }

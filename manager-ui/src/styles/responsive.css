@@ -24,6 +24,10 @@
 
   .home-layout.has-selected-agent .agents-sidebar {
     max-height: none;
+    overflow: visible;
+  }
+
+  .home-layout.has-selected-agent .agents-sidebar-scroll {
     overflow-y: visible;
   }
 

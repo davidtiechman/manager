@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
 import type {
@@ -20,6 +20,9 @@ const RESIZE_HANDLE_WIDTH = Number(import.meta.env.VITE_RESIZE_HANDLE_WIDTH) || 
 const PAGE_HORIZONTAL_PADDING = Number(import.meta.env.VITE_PAGE_HORIZONTAL_PADDING) || 40;
 const SELECTED_LAYOUT_GAPS = Number(import.meta.env.VITE_SELECTED_LAYOUT_GAPS) || 64;
 const MAX_SIDEBAR_VIEWPORT_RATIO = Number(import.meta.env.VITE_MAX_SIDEBAR_VIEWPORT_RATIO) || 0.72;
+const AGENT_CARD_MIN_SIZE = 118;
+const AGENT_CARD_MAX_SIZE = 152;
+const AGENT_CARD_GROWTH_RATIO = 0.14;
 
 type ViewMode = 'icon' | 'list';
 
@@ -46,6 +49,15 @@ function clampSidebarWidth(width: number) {
   return Math.min(
     Math.max(width, MIN_SIDEBAR_WIDTH),
     getMaxSidebarWidth()
+  );
+}
+
+function getSelectedAgentCardSize(sidebarWidth: number) {
+  const extraWidth = Math.max(0, sidebarWidth - MIN_SIDEBAR_WIDTH);
+
+  return Math.min(
+    AGENT_CARD_MAX_SIZE,
+    Math.round(AGENT_CARD_MIN_SIZE + extraWidth * AGENT_CARD_GROWTH_RATIO)
   );
 }
 
@@ -152,7 +164,7 @@ export default function Preview() {
   }
 
   return (
-    <div className="page">
+    <div className={`page ${selectedAgent ? 'has-selected-agent-page' : ''}`}>
       <FilterAgents agents={agents}>
         {(filteredAgents, statusFilter, filtersPanel) => (
           <>
@@ -198,53 +210,56 @@ export default function Preview() {
               }`}
               style={
                 selectedAgent
-                  ? {
+                  ? ({
                       gridTemplateColumns: `${sidebarWidth}px ${RESIZE_HANDLE_WIDTH}px minmax(${DETAILS_MIN_WIDTH}px, 1fr)`,
-                    }
+                      '--agent-card-size': `${getSelectedAgentCardSize(sidebarWidth)}px`,
+                    } as CSSProperties)
                   : undefined
               }
             >
               <aside className="agents-sidebar">
                 {filtersPanel}
-                <div
-                  className={`agents-grid ${
-                    !selectedAgent && viewMode === 'list' ? 'agents-list' : ''
-                  }`}
-                >
-                  {filteredAgents.map((agent) => {
-                    const previewAgent = toAgentPreview(agent);
+                <div className="agents-sidebar-scroll">
+                  <div
+                    className={`agents-grid ${
+                      !selectedAgent && viewMode === 'list' ? 'agents-list' : ''
+                    }`}
+                  >
+                    {filteredAgents.map((agent) => {
+                      const previewAgent = toAgentPreview(agent);
 
-                    return (
-                      <button
-                        key={previewAgent.id}
+                      return (
+                        <button
+                          key={previewAgent.id}
                         type="button"
+                        title={`ID: ${previewAgent.id}`}
                         className={`agent-card ${previewAgent.status} ${
                           !selectedAgent && viewMode === 'list' ? 'list-view' : ''
                         } ${selectedAgentId === previewAgent.id ? 'selected' : ''}`}
-                        onClick={() => {
-                          setSelectedAgentId(previewAgent.id);
-                          setConfigurationMessage('');
-                          navigate(`/agents/${previewAgent.id}`);
-                        }}
-                      >
-                        <div className="tank-icon">
-                          <TankIcon status={previewAgent.status} />
-                        </div>
-
-                        <div className="agent-content">
-                          <div className="agent-label">{getAgentLabel(previewAgent)}</div>
-                          <div className="agent-info">
-                            <div className="info-item">Status: {previewAgent.status}</div>
-                            <div className="info-item">Unit: {previewAgent.unit}</div>
-                            <div className="info-item">Call Sign: {previewAgent.call_sign}</div>
-                            <div className="info-item">Platform ID: {previewAgent.platformId}</div>
-                            <div className="info-item">Zayad ID: {previewAgent.zayad_id}</div>
-                            <div className="info-item info-item-id">ID: {previewAgent.id}</div>
+                          onClick={() => {
+                            setSelectedAgentId(previewAgent.id);
+                            setConfigurationMessage('');
+                            navigate(`/agents/${previewAgent.id}`);
+                          }}
+                        >
+                          <div className="tank-icon">
+                            <TankIcon status={previewAgent.status} />
                           </div>
-                        </div>
-                      </button>
-                    );
-                  })}
+
+                          <div className="agent-content">
+                            <div className="agent-label">{getAgentLabel(previewAgent)}</div>
+                            <div className="agent-info">
+                              <div className="info-item">Call Sign: {previewAgent.call_sign}</div>
+                              <div className="info-item">Status: {previewAgent.status}</div>
+                              <div className="info-item">Unit: {previewAgent.unit}</div>
+                              <div className="info-item">Platform ID: {previewAgent.platformId}</div>
+                              <div className="info-item">Zayad ID: {previewAgent.zayad_id}</div>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </aside>
 
