@@ -71,11 +71,7 @@ export class ApiService {
       throw new Error('Failed to load history agents');
     }
 
-    // Server may return a plain array, or a TypeORM findAndCount tuple
-    // [agents, count]. Unwrap the tuple so we always get the agents array.
-    const data = await response.json();
-    const agents = Array.isArray(data) && Array.isArray(data[0]) ? data[0] : data;
-    return Array.isArray(agents) ? agents : [];
+    return response.json();
   }
 
   // Generic IRM fetch.
