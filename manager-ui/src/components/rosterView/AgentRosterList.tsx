@@ -253,9 +253,9 @@ export default function AgentRosterList() {
                   className="rstr-cards-row"
                   style={{ transform: `translateY(${top}px)`, height: CARD_H, gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
                 >
-                  {row.items.map((a) => (
+                  {row.items.map((a, j) => (
                     <AgentCard
-                      key={a.id}
+                      key={`${i}-${j}`}
                       agent={a}
                       onOpen={openAgent}
                       hideUnit={groupBy === 'unit'}
