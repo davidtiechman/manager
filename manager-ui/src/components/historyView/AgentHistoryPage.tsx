@@ -8,6 +8,7 @@ import type { HistoryAgent } from '../../types/history/historyAgent';
 import { formatRosterDate } from '../rosterView/rosterFormat';
 import { unitDotColor } from '../rosterView/rosterColors';
 import ModeNavigationLink from '../ModeNavigationLink';
+import NotFound from '../NotFound';
 
 import HistoryDataGrid from './grid/HistoryDataGrid';
 import { syncsConfig } from './syncsConfig';
@@ -58,14 +59,18 @@ export default function AgentHistoryPage() {
   const [agent, setAgent] = useState<HistoryAgent | null>(
     (location.state?.agent as HistoryAgent | undefined) ?? null
   );
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     if (!agentId || (agent && agent.id === agentId)) return;
     let cancelled = false;
+    setNotFound(false);
     ApiService.getHistoryAgents()
       .then((agents) => {
         if (cancelled) return;
-        setAgent(agents.find((a) => a.id === agentId) ?? null);
+        const found = agents.find((a) => a.id === agentId) ?? null;
+        setAgent(found);
+        setNotFound(found === null);
       })
       .catch((err) => {
         console.error('[History] failed to load agent identity:', err);
@@ -87,6 +92,18 @@ export default function AgentHistoryPage() {
       <div className="page">
         <p className="muted">No agent id in the URL.</p>
       </div>
+    );
+  }
+
+  // ── Agent doesn't exist ──────────────────────────────────────────────
+  if (notFound) {
+    return (
+      <NotFound
+        code=""
+        message={`Agent "${agentId}" not found`}
+        to={backTo}
+        linkLabel="Back to history"
+      />
     );
   }
 
