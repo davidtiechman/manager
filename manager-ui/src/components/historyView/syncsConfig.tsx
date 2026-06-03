@@ -24,5 +24,5 @@ export const syncsConfig: GridConfig<AgentHistoryRecord> = {
       onClose={onClose}
     />
   ),
-  noRowsText: 'אין רשומות עבור agent זה',
+  noRowsText: 'No records for this agent',
 };

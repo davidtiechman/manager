@@ -85,7 +85,7 @@ export default function AgentHistoryPage() {
   if (!agentId) {
     return (
       <div className="page">
-        <p className="muted">לא נמצא מזהה agent בכתובת.</p>
+        <p className="muted">No agent id in the URL.</p>
       </div>
     );
   }

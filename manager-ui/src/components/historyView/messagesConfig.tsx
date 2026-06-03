@@ -29,5 +29,5 @@ export const messagesConfig: GridConfig<AgentMessageRecord> = {
       onClose={onClose}
     />
   ),
-  noRowsText: 'אין הודעות עבור agent זה',
+  noRowsText: 'No messages for this agent',
 };
