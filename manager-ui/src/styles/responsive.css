@@ -14,6 +14,21 @@
 
   .details-pane {
     position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .home-layout.has-selected-agent {
+    height: auto;
+  }
+
+  .home-layout.has-selected-agent .agents-sidebar {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .home-layout.has-selected-agent .agents-sidebar-scroll {
+    overflow-y: visible;
   }
 
   .agent-card.list-view {
