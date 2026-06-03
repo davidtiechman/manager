@@ -15,6 +15,11 @@ import { messagesConfig } from './messagesConfig';
 
 type HistoryTab = 'syncs' | 'messages';
 
+const TABS: Array<{ id: HistoryTab; label: string }> = [
+  { id: 'syncs', label: 'Syncs' },
+  { id: 'messages', label: 'Messages' },
+];
+
 function TabIcon({ tab }: { tab: HistoryTab }) {
   if (tab === 'syncs') {
     return (
@@ -41,8 +46,6 @@ function TabIcon({ tab }: { tab: HistoryTab }) {
 }
 
 // Count-only block for tab badges.
-const COUNT_PARAMS = { startRow: 0, endRow: 1, sortModel: [], filterModel: {} };
-
 export default function AgentHistoryPage() {
   const { agentId } = useParams<{ agentId: string }>();
   const location = useLocation();
@@ -70,26 +73,6 @@ export default function AgentHistoryPage() {
     return () => { cancelled = true; };
   }, [agentId, agent]);
 
-  // ── Tab row counts (badges) ────────────────────────────────────────
-  const [counts, setCounts] = useState<{ syncs: number | null; messages: number | null }>({
-    syncs: null,
-    messages: null,
-  });
-
-  useEffect(() => {
-    if (!agentId) return;
-    let cancelled = false;
-    const total = (r: { rowCount?: number; lastRow: number | null; rows: unknown[] }) =>
-      r.rowCount ?? r.lastRow ?? r.rows.length;
-    Promise.all([
-      ApiService.getHistorySyncsIrm(agentId, COUNT_PARAMS).then(total).catch(() => null),
-      ApiService.getHistoryMessagesIrm(agentId, COUNT_PARAMS).then(total).catch(() => null),
-    ]).then(([syncs, messages]) => {
-      if (!cancelled) setCounts({ syncs, messages });
-    });
-    return () => { cancelled = true; };
-  }, [agentId]);
-
   // ── Lock html overflow (full-page) ──
   useEffect(() => {
     const html = document.documentElement;
@@ -107,15 +90,10 @@ export default function AgentHistoryPage() {
     );
   }
 
-  const tabs: Array<{ id: HistoryTab; label: string; count: number | null }> = [
-    { id: 'syncs', label: 'Syncs', count: counts.syncs },
-    { id: 'messages', label: 'Messages', count: counts.messages },
-  ];
-
   // Switcher lives inside the grid toolbar (no dedicated row).
   const tabSwitcher = (
     <div className="snc-tabs" role="tablist" aria-label="History tables">
-      {tabs.map((tab) => (
+      {TABS.map((tab) => (
         <button
           key={tab.id}
           type="button"
@@ -126,9 +104,6 @@ export default function AgentHistoryPage() {
         >
           <TabIcon tab={tab.id} />
           <span className="snc-tab-label">{tab.label}</span>
-          {tab.count !== null && (
-            <span className="snc-tab-count">{tab.count.toLocaleString('en-US')}</span>
-          )}
         </button>
       ))}
     </div>

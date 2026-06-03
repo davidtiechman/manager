@@ -279,27 +279,6 @@
   color: #ffffff;
 }
 
-.snc-tab-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 16px;
-  padding: 0 5px;
-  border-radius: 8px;
-  background: #d4dbe4;
-  color: #475569;
-  font-size: 10.5px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  transition: background 0.15s, color 0.15s;
-}
-
-.snc-tab--active .snc-tab-count {
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-}
-
 /* ── Right nav button — "Live monitoring" override ──────────── */
 .snc-header .mode-navigation-link.real-time {
   position: relative;
