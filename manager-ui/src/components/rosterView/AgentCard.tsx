@@ -34,13 +34,13 @@ export default function AgentCard({ agent, onOpen, hideUnit, hidePlatform }: Age
       </div>
 
       <div className="rstr-card-pills">
-        {!hideUnit && (
+        {!hideUnit && p?.unit && (
           <span className="rstr-chip" title={p.unit}>
             <span className="rstr-chip-dot" style={{ backgroundColor: unitDotColor(p.unit) }} />
             <span className="rstr-chip-text">{p.unit}</span>
           </span>
         )}
-        {!hidePlatform && (
+        {!hidePlatform && p?.platform && (
           <span className="rstr-chip rstr-chip--outline" title={p.platform}>
             <span className="rstr-chip-text">{p.platform}</span>
           </span>
@@ -49,9 +49,9 @@ export default function AgentCard({ agent, onOpen, hideUnit, hidePlatform }: Age
 
       <div className="rstr-card-footer">
         <div className="rstr-card-specs">
-          <div className="rstr-spec"><span className="rstr-spec-label">Zayad ID</span><span className="rstr-spec-val"><FitText>{p.zayadId}</FitText></span></div>
-          <div className="rstr-spec"><span className="rstr-spec-label">Platform ID</span><span className="rstr-spec-val"><FitText>{p.platformId}</FitText></span></div>
-          <div className="rstr-spec"><span className="rstr-spec-label">Unit Code</span><span className="rstr-spec-val"><FitText>{p.unitCode}</FitText></span></div>
+          <div className="rstr-spec"><span className="rstr-spec-label">Zayad ID</span><span className="rstr-spec-val"><FitText>{p?.zayadId ?? '—'}</FitText></span></div>
+          <div className="rstr-spec"><span className="rstr-spec-label">Platform ID</span><span className="rstr-spec-val"><FitText>{p?.platformId ?? '—'}</FitText></span></div>
+          <div className="rstr-spec"><span className="rstr-spec-label">Unit Code</span><span className="rstr-spec-val"><FitText>{p?.unitCode ?? '—'}</FitText></span></div>
         </div>
         <div className="rstr-card-created">
           <span className="rstr-spec-label">Created</span>

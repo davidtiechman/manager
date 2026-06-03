@@ -44,8 +44,8 @@ export function distinctFacetValues(
 // Within a facet: OR (any selected value matches). Between facets: AND.
 function matchesFacets(agent: HistoryAgent, facets: RosterFacets): boolean {
   const p = agent.platfrom;
-  if (facets.unit.length && !facets.unit.includes(p.unit)) return false;
-  if (facets.platform.length && !facets.platform.includes(p.platform)) return false;
+  if (facets.unit.length && !facets.unit.includes(p?.unit)) return false;
+  if (facets.platform.length && !facets.platform.includes(p?.platform)) return false;
   return true;
 }
 
@@ -85,10 +85,10 @@ export function sortAgents(
       case 'callsign':   return a.callsign;
       case 'id':         return a.id;
       case 'createdAt':  return a.createdAt;
-      case 'zayadId':    return a.platfrom.zayadId;
-      case 'platformId': return a.platfrom.platformId;
-      case 'unit':       return a.platfrom.unit;
-      case 'platform':   return a.platfrom.platform;
+      case 'zayadId':    return a.platfrom?.zayadId ?? 0;
+      case 'platformId': return a.platfrom?.platformId ?? 0;
+      case 'unit':       return a.platfrom?.unit ?? '';
+      case 'platform':   return a.platfrom?.platform ?? '';
       default:           return a.callsign;
     }
   };
@@ -105,7 +105,7 @@ export interface AgentGroup { key: string; items: HistoryAgent[]; }
 export function groupAgents(agents: HistoryAgent[], by: 'unit' | 'platform'): AgentGroup[] {
   const map = new Map<string, HistoryAgent[]>();
   for (const a of agents) {
-    const k = a.platfrom[by];
+    const k = a.platfrom?.[by] ?? '—';
     let arr = map.get(k);
     if (!arr) { arr = []; map.set(k, arr); }
     arr.push(a);
@@ -121,13 +121,13 @@ function valuesForScope(agent: HistoryAgent, scope: RosterScope): string[] {
   switch (scope) {
     case 'callsign':   return [agent.callsign];
     case 'id':         return [agent.id];
-    case 'zayadId':    return [String(p.zayadId)];
-    case 'unit':       return [p.unit];
-    case 'platform':   return [p.platform];
-    case 'platformId': return [String(p.platformId)];
-    case 'unitCode':   return [p.unitCode];
+    case 'zayadId':    return [String(p?.zayadId ?? '')];
+    case 'unit':       return [p?.unit ?? ''];
+    case 'platform':   return [p?.platform ?? ''];
+    case 'platformId': return [String(p?.platformId ?? '')];
+    case 'unitCode':   return [p?.unitCode ?? ''];
     case 'all':
-      return [agent.callsign, agent.id, p.unit, p.unitCode, p.platform, String(p.platformId), String(p.zayadId)];
+      return [agent.callsign, agent.id, p?.unit ?? '', p?.unitCode ?? '', p?.platform ?? '', String(p?.platformId ?? ''), String(p?.zayadId ?? '')];
     default:           return [];
   }
 }
