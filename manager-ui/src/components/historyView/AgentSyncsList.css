@@ -10,13 +10,14 @@
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
-/* ── Top header bar ─────────────────────────────────────────── */
+/* ── Top header bar (single row) ────────────────────────────── */
 .snc-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  height: 60px;
+  height: 64px;
+  gap: 16px;
   background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06);
@@ -36,6 +37,25 @@
   justify-content: flex-end;
   align-items: center;
   flex-shrink: 0;
+}
+
+/* ── Agent avatar / monogram ────────────────────────────────── */
+.snc-agent-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #2563eb;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.snc-agent-avatar svg {
+  width: 21px;
+  height: 21px;
 }
 
 /* ── Back button — text-only, no border box ─────────────────── */
@@ -87,18 +107,22 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
-  border-left: 3px solid #3b82f6;
-  padding-left: 14px;
 }
 
-.snc-agent-id-text {
-  font-size: 15px;
+.snc-agent-identity-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.snc-agent-callsign {
+  font-size: 16px;
   font-weight: 700;
   color: #0f172a;
-  letter-spacing: -0.025em;
-  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
   line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -106,37 +130,226 @@
   font-family: inherit;
 }
 
+.snc-agent-id-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'SFMono-Regular', ui-monospace, 'Menlo', monospace;
+}
+
 .snc-page-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: #3b82f6;
-  letter-spacing: 0.08em;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: #eff6ff;
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #2563eb;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  line-height: 1;
+  line-height: 1.3;
+  white-space: nowrap;
+  flex-shrink: 0;
   font-family: inherit;
 }
 
-/* ── Right nav button — override navigation.css defaults ──── */
-.snc-header .mode-navigation-link {
-  padding: 8px 16px;
-  border: 1px solid #3B82F6;
-  border-radius: 8px;
+/* ── Agent metadata — inline in the header row ──────────────── */
+.snc-meta-row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  margin-left: 18px;
+  padding-left: 18px;
+  border-left: 1px solid #e8edf3;
+  overflow: hidden;
+}
+
+.snc-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 16px;
+  border-right: 1px solid #eef2f6;
+  min-width: 0;
+}
+
+.snc-meta-item:first-child {
+  padding-left: 0;
+}
+
+.snc-meta-item--created {
+  border-right: none;
+  padding-right: 0;
+}
+
+.snc-meta-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.snc-meta-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.snc-meta-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.snc-meta-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Tab switcher (Syncs / Messages) — sits in the grid toolbar ── */
+.snc-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 9px;
+  background: #e8edf3;
+}
+
+.snc-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: none;
+  border-radius: 7px;
   background: transparent;
-  color: #3B82F6;
-  font-size: 13.5px;
-  font-weight: 500;
+  color: #64748b;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+
+.snc-tab:hover {
+  color: #334155;
+}
+
+.snc-tab--active {
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.35);
+}
+
+.snc-tab-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+}
+
+.snc-tab-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.snc-tab:hover .snc-tab-icon {
+  color: #475569;
+}
+
+.snc-tab--active .snc-tab-icon {
+  color: #ffffff;
+}
+
+.snc-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 8px;
+  background: #d4dbe4;
+  color: #475569;
+  font-size: 10.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transition: background 0.15s, color 0.15s;
+}
+
+.snc-tab--active .snc-tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* ── Right nav button — "Live monitoring" override ──────────── */
+.snc-header .mode-navigation-link.real-time {
+  position: relative;
+  gap: 9px;
+  padding: 8px 16px 8px 14px;
+  border: 1px solid #bbf7d0;
+  border-radius: 9px;
+  background: #f0fdf4;
+  color: #15803d;
+  font-size: 13px;
+  font-weight: 600;
   margin-bottom: 0;
   white-space: nowrap;
   min-width: fit-content;
   flex-shrink: 0;
-  transition: background 0.15s;
+  box-shadow: 0 1px 2px rgba(16, 185, 129, 0.08);
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
-.snc-header .mode-navigation-link:hover,
-.snc-header .mode-navigation-link:focus-visible {
-  background: #EFF6FF;
-  border-color: #3B82F6;
-  color: #3B82F6;
+.snc-header .mode-navigation-link.real-time:hover,
+.snc-header .mode-navigation-link.real-time:focus-visible {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.16);
+  outline: none;
+}
+
+/* Shrink the wifi icon and add a live pulse dot before it */
+.snc-header .mode-navigation-link.real-time .mode-navigation-icon,
+.snc-header .mode-navigation-link.real-time .mode-navigation-svg {
+  width: 20px;
+  height: 20px;
+}
+
+.snc-header .mode-navigation-link.real-time::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+  animation: snc-live-pulse 1.8s ease-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes snc-live-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
+  70%  { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
 }
 
 /* ── Unified toolbar: columns · filters · row count ─────────── */
@@ -158,12 +371,89 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
+  flex: 1 1 auto;
 }
 
 .snc-toolbar-end {
   display: flex;
   align-items: center;
   flex-shrink: 0;
+}
+
+/* Filter chips fill the available row width; extras collapse into "+N". */
+.snc-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.snc-filter-row > .snc-filter-chip {
+  flex-shrink: 0;
+}
+
+/* Off-screen row used only to measure each chip's natural width. */
+.snc-filter-measure {
+  position: absolute;
+  top: 0;
+  left: 0;
+  visibility: hidden;
+  pointer-events: none;
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.snc-filter-measure .snc-filter-chip {
+  flex-shrink: 0;
+}
+
+/* Overflow: extra filter chips collapse into a "+N" popover (bar stays one line). */
+.snc-filter-more {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.snc-filter-more-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border: 1px solid #cbd5e1;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  white-space: nowrap;
+}
+
+.snc-filter-more-btn:hover,
+.snc-filter-more-btn[aria-expanded='true'] {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+.snc-filter-more-panel {
+  position: absolute;
+  top: calc(100% + 15px);
+  left: 0;
+  z-index: 50;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  width: max-content;
+  max-width: 380px;
+  padding: 11px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
 }
 
 /* Vertical rule between columns picker and filter chips */
@@ -206,7 +496,7 @@
 /* ── Filter chips ───────────────────────────────────────────── */
 
 .snc-filter-bar-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.05em;
   color: #64748b;
@@ -218,13 +508,13 @@
 .snc-filter-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 8px 3px 10px;
+  gap: 4px;
+  padding: 2px 7px 2px 9px;
   border: 1px solid #93c5fd;
   border-radius: 20px;
   background: #eff6ff;
   color: #1e40af;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;

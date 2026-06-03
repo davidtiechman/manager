@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+// Generic infinite-scroll grid for a per-agent history table (one GridConfig).
+
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AgGridReact } from 'ag-grid-react';
 import type {
   ColDef,
@@ -16,49 +17,27 @@ import type {
 
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-quartz.css';
-import './AgentSyncsList.css';
-import './syncGrid.theme.css';
-import './syncGrid.cells.css';
-// Reused for the toolbar button styles (.snc-col-picker-btn).
-import './ColumnPicker.css';
+import '../AgentSyncsList.css';
+import '../syncGrid.theme.css';
+import '../syncGrid.cells.css';
+import '../ColumnPicker.css';
 
-import { ApiService } from '../../api';
-import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
-import ModeNavigationLink from '../ModeNavigationLink';
-
-import {
-  BLOCK_SIZE,
-  COLUMN_LABELS,
-  GROUP_COLORS,
-  buildColumnDefs,
-} from './syncGrid.columns';
-import { SyncDetailPanel } from './SyncDetailPanel';
+import type { GridConfig } from './gridConfig';
 import {
   loadColumnState,
   saveColumnState,
   clearColumnState,
-} from './gridStatePersistence';
+} from '../gridStatePersistence';
 
-interface AgentSyncsListProps {
-  agentId?: string;
-  onClose?: () => void;
+interface HistoryDataGridProps<T> {
+  agentId: string;
+  config: GridConfig<T>;
+  leftSlot?: ReactNode; // rendered at the start of the toolbar (e.g. tab switcher)
 }
 
-// ── Component ───────────────────────────────────────────────────────
-
-export default function AgentSyncsList({
-  agentId: agentIdProp,
-  onClose,
-}: AgentSyncsListProps) {
-  const { agentId: routeAgentId } = useParams<{ agentId: string }>();
-  const agentId = agentIdProp ?? routeAgentId;
-  const isEmbedded = Boolean(agentIdProp);
-  const location = useLocation();
-  const backTo = location.state?.backTo ?? '/history';
-  const navigate = useNavigate();
-
-  const gridRef = useRef<AgGridReact<AgentHistoryRecord>>(null);
-  const columnDefs = useMemo(() => buildColumnDefs(), []);
+export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: HistoryDataGridProps<T>) {
+  const gridRef = useRef<AgGridReact<T>>(null);
+  const columnDefs = config.columnDefs;
 
   const defaultColDef = useMemo<ColDef>(
     () => ({
@@ -99,28 +78,78 @@ export default function AgentSyncsList({
     []
   );
 
-  // ── Per-group color CSS, generated from GROUP_DEFS ─────────────────
+  // ── Per-group color CSS ──
   const groupColorCss = useMemo(
     () =>
-      Object.entries(GROUP_COLORS)
+      Object.entries(config.groupColors)
         .map(
           ([slug, color]) =>
             `.snc-grid-wrapper .snc-hdr-group--${slug}{--snc-group-color:${color}}` +
             `.snc-grid-wrapper .snc-tp-group--${slug} .ag-column-select-column-label{color:${color}}`
         )
         .join('\n'),
-    []
+    [config.groupColors]
   );
 
   // ── State ──────────────────────────────────────────────────────────
   const [filterModel, setFilterModel] = useState<Record<string, unknown>>({});
   const [totalRows, setTotalRows] = useState<number | null>(null);
   const [hiddenCount, setHiddenCount] = useState(0);
-  const [detailRecord, setDetailRecord] = useState<AgentHistoryRecord | null>(null);
+  const [detailRecord, setDetailRecord] = useState<T | null>(null);
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  const [maxVisibleChips, setMaxVisibleChips] = useState(99);
 
-  // ── Refs ────────────────────────────────────────────────────────────
-  const maxIdRef = useRef<number | null>(null);
   const gridWrapperRef = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLDivElement>(null);
+  const filterRowRef = useRef<HTMLDivElement>(null);
+  const filterMeasureRef = useRef<HTMLDivElement>(null);
+
+  // Close the "+N" filter popover on outside click.
+  useEffect(() => {
+    if (!overflowOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (moreRef.current && !moreRef.current.contains(e.target as Node)) setOverflowOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [overflowOpen]);
+
+  // Fit as many filter chips as the row allows; the rest collapse into "+N".
+  const filterKey = Object.keys(filterModel).join('|');
+  useLayoutEffect(() => {
+    const row = filterRowRef.current;
+    const measure = filterMeasureRef.current;
+    if (!row || !measure) return;
+    const GAP = 6;
+    const MORE_BTN = 52; // reserve for the "+N" button + gap
+
+    const compute = () => {
+      const avail = row.clientWidth;
+      const widths = Array.from(measure.children).map((c) => (c as HTMLElement).offsetWidth);
+      let total = 0;
+      let count = 0;
+      for (let i = 0; i < widths.length; i += 1) {
+        const w = widths[i] + (i > 0 ? GAP : 0);
+        if (total + w <= avail) { total += w; count += 1; } else break;
+      }
+      if (count < widths.length) {
+        while (count > 0 && total + MORE_BTN > avail) {
+          total -= widths[count - 1] + (count > 1 ? GAP : 0);
+          count -= 1;
+        }
+      }
+      setMaxVisibleChips(Math.max(1, count));
+    };
+
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(row);
+    window.addEventListener('resize', compute);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', compute);
+    };
+  }, [filterKey]);
 
   // ── Filter callbacks ───────────────────────────────────────────────
   const onFilterChanged = useCallback(() => {
@@ -141,7 +170,7 @@ export default function AgentSyncsList({
     gridRef.current?.api?.setFilterModel(null);
   }, []);
 
-  // ── Color the Filters tool-panel group titles by group name ────────
+  // ── Color the Filters tool-panel group titles ──
   useEffect(() => {
     const wrapper = gridWrapperRef.current;
     if (!wrapper) return;
@@ -152,7 +181,7 @@ export default function AgentSyncsList({
           const slug = (el.textContent?.trim() ?? '')
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-');
-          const color = GROUP_COLORS[slug];
+          const color = config.groupColors[slug];
           if (color) el.style.color = color;
         });
     };
@@ -160,22 +189,12 @@ export default function AgentSyncsList({
     observer.observe(wrapper, { childList: true, subtree: true });
     paint();
     return () => observer.disconnect();
-  }, []);
+  }, [config.groupColors]);
 
-  // ── Reset snapshot + count when agentId changes ────────────────────
+  // ── Reset count when agentId changes ───────────────────────────────
   useEffect(() => {
-    maxIdRef.current = null;
     setTotalRows(null);
   }, [agentId]);
-
-  // ── Fix double scrollbar: lock html overflow on full-page mount ────
-  useEffect(() => {
-    if (isEmbedded) return;
-    const html = document.documentElement;
-    const prev = html.style.overflow;
-    html.style.overflow = 'hidden';
-    return () => { html.style.overflow = prev; };
-  }, [isEmbedded]);
 
   // ── Datasource ─────────────────────────────────────────────────────
   const buildDatasource = useCallback((): IDatasource => ({
@@ -184,22 +203,18 @@ export default function AgentSyncsList({
         params.successCallback([], 0);
         return;
       }
-      ApiService.getHistorySyncsIrm(agentId, {
-        startRow: params.startRow,
-        endRow: params.endRow,
-        sortModel: params.sortModel as Array<{ colId: string; sort: 'asc' | 'desc' }>,
-        filterModel: params.filterModel as Record<string, unknown>,
-        maxId: maxIdRef.current,
-      })
+      config
+        .fetchRows(agentId, {
+          startRow: params.startRow,
+          endRow: params.endRow,
+          sortModel: params.sortModel as Array<{ colId: string; sort: 'asc' | 'desc' }>,
+          filterModel: params.filterModel as Record<string, unknown>,
+        })
         .then(({ rows, lastRow, rowCount }) => {
           const safeRows = Array.isArray(rows) ? rows : [];
-          if (params.startRow === 0 && safeRows.length > 0 && maxIdRef.current === null) {
-            maxIdRef.current = safeRows[0].id;
-          }
           const blockSize = params.endRow - params.startRow;
           const knownEnd =
             safeRows.length < blockSize ? params.startRow + safeRows.length : undefined;
-          // Server total (first block) → lastRow → short final block.
           const resolvedTotal = rowCount ?? lastRow ?? knownEnd;
           if (params.startRow === 0 && resolvedTotal !== undefined) {
             setTotalRows(resolvedTotal);
@@ -207,21 +222,21 @@ export default function AgentSyncsList({
           params.successCallback(safeRows, lastRow ?? knownEnd);
         })
         .catch((err) => {
-          console.error('[SyncHistory] getRows failed:', err);
+          console.error('[HistoryDataGrid] getRows failed:', err);
           params.failCallback();
         });
     },
-  }), [agentId]);
+  }), [agentId, config]);
 
-  // ── Persist column layout to localStorage (debounced) ──────────────
+  // ── Persist column layout (debounced) ──
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveColState = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
       const api = gridRef.current?.api;
-      if (api) saveColumnState(api);
+      if (api) saveColumnState(api, config.storageKey);
     }, 200);
-  }, []);
+  }, [config.storageKey]);
 
   useEffect(() => () => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
@@ -230,11 +245,11 @@ export default function AgentSyncsList({
   const onGridReady = useCallback(
     (event: GridReadyEvent) => {
       event.api.updateGridOptions({ datasource: buildDatasource() });
-      loadColumnState(event.api);
+      loadColumnState(event.api, config.storageKey);
       const cols = event.api.getColumns();
       if (cols) setHiddenCount(cols.filter((c) => !c.isVisible()).length);
     },
-    [buildDatasource]
+    [buildDatasource, config.storageKey]
   );
 
   const onColumnResized = useCallback(
@@ -245,7 +260,7 @@ export default function AgentSyncsList({
     [saveColState]
   );
 
-  // ── Track hidden-column count for the "Columns" badge ──────────────
+  // ── Hidden-column count for the badge ──
   const refreshHiddenCount = useCallback(() => {
     const cols = gridRef.current?.api?.getColumns();
     if (!cols) return;
@@ -270,10 +285,10 @@ export default function AgentSyncsList({
     if (!api) return;
     api.resetColumnState();
     refreshHiddenCount();
-    setTimeout(clearColumnState, 300);
-  }, [refreshHiddenCount]);
+    setTimeout(() => clearColumnState(config.storageKey), 300);
+  }, [refreshHiddenCount, config.storageKey]);
 
-  // ── Custom column header menu (the ☰ button) ───────────────────────
+  // ── Column header menu ──
   const getMainMenuItems = useCallback(
     (params: GetMainMenuItemsParams): (DefaultMenuItem | MenuItemDef)[] => {
       const colId = params.column?.getColId();
@@ -303,9 +318,9 @@ export default function AgentSyncsList({
     [resetColumns]
   );
 
-  // ── Detail side panel: double-click opens, single click closes ─────
+  // ── Detail panel: dbl-click opens, click closes ──
   const onRowDoubleClicked = useCallback(
-    (e: RowDoubleClickedEvent<AgentHistoryRecord>) => {
+    (e: RowDoubleClickedEvent<T>) => {
       if (e.data) setDetailRecord(e.data);
     },
     []
@@ -317,7 +332,7 @@ export default function AgentSyncsList({
 
   const closeDetail = useCallback(() => setDetailRecord(null), []);
 
-  // ── Toggle a tool panel from the toolbar buttons ───────────────────
+  // ── Toggle a tool panel ──
   const toggleToolPanel = useCallback((panelId: 'columns' | 'filters') => {
     const api = gridRef.current?.api;
     if (!api) return;
@@ -325,138 +340,42 @@ export default function AgentSyncsList({
     else api.openToolPanel(panelId);
   }, []);
 
-  // ── Persist column state + refresh hidden count on any change ──────
+  // ── Persist + refresh hidden count on change ──
   const onColumnStateChanged = useCallback(() => {
     saveColState();
     refreshHiddenCount();
   }, [saveColState, refreshHiddenCount]);
 
-  // ── No agentId guard ────────────────────────────────────────────────
+  const activeColIds = Object.keys(filterModel);
+  const visibleColIds = activeColIds.slice(0, maxVisibleChips);
+  const hiddenColIds = activeColIds.slice(maxVisibleChips);
 
-  if (!agentId) {
-    return (
-      <div className="page">
-        <p className="muted">לא נמצא מזהה agent בכתובת.</p>
-      </div>
-    );
-  }
-
-  // ── Shared grid element ─────────────────────────────────────────────
-
-  const gridEl = (
-    <div ref={gridWrapperRef} className="snc-grid-wrapper ag-theme-quartz">
-      <style>{groupColorCss}</style>
-      <AgGridReact<AgentHistoryRecord>
-        ref={gridRef}
-        columnDefs={columnDefs}
-        defaultColDef={defaultColDef}
-        theme="legacy"
-        rowModelType="infinite"
-        cacheBlockSize={BLOCK_SIZE}
-        cacheOverflowSize={2}
-        maxConcurrentDatasourceRequests={2}
-        maxBlocksInCache={10}
-        sideBar={sideBar}
-        getContextMenuItems={getContextMenuItems}
-        getMainMenuItems={getMainMenuItems}
-        cellSelection
-        groupHeaderHeight={0}
-        onGridReady={onGridReady}
-        onColumnResized={onColumnResized}
-        onColumnVisible={onColumnStateChanged}
-        onColumnPinned={onColumnStateChanged}
-        onColumnMoved={onColumnStateChanged}
-        onFilterChanged={onFilterChanged}
-        onRowClicked={onRowClicked}
-        onRowDoubleClicked={onRowDoubleClicked}
-        suppressCellFocus={false}
-        rowSelection={{ mode: 'singleRow', checkboxes: false, enableClickSelection: true }}
-        tooltipShowDelay={400}
-        overlayNoRowsTemplate='<span class="snc-no-rows">אין רשומות עבור agent זה</span>'
-      />
-      <SyncDetailPanel record={detailRecord} onClose={closeDetail} />
-    </div>
+  const renderChip = (colId: string) => (
+    <button
+      key={colId}
+      type="button"
+      className="snc-filter-chip"
+      onClick={() => clearFilter(colId)}
+      title={`Clear ${config.columnLabels[colId] ?? colId} filter`}
+    >
+      {config.columnLabels[colId] ?? colId}
+      <span className="snc-filter-chip-x" aria-hidden="true">×</span>
+    </button>
   );
 
-  // ── Embedded view ───────────────────────────────────────────────────
-
-  if (isEmbedded) {
-    return (
-      <div className="details-panel">
-        <div className="details-header">
-          <div className="details-title-block">
-            <h2>Sync History</h2>
-          </div>
-          <div className="details-header-actions details-header-actions-left">
-            <button
-              type="button"
-              className="details-back-button"
-              onClick={() => navigate(backTo ?? '/history')}
-            >
-              Back
-            </button>
-            {agentId && (
-              <p className="details-agent-id">Agent ID: {agentId}</p>
-            )}
-          </div>
-          {onClose && (
-            <div className="details-header-actions details-header-actions-right">
-              <button
-                type="button"
-                className="details-close-button"
-                onClick={onClose}
-              >
-                Close
-              </button>
-            </div>
-          )}
-        </div>
-        <div className="snc-grid-outer" style={{ height: 520 }}>
-          {gridEl}
-        </div>
-      </div>
-    );
-  }
-
-  // ── Full-page view ──────────────────────────────────────────────────
-
-  const activeColIds = Object.keys(filterModel);
-
   return (
-    <div className="snc-page">
-
-      {/* ── Page header ─────────────────────────────────────────── */}
-      <header className="snc-header">
-
-        <div className="snc-header-start">
-          <button
-            type="button"
-            className="snc-back-btn"
-            onClick={() => navigate(backTo ?? '/history')}
-          >
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden="true">
-              <path d="M9.5 3L5 7.5L9.5 12" stroke="currentColor"
-                strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            History
-          </button>
-          <div className="snc-header-sep" aria-hidden="true" />
-          <div className="snc-agent-identity">
-            <span className="snc-agent-id-text">{agentId}</span>
-            <span className="snc-page-label">Sync History</span>
-          </div>
-        </div>
-
-        <div className="snc-header-end">
-          <ModeNavigationLink to="/" label="ניטור זמן אמת" variant="real-time" />
-        </div>
-
-      </header>
-
+    <>
       {/* ── Toolbar ───────────────────────────────────────────────── */}
       <div className="snc-toolbar">
 
         <div className="snc-toolbar-start">
+
+          {leftSlot && (
+            <>
+              {leftSlot}
+              <div className="snc-toolbar-vr" aria-hidden="true" />
+            </>
+          )}
 
           {/* Columns tool-panel toggle */}
           <button
@@ -488,23 +407,31 @@ export default function AgentSyncsList({
             Filters
           </button>
 
-          {/* Active filter chips (appear inline after buttons) */}
+          {/* Active filter chips; extras beyond the row width collapse into "+N" */}
           {activeColIds.length > 0 && (
             <>
               <div className="snc-toolbar-vr" aria-hidden="true" />
               <span className="snc-filter-bar-label">Filters:</span>
-              {activeColIds.map((colId) => (
-                <button
-                  key={colId}
-                  type="button"
-                  className="snc-filter-chip"
-                  onClick={() => clearFilter(colId)}
-                  title={`Clear ${COLUMN_LABELS[colId] ?? colId} filter`}
-                >
-                  {COLUMN_LABELS[colId] ?? colId}
-                  <span className="snc-filter-chip-x" aria-hidden="true">×</span>
-                </button>
-              ))}
+              <div className="snc-filter-row" ref={filterRowRef}>
+                {visibleColIds.map(renderChip)}
+                {hiddenColIds.length > 0 && (
+                  <div className="snc-filter-more" ref={moreRef}>
+                    <button
+                      type="button"
+                      className="snc-filter-more-btn"
+                      aria-expanded={overflowOpen}
+                      onClick={() => setOverflowOpen((o) => !o)}
+                    >
+                      +{hiddenColIds.length}
+                    </button>
+                    {overflowOpen && (
+                      <div className="snc-filter-more-panel">
+                        {hiddenColIds.map(renderChip)}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <button
                 type="button"
                 className="snc-filter-clear-all"
@@ -512,6 +439,16 @@ export default function AgentSyncsList({
               >
                 Clear all
               </button>
+
+              {/* Hidden row used only to measure each chip's natural width */}
+              <div className="snc-filter-measure" ref={filterMeasureRef} aria-hidden="true">
+                {activeColIds.map((colId) => (
+                  <span key={colId} className="snc-filter-chip">
+                    {config.columnLabels[colId] ?? colId}
+                    <span className="snc-filter-chip-x">×</span>
+                  </span>
+                ))}
+              </div>
             </>
           )}
 
@@ -541,8 +478,40 @@ export default function AgentSyncsList({
       </div>
 
       {/* ── Grid ─────────────────────────────────────────────────── */}
-      <div className="snc-grid-outer">{gridEl}</div>
-
-    </div>
+      <div className="snc-grid-outer">
+        <div ref={gridWrapperRef} className="snc-grid-wrapper ag-theme-quartz">
+          <style>{groupColorCss}</style>
+          <AgGridReact<T>
+            ref={gridRef}
+            columnDefs={columnDefs}
+            defaultColDef={defaultColDef}
+            theme="legacy"
+            rowModelType="infinite"
+            cacheBlockSize={config.blockSize}
+            cacheOverflowSize={2}
+            maxConcurrentDatasourceRequests={2}
+            maxBlocksInCache={10}
+            sideBar={sideBar}
+            getContextMenuItems={getContextMenuItems}
+            getMainMenuItems={getMainMenuItems}
+            cellSelection
+            groupHeaderHeight={0}
+            onGridReady={onGridReady}
+            onColumnResized={onColumnResized}
+            onColumnVisible={onColumnStateChanged}
+            onColumnPinned={onColumnStateChanged}
+            onColumnMoved={onColumnStateChanged}
+            onFilterChanged={onFilterChanged}
+            onRowClicked={onRowClicked}
+            onRowDoubleClicked={onRowDoubleClicked}
+            suppressCellFocus={false}
+            rowSelection={{ mode: 'singleRow', checkboxes: false, enableClickSelection: true }}
+            tooltipShowDelay={400}
+            overlayNoRowsTemplate={`<span class="snc-no-rows">${config.noRowsText}</span>`}
+          />
+          {config.renderDetail(detailRecord, closeDetail)}
+        </div>
+      </div>
+    </>
   );
 }

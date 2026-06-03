@@ -4,3 +4,8 @@
 @import './styles/details.css';
 @import './styles/configuration.css';
 @import './styles/responsive.css';
+
+html, body {
+  margin: 0;
+  padding: 0;
+}

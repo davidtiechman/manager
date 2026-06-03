@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Preview from './components/realTimeView/Preview';
-import AgentHistoryList from './components/historyView/AgentHistoryList';
-import AgentSyncsList from './components/historyView/AgentSyncsList';
+import AgentHistoryPage from './components/historyView/AgentHistoryPage';
+import AgentRosterList from './components/rosterView/AgentRosterList';
 
 export default function App() {
   return (
@@ -11,8 +11,8 @@ export default function App() {
         <Route path="/" element={<Preview />} />
         <Route path="/agents/:agentId" element={<Preview />} />
 
-        <Route path="/history" element={<AgentHistoryList />} />
-        <Route path="/history/:agentId" element={<AgentSyncsList />} />
+        <Route path="/history" element={<AgentRosterList />} />
+        <Route path="/history/:agentId" element={<AgentHistoryPage />} />
       </Routes>
     </BrowserRouter>
   );
