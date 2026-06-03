@@ -177,11 +177,13 @@ export default function Preview() {
               <div className="top-bar-status">{statusFilter}</div>
               <h1 className="top-bar-title">ניטור סוכנים בזמן אמת</h1>
               <div className="top-bar-actions">
-                <p className="top-bar-hint">
-                  {viewMode === 'icon'
-                    ? 'לחץ על אייקון כדי לראות פרטים'
-                    : 'לחץ על שורה כדי לראות פרטים'}
-                </p>
+                {!selectedAgent && (
+                  <p className="top-bar-hint">
+                    {viewMode === 'icon'
+                      ? 'לחץ על אייקון כדי לראות פרטים'
+                      : 'לחץ על שורה כדי לראות פרטים'}
+                  </p>
+                )}
                 {!selectedAgent && (
                   <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
                     <button

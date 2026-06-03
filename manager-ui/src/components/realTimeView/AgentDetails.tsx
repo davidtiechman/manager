@@ -26,6 +26,8 @@ export default function AgentDetails({
   configurationMessage,
   onConfigurationMessageChange,
 }: Props) {
+  const unitCode = agent.status.details.agentData.unit_code;
+
   return (
     <div className="details-panel">
       <div className="details-header">
@@ -38,7 +40,10 @@ export default function AgentDetails({
            className="details-history-button">
             History
           </Link>
-          <p className="details-agent-id">Agent ID: {agent.id}</p>
+          <div className="details-agent-badges">
+            <p className="details-agent-id">Agent ID: {agent.id}</p>
+            <p className="details-agent-id">Unit Code: {unitCode}</p>
+          </div>
         </div>
         <div className="details-header-actions details-header-actions-right">
           <button type="button" className="details-close-button" onClick={onClose}>
