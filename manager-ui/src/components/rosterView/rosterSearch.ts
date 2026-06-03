@@ -82,14 +82,14 @@ export function sortAgents(
   const mul = dir === 'asc' ? 1 : -1;
   const val = (a: HistoryAgent): string | number => {
     switch (sortBy) {
-      case 'callsign':   return a.callsign;
+      case 'callsign':   return a.callSign;
       case 'id':         return a.id;
       case 'createdAt':  return a.createdAt;
       case 'zayadId':    return a.platfrom?.zayadId ?? 0;
       case 'platformId': return a.platfrom?.platformId ?? 0;
       case 'unit':       return a.platfrom?.unit ?? '';
       case 'platform':   return a.platfrom?.platform ?? '';
-      default:           return a.callsign;
+      default:           return a.callSign;
     }
   };
   return [...agents].sort((a, b) => {
@@ -119,7 +119,7 @@ export function groupAgents(agents: HistoryAgent[], by: 'unit' | 'platform'): Ag
 function valuesForScope(agent: HistoryAgent, scope: RosterScope): string[] {
   const p = agent.platfrom;
   switch (scope) {
-    case 'callsign':   return [agent.callsign];
+    case 'callsign':   return [agent.callSign];
     case 'id':         return [agent.id];
     case 'zayadId':    return [String(p?.zayadId ?? '')];
     case 'unit':       return [p?.unit ?? ''];
@@ -127,7 +127,7 @@ function valuesForScope(agent: HistoryAgent, scope: RosterScope): string[] {
     case 'platformId': return [String(p?.platformId ?? '')];
     case 'unitCode':   return [p?.unitCode ?? ''];
     case 'all':
-      return [agent.callsign, agent.id, p?.unit ?? '', p?.unitCode ?? '', p?.platform ?? '', String(p?.platformId ?? ''), String(p?.zayadId ?? '')];
+      return [agent.callSign, agent.id, p?.unit ?? '', p?.unitCode ?? '', p?.platform ?? '', String(p?.platformId ?? ''), String(p?.zayadId ?? '')];
     default:           return [];
   }
 }

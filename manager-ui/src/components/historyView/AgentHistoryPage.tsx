@@ -141,8 +141,8 @@ export default function AgentHistoryPage() {
 
           <div className="snc-agent-identity">
             <div className="snc-agent-identity-line">
-              <span className="snc-agent-callsign" title={agent?.callsign ?? undefined}>
-                {agent?.callsign ?? 'Agent'}
+              <span className="snc-agent-callsign" title={agent?.callSign ?? undefined}>
+                {agent?.callSign ?? 'Agent'}
               </span>
               <span className="snc-page-label">History</span>
             </div>

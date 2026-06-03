@@ -10,8 +10,8 @@ export interface HistoryAgentPlatfrom {
 
 export interface HistoryAgent {
   id: string;
-  callsign: string;
+  // NOTE: field names match the server's exactly ("callSign", "platfrom").
+  callSign: string;
   createdAt: string;
-  // NOTE: "platfrom" matches the server's (misspelled) field name.
   platfrom: HistoryAgentPlatfrom;
 }

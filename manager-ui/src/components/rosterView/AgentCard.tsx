@@ -25,7 +25,7 @@ export default function AgentCard({ agent, onOpen, hideUnit, hidePlatform }: Age
           </svg>
         </span>
         <div className="rstr-card-heading">
-          <span className="rstr-card-callsign" title={agent.callsign}>{agent.callsign}</span>
+          <span className="rstr-card-callsign" title={agent.callSign}>{agent.callSign}</span>
           <span className="rstr-card-uuid" title={agent.id}>{agent.id}</span>
         </div>
         <svg className="rstr-card-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true">

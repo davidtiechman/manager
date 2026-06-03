@@ -463,7 +463,7 @@ async function handleLoadAgentHistory(req, res) {
 function toHistoryAgentResponse(row) {
     return {
         id: row.id,
-        callsign: row.call_sign,
+        callSign: row.call_sign,
         createdAt: row.first_seen_at,
         platfrom: {
             id: row.platform_id,
