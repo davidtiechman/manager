@@ -71,7 +71,12 @@ export class ApiService {
       throw new Error('Failed to load history agents');
     }
 
-    return response.json();
+    // Tolerate the field spelled either "platform" or the legacy typo "platfrom".
+    const data = await response.json();
+    return (Array.isArray(data) ? data : []).map((a: Record<string, unknown>) => ({
+      ...a,
+      platfrom: a.platfrom ?? a.platform,
+    })) as HistoryAgent[];
   }
 
   // Generic IRM fetch.
