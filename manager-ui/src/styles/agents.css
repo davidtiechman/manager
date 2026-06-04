@@ -1021,3 +1021,15 @@
   overflow-wrap: anywhere;
   white-space: normal;
 }
+
+.info-label {
+  font-weight: 800;
+}
+
+.info-value {
+  font-weight: 400;
+}
+
+.info-label + .info-value {
+  margin-left: 3px;
+}
