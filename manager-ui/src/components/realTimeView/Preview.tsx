@@ -13,7 +13,7 @@ import TankIcon from '../agent-details/TankIcon';
 import ModeNavigationLink from '../ModeNavigationLink';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
-const DEFAULT_SIDEBAR_WIDTH = Number(import.meta.env.VITE_DEFAULT_SIDEBAR_WIDTH) || 420;
+const DEFAULT_SIDEBAR_WIDTH = Number(import.meta.env.VITE_DEFAULT_SIDEBAR_WIDTH) || 960;
 const MIN_SIDEBAR_WIDTH = Number(import.meta.env.VITE_MIN_SIDEBAR_WIDTH) || 220;
 const DETAILS_MIN_WIDTH = Number(import.meta.env.VITE_DETAILS_MIN_WIDTH) || 360;
 const RESIZE_HANDLE_WIDTH = Number(import.meta.env.VITE_RESIZE_HANDLE_WIDTH) || 6;
@@ -251,11 +251,26 @@ export default function Preview() {
                           <div className="agent-content">
                             <div className="agent-label">{getAgentLabel(previewAgent)}</div>
                             <div className="agent-info">
-                              <div className="info-item">Call Sign: {previewAgent.call_sign}</div>
-                              <div className="info-item">Status: {previewAgent.status}</div>
-                              <div className="info-item">Unit: {previewAgent.unit}</div>
-                              <div className="info-item">Platform ID: {previewAgent.platformId}</div>
-                              <div className="info-item">Zayad ID: {previewAgent.zayad_id}</div>
+                              <div className="info-item">
+                                <span className="info-label">Call Sign:</span>
+                                <span className="info-value">{previewAgent.call_sign}</span>
+                              </div>
+                              <div className="info-item">
+                                <span className="info-label">Status:</span>
+                                <span className="info-value">{previewAgent.status}</span>
+                              </div>
+                              <div className="info-item">
+                                <span className="info-label">Unit:</span>
+                                <span className="info-value">{previewAgent.unit}</span>
+                              </div>
+                              <div className="info-item">
+                                <span className="info-label">Platform ID:</span>
+                                <span className="info-value">{previewAgent.platformId}</span>
+                              </div>
+                              <div className="info-item">
+                                <span className="info-label">Zayad ID:</span>
+                                <span className="info-value">{previewAgent.zayad_id}</span>
+                              </div>
                             </div>
                           </div>
                         </button>
