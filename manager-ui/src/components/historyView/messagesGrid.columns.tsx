@@ -17,7 +17,7 @@ import {
   type GroupDef,
 } from './grid/gridCells';
 
-export const MESSAGES_BLOCK_SIZE = 100;
+export const MESSAGES_BLOCK_SIZE = 200;
 
 // Column groups (name + color).
 export const MESSAGES_GROUP_DEFS = [

@@ -25,7 +25,7 @@ import {
 
 // ── Grid constants ──────────────────────────────────────────────────
 
-export const BLOCK_SIZE = 100;
+export const BLOCK_SIZE = 200;
 
 // Column groups (name + color).
 export const GROUP_DEFS = [
