@@ -1,3 +1,5 @@
+import '@fontsource/inter';
+import '@fontsource/heebo';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ModuleRegistry } from 'ag-grid-community';

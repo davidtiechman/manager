@@ -16,6 +16,7 @@
 }
 
 .top-bar {
+  position: relative;
   height: 64px;
   margin: 0 -20px 16px;
   padding: 0 20px;
@@ -27,25 +28,33 @@
 }
 
 .top-bar .mode-navigation-link {
+  grid-column: 1;
   margin-bottom: 0;
   justify-self: start;
 }
 
 .top-bar-title {
+  grid-column: 1 / -1;
+  position: absolute;
+  left: 50%;
   justify-self: center;
   margin: 0;
   color: #ffffff;
   font-size: 34px;
   font-weight: 800;
   line-height: 1;
+  transform: translateX(-50%);
+  white-space: nowrap;
 }
 
 .top-bar-status {
+  grid-column: 2;
   justify-self: start;
   min-width: 0;
 }
 
 .top-bar-actions {
+  grid-column: 4;
   justify-self: end;
   display: inline-flex;
   align-items: center;

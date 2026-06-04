@@ -520,8 +520,8 @@
   padding: 16px;
   overflow: hidden;
   cursor: pointer;
-  background: #1e293b;
-  color: white;
+  background: #dbeafe;
+  color: #0f172a;
   text-align: center;
 }
 
@@ -623,6 +623,7 @@
 }
 
 .agent-label {
+  color: #172554;
   font-weight: 900;
   font-size: 18px;
   line-height: 1.05;
@@ -637,6 +638,7 @@
   align-items: center;
   gap: 4px;
   width: 100%;
+  color: #334155;
   font-size: 13px;
   font-weight: 700;
   line-height: 1.25;
@@ -656,7 +658,7 @@
 
 .info-item {
   margin-bottom: 2px;
-  color: #e2e8f0;
+  color: inherit;
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -988,7 +990,7 @@
 .home-layout.has-selected-agent .agent-label {
   margin-bottom: 6px;
   padding-inline: 12px 2px;
-  color: #dbeafe;
+  color: #172554;
   font-size: 15px;
   font-weight: 700;
   line-height: 1;
@@ -1004,7 +1006,7 @@
   justify-content: center;
   gap: 3px;
   width: 100%;
-  color: #cbd5e1;
+  color: #334155;
   font-size: 12px;
   font-weight: 500;
   line-height: 1;
