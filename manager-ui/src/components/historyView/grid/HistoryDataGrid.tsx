@@ -490,7 +490,7 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
             cacheBlockSize={config.blockSize}
             cacheOverflowSize={2}
             maxConcurrentDatasourceRequests={4}
-            maxBlocksInCache={100}
+            maxBlocksInCache={50}
             sideBar={sideBar}
             getContextMenuItems={getContextMenuItems}
             getMainMenuItems={getMainMenuItems}
