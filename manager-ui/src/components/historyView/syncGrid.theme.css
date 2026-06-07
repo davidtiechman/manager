@@ -76,7 +76,7 @@
   display: inline-block;
   width: 13px;
   height: 13px;
-  margin-right: 6px;
+  margin-inline-end: 6px;
   vertical-align: -2px;
   background-color: #94a3b8;
   -webkit-mask-repeat: no-repeat;
@@ -151,8 +151,8 @@
   opacity: 0;
   width: 0 !important;
   overflow: hidden;
-  margin-left: 0 !important;
-  transition: width 0.15s ease, opacity 0.15s ease, margin-left 0.15s ease;
+  margin-inline-start: 0 !important;
+  transition: width 0.15s ease, opacity 0.15s ease, margin-inline-start 0.15s ease;
 }
 
 /* Show when hovering the header cell */
@@ -160,7 +160,7 @@
 .snc-grid-wrapper .ag-header-cell:hover .ag-header-cell-filter-button {
   opacity: 0.55;
   width: 18px !important;
-  margin-left: 4px !important;
+  margin-inline-start: 4px !important;
 }
 
 /* Full opacity on direct icon hover */
@@ -174,7 +174,7 @@
 .snc-grid-wrapper .ag-column-menu-visible .ag-header-cell-filter-button {
   opacity: 1;
   width: 18px !important;
-  margin-left: 4px !important;
+  margin-inline-start: 4px !important;
 }
 
 /* Always show filter button when a filter is active on that column */
@@ -182,7 +182,7 @@
 .snc-grid-wrapper .ag-header-cell-filtered .ag-header-cell-filter-button {
   opacity: 0.75;
   width: 18px !important;
-  margin-left: 4px !important;
+  margin-inline-start: 4px !important;
 }
 
 /* ── Column filter popup (menu) styling ─────────────────────── */
@@ -198,10 +198,14 @@
   border-top: 1px solid #e2e8f0;
 }
 
-/* ── Pinned left column separator ───────────────────────────── */
+/* ── Pinned column separator (faces the scrolling area; flips in RTL) ── */
 .snc-grid-wrapper .ag-pinned-left-header,
 .snc-grid-wrapper .ag-cell.ag-cell-last-left-pinned {
   border-right: 2px solid #dde3ea !important;
+}
+[dir='rtl'] .snc-grid-wrapper .ag-pinned-right-header,
+[dir='rtl'] .snc-grid-wrapper .ag-cell.ag-cell-first-right-pinned {
+  border-left: 2px solid #dde3ea !important;
 }
 
 /* ── Cell text styling ──────────────────────────────────────── */
