@@ -8,6 +8,7 @@ import AgentCard from './AgentCard';
 import { unitDotColor } from './rosterColors';
 import RosterCommandBar from './RosterCommandBar';
 import RosterActiveFilters from './RosterActiveFilters';
+import LanguageToggle from '../../i18n/LanguageToggle';
 import {
   filterAgents, sortAgents, groupAgents, distinctFacetValues,
   DEFAULT_SCOPE, DEFAULT_SORT,
@@ -193,10 +194,13 @@ export default function AgentRosterList() {
           </span>
           <span className="rstr-topbar-name">Agent History</span>
         </div>
-        <Link to="/" className="rstr-topbar-link">
-          <span className="rstr-live-dot" aria-hidden="true" />
-          Real-time monitoring
-        </Link>
+        <div className="rstr-topbar-end">
+          <Link to="/" className="rstr-topbar-link">
+            <span className="rstr-live-dot" aria-hidden="true" />
+            Real-time monitoring
+          </Link>
+          <LanguageToggle />
+        </div>
       </header>
       <RosterCommandBar
         search={search}

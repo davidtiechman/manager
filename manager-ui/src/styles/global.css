@@ -10,3 +10,28 @@ textarea {
 h1 {
   font-family: 'Heebo', 'Inter', sans-serif;
 }
+
+/* Hebrew uses Heebo as the base face. */
+html[lang='he'] :is(body, button, input, select, textarea) {
+  font-family: 'Heebo', 'Inter', sans-serif;
+}
+
+/* Language switch button. */
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border, #d4d8e0);
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lang-toggle:hover {
+  background: rgba(127, 127, 127, 0.12);
+}

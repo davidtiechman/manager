@@ -9,6 +9,7 @@ import { formatRosterDate } from '../rosterView/rosterFormat';
 import { unitDotColor } from '../rosterView/rosterColors';
 import ModeNavigationLink from '../ModeNavigationLink';
 import NotFound from '../NotFound';
+import LanguageToggle from '../../i18n/LanguageToggle';
 
 import HistoryDataGrid from './grid/HistoryDataGrid';
 import { syncsConfig } from './syncsConfig';
@@ -206,6 +207,7 @@ export default function AgentHistoryPage() {
 
         <div className="snc-header-end">
           <ModeNavigationLink to="/" label="ניטור זמן אמת" variant="real-time" />
+          <LanguageToggle />
         </div>
 
       </header>

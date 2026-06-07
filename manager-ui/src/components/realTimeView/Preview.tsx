@@ -11,6 +11,7 @@ import FilterAgents from './FilterAgents';
 import { ApiService } from '../../api';
 import TankIcon from '../agent-details/TankIcon';
 import ModeNavigationLink from '../ModeNavigationLink';
+import LanguageToggle from '../../i18n/LanguageToggle';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
 const DEFAULT_SIDEBAR_WIDTH = Number(import.meta.env.VITE_DEFAULT_SIDEBAR_WIDTH) || 960;
@@ -177,6 +178,7 @@ export default function Preview() {
               <div className="top-bar-status">{statusFilter}</div>
               <h1 className="top-bar-title">ניטור סוכנים בזמן אמת</h1>
               <div className="top-bar-actions">
+                <LanguageToggle />
                 {!selectedAgent && (
                   <p className="top-bar-hint">
                     {viewMode === 'icon'
