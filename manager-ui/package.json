@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@fontsource/heebo": "^5.2.8",
+    "@fontsource/assistant": "^5.2.9",
     "@fontsource/inter": "^5.2.8",
     "ag-grid-community": "33.2.4",
     "ag-grid-enterprise": "33.2.4",

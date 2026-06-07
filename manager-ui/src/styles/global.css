@@ -8,12 +8,12 @@ textarea {
   font-family: 'Inter', sans-serif;
 }
 h1 {
-  font-family: 'Heebo', 'Inter', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
-/* Hebrew uses Heebo as the base face. */
-html[lang='he'] :is(body, button, input, select, textarea) {
-  font-family: 'Heebo', 'Inter', sans-serif;
+/* Hebrew uses Assistant as the base face. */
+html[lang='he'] :is(body, button, input, select, textarea, h1) {
+  font-family: 'Assistant', 'Inter', sans-serif;
 }
 
 /* Language switch button. */
