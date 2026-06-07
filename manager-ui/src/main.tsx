@@ -13,6 +13,7 @@ import {
   RowSelectionModule,
   TooltipModule,
   ValidationModule,
+  LocaleModule,
 } from 'ag-grid-community';
 import {
   LicenseManager,
@@ -39,6 +40,7 @@ ModuleRegistry.registerModules([
   RowSelectionModule,
   TooltipModule,
   ValidationModule,
+  LocaleModule,
   SetFilterModule,
   ColumnMenuModule,
   ContextMenuModule,
