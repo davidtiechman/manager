@@ -292,9 +292,10 @@ export default function Preview() {
                       const startX = event.clientX;
                       const startWidth = sidebarWidth;
 
+                      const rtl = document.documentElement.dir === 'rtl';
                       const handleMouseMove = (moveEvent: MouseEvent) => {
-                        const nextWidth = startWidth + (moveEvent.clientX - startX);
-                        setSidebarWidth(clampSidebarWidth(nextWidth));
+                        const delta = (moveEvent.clientX - startX) * (rtl ? -1 : 1);
+                        setSidebarWidth(clampSidebarWidth(startWidth + delta));
                       };
 
                       const handleMouseUp = () => {

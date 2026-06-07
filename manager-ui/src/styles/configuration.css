@@ -99,7 +99,7 @@
 
 .menu-dropdown {
   position: absolute;
-  right: 0;
+  inset-inline-end: 0;
   top: 28px;
   background: white;
   border: 1px solid #ddd;
@@ -118,7 +118,7 @@
   font: inherit;
   padding: 8px 14px;
   width: 100%;
-  text-align: left;
+  text-align: start;
 }
 
 .menu-dropdown button:hover,
