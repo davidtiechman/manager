@@ -132,7 +132,7 @@
   word-break: break-word;
 }
 
-/* ── RTL: drawer anchors + slides from the opposite edge ── */
+/* ── RTL ── */
 [dir='rtl'] .snc-dp {
   box-shadow: 8px 0 28px rgba(15, 23, 42, 0.16);
   transform: translateX(-100%);

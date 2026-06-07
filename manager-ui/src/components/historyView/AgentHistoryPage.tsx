@@ -55,7 +55,7 @@ export default function AgentHistoryPage() {
   const { t, i18n } = useTranslation('history');
   const { lang, dir } = useLang();
 
-  // Rebuild table configs on language change (freeze side follows direction).
+  // Rebuild table configs on language change.
   const syncs = useMemo(() => syncsConfig(t, dir), [i18n.language, dir]);
   const messages = useMemo(() => messagesConfig(t, dir), [i18n.language, dir]);
 

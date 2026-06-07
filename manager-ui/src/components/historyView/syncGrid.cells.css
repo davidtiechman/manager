@@ -300,7 +300,7 @@
   color: #0c4a6e;
 }
 
-/* Hide dead scrollbar track under the pinned column (flips side in RTL) */
+/* Hide dead scrollbar track under the pinned column */
 .snc-grid-wrapper .ag-horizontal-left-spacer {
   visibility: hidden;
 }

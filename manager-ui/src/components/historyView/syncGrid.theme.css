@@ -198,7 +198,7 @@
   border-top: 1px solid #e2e8f0;
 }
 
-/* ── Pinned column separator (faces the scrolling area; flips in RTL) ── */
+/* ── Pinned column separator ── */
 .snc-grid-wrapper .ag-pinned-left-header,
 .snc-grid-wrapper .ag-cell.ag-cell-last-left-pinned {
   border-right: 2px solid #dde3ea !important;
@@ -259,8 +259,7 @@
   color: #4b5563;
 }
 
-/* Vertical side-tab labels render soft as rotated text and duplicate the
-   toolbar's Columns/Filters buttons — show the icon only. */
+/* Side tabs: icon only */
 .snc-grid-wrapper .ag-side-button-label {
   display: none;
 }

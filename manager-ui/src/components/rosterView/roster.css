@@ -351,7 +351,7 @@
 }
 .rstr-empty-clear:hover { background: #f5f7ff; border-color: #c7cdfa; }
 
-/* ── RTL: flip transform/edge-based visuals (logical props handle the rest) ── */
+/* ── RTL overrides ── */
 [dir='rtl'] .rstr-card:hover {
   box-shadow: inset -2px 0 0 0 #4f46e5, 0 2px 6px rgba(16, 24, 40, 0.06);
 }

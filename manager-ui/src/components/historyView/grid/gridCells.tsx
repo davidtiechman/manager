@@ -189,8 +189,7 @@ export function makeCol<T>(def: ColInput<T>): GridColDef<T> {
   };
 }
 
-// Flat columns → ColGroupDefs by group. groupId stays the (English) name for a
-// stable color slug; labelFor supplies the translated display name.
+// Flat columns → ColGroupDefs by group. labelFor = translated display name.
 export function groupColumns<T>(
   defs: GridColDef<T>[],
   groupOrder: readonly string[],

@@ -541,7 +541,7 @@
   color: #1e293b;
 }
 
-/* ── RTL: flip transform-based visuals (logical props handle the rest) ── */
+/* ── RTL overrides ── */
 [dir='rtl'] .snc-back-btn svg {
   transform: scaleX(-1);
 }

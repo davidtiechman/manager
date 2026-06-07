@@ -62,7 +62,7 @@
   min-width: 0;
 }
 
-/* Language toggle — readable on the dark top-bar */
+/* language toggle on dark top-bar */
 .top-bar .lang-toggle {
   flex: none;
   color: #e2e8f0;

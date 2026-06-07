@@ -1,5 +1,4 @@
-// Hebrew locale for ag-grid internal UI (filters, menus, tool panels).
-// Applied only in he; en falls back to ag-grid defaults.
+// Hebrew locale for ag-grid (applied in he only).
 export const AG_GRID_LOCALE_HE: Record<string, string> = {
   // Set filter
   selectAll: '(בחר הכול)',

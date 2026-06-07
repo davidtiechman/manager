@@ -29,7 +29,7 @@ import {
 
 export const BLOCK_SIZE = 200;
 
-// Column groups (English name = stable color slug + color).
+// Column groups (name + color).
 export const GROUP_DEFS = [
   { name: 'General',       color: '#0284c7' }, // sky
   { name: 'Sync Details',  color: '#7c3aed' }, // violet
@@ -404,12 +404,12 @@ export function buildColumnDefs(
   return groupColumns(buildColumnDefsInternal(t, dir), GROUP_ORDER, groupLabel(t));
 }
 
-// colId → translated label (filter chips). Pin side irrelevant here.
+// colId → translated label.
 export function buildColumnLabelsFor(t: TFunction): Record<string, string> {
   return buildColumnLabels(buildColumnDefsInternal(t, 'ltr'));
 }
 
-// Translated group label → color (tool-panel title painting).
+// Translated group label → color.
 export function groupLabelColors(t: TFunction): Record<string, string> {
   return Object.fromEntries(GROUP_DEFS.map((g) => [t(`groups.${groupSlug(g.name)}`), g.color]));
 }
