@@ -259,8 +259,8 @@
   color: #4b5563;
 }
 
-/* Quartz adds transform: rotate(0.05deg) to the vertical side-button labels,
-   which rasterizes the text on a GPU layer and makes it blurry — drop it. */
+/* Vertical side-tab labels render soft as rotated text and duplicate the
+   toolbar's Columns/Filters buttons — show the icon only. */
 .snc-grid-wrapper .ag-side-button-label {
-  transform: none;
+  display: none;
 }
