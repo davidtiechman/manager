@@ -1,5 +1,5 @@
 import '@fontsource/inter';
-import '@fontsource/assistant';
+import '@fontsource/rubik';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ModuleRegistry } from 'ag-grid-community';

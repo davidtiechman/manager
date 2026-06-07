@@ -11,9 +11,9 @@ h1 {
   font-family: 'Inter', sans-serif;
 }
 
-/* Hebrew uses Assistant as the base face. */
+/* Hebrew uses Rubik as the base face. */
 html[lang='he'] :is(body, button, input, select, textarea, h1) {
-  font-family: 'Assistant', 'Inter', sans-serif;
+  font-family: 'Rubik', 'Inter', sans-serif;
 }
 
 /* Language switch button. */
