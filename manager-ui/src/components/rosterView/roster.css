@@ -77,17 +77,18 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 0 8px 0 12px;
+  padding-block: 0;
+  padding-inline: 12px 8px;
   transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
 .rstr-search:focus-within { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.08); }
-.rstr-search-icon { width: 16px; height: 16px; color: #94a3b8; flex: none; margin-right: 8px; }
+.rstr-search-icon { width: 16px; height: 16px; color: #94a3b8; flex: none; margin-inline-end: 8px; }
 .rstr-search-input {
   flex: 1; height: 100%; border: none; outline: none; background: transparent;
   font-size: 13px; color: #1e293b; font-family: inherit;
 }
 .rstr-search-input::placeholder { color: #9aa6b6; }
-.rstr-scope-label { color: #94a3b8; font-size: 12px; margin: 0 2px 0 8px; flex: none; }
+.rstr-scope-label { color: #94a3b8; font-size: 12px; margin-block: 0; margin-inline: 8px 2px; flex: none; }
 
 .rstr-scope-trigger {
   display: inline-flex; align-items: center; gap: 4px; height: 100%; padding: 0 4px;
@@ -108,7 +109,7 @@
 
 .rstr-count { flex: none; font-size: 13px; color: #64748b; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-.rstr-cmdbar-right { display: flex; align-items: center; gap: 12px; flex: none; margin-left: auto; }
+.rstr-cmdbar-right { display: flex; align-items: center; gap: 12px; flex: none; margin-inline-start: auto; }
 
 .rstr-facets { display: flex; align-items: center; gap: 8px; flex: none; }
 .rstr-facet { position: relative; }
@@ -132,7 +133,7 @@
 .rstr-select-option {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;
   padding: 7px 10px; border: none; background: none; border-radius: 7px;
-  font-size: 13px; color: #1e293b; font-family: inherit; text-align: left; cursor: pointer;
+  font-size: 13px; color: #1e293b; font-family: inherit; text-align: start; cursor: pointer;
   transition: background-color 0.1s ease;
 }
 .rstr-select-option:hover { background: #f5f7ff; }
@@ -142,12 +143,12 @@
 /* Shared dropdown popover */
 .rstr-facet-panel,
 .rstr-select-panel {
-  position: absolute; top: calc(100% + 6px); left: 0; z-index: 30;
+  position: absolute; top: calc(100% + 6px); inset-inline-start: 0; z-index: 30;
   min-width: 180px; max-height: 300px; overflow-y: auto;
   background: #ffffff; border: 1px solid #e7ebf0; border-radius: 10px;
   box-shadow: 0 10px 30px -8px rgba(16, 24, 40, 0.18); padding: 6px;
 }
-.rstr-select-panel--right { left: auto; right: 0; }
+.rstr-select-panel--right { inset-inline-start: auto; inset-inline-end: 0; }
 
 /* Sort + group controls */
 .rstr-sort { display: inline-flex; align-items: center; gap: 6px; }
@@ -183,8 +184,9 @@
   overflow-y: auto;
   /* Extend to the window edge so the scrollbar lives in the right gutter,
      while content stays aligned to the 32px column. */
-  margin-right: -32px;
-  padding: 6px 32px 28px 0;
+  margin-inline-end: -32px;
+  padding-block: 6px 28px;
+  padding-inline: 0 32px;
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
 }
@@ -207,7 +209,7 @@
   display: flex; align-items: center; gap: 10px;
   padding: 0 10px;
   border: none; border-bottom: 1px solid #eceff3; border-radius: 8px;
-  background: none; cursor: pointer; font-family: inherit; text-align: left;
+  background: none; cursor: pointer; font-family: inherit; text-align: start;
   transition: background-color 0.12s ease;
 }
 .rstr-group-row:hover { background: #f5f7ff; }
@@ -217,7 +219,7 @@
 .rstr-group-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .rstr-group-name { font-size: 14px; font-weight: 600; color: #1e293b; letter-spacing: 0.01em; }
 .rstr-group-count {
-  margin-left: auto;
+  margin-inline-start: auto;
   display: inline-flex; align-items: center; height: 20px; padding: 0 9px; border-radius: 10px;
   background-color: #eef2f7; color: #64748b; font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
 }
@@ -226,7 +228,7 @@
 .rstr-card {
   display: flex; flex-direction: column; gap: 8px;
   height: 158px; box-sizing: border-box; padding: 13px 14px;
-  background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; text-align: left;
+  background: #ffffff; border: 1px solid #e5e7eb; border-radius: 14px; text-align: start;
   cursor: pointer; font-family: inherit;
   overflow: hidden; min-width: 0;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.07), 0 4px 10px -2px rgba(16, 24, 40, 0.06);
@@ -305,7 +307,7 @@
 }
 /* Small color accent dot inside the Unit chip */
 .rstr-chip-dot {
-  width: 7px; height: 7px; border-radius: 50%; flex: none; margin-right: 6px; display: inline-block;
+  width: 7px; height: 7px; border-radius: 50%; flex: none; margin-inline-end: 6px; display: inline-block;
 }
 .rstr-meta-item { display: inline-flex; align-items: center; gap: 5px; }
 .rstr-meta-label { color: #94a3b8; }
@@ -348,3 +350,17 @@
   transition: background-color 0.12s ease, border-color 0.12s ease;
 }
 .rstr-empty-clear:hover { background: #f5f7ff; border-color: #c7cdfa; }
+
+/* ── RTL: flip transform/edge-based visuals (logical props handle the rest) ── */
+[dir='rtl'] .rstr-card:hover {
+  box-shadow: inset -2px 0 0 0 #4f46e5, 0 2px 6px rgba(16, 24, 40, 0.06);
+}
+[dir='rtl'] .rstr-card-chevron {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .rstr-card:hover .rstr-card-chevron {
+  transform: scaleX(-1) translateX(2px);
+}
+[dir='rtl'] .rstr-group-chevron.is-collapsed {
+  transform: rotate(90deg);
+}
