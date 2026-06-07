@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
 import { toPlatformTable } from '../../types/realTimeAgents/adapter';
 import {
@@ -157,6 +158,7 @@ export default function FilterAgents({
   agents,
   children,
 }: FilterAgentsProps) {
+  const { t } = useTranslation('realtime');
   const [activeFilterGroup, setActiveFilterGroup] =
     useState<AgentFilterFieldGroup | null>(null);
   const [openFilterGroup, setOpenFilterGroup] =
@@ -258,16 +260,16 @@ export default function FilterAgents({
   );
   const appliedFilterLabel =
     !isSearchActive
-      ? 'No filter'
+      ? t('filter.noFilter')
       : search.field === 'other'
-        ? search.customField.trim() || 'Other'
-        : appliedFilterField?.label ?? 'Field';
+        ? search.customField.trim() || t('filter.other')
+        : appliedFilterField ? t(`fields.${appliedFilterField.value}`) : t('filter.field');
   const appliedFilterValue =
     !isSearchActive
-      ? 'All'
+      ? t('filter.all')
       : search.field === 'other'
-        ? search.text.trim() || 'All'
-        : search.text.trim() || 'All';
+        ? search.text.trim() || t('filter.all')
+        : search.text.trim() || t('filter.all');
 
   const clearSearch = () => {
     const nextSearch: AgentSearchState = {
@@ -285,11 +287,11 @@ export default function FilterAgents({
   const statusFilter =
     statusFilterField?.kind === 'enum' ? (
       <div className="filter-section filter-section-status">
-        <span className="filter-section-title">Status</span>
+        <span className="filter-section-title">{t('filter.statusTitle')}</span>
         <div
           className="status-filter-dots"
           role="group"
-          aria-label="Status filter"
+          aria-label={t('filter.ariaStatusFilter')}
         >
           <button
             type="button"
@@ -311,10 +313,10 @@ export default function FilterAgents({
               setSearch(nextSearch);
               setOpenFilterGroup(null);
             }}
-            title="All agents"
+            title={t('filter.ariaAllAgents')}
           >
             <span className="status-filter-dot-mark" />
-            <span className="status-filter-dot-label">All</span>
+            <span className="status-filter-dot-label">{t('filter.all')}</span>
           </button>
 
           {statusFilterField.options.map((option) => (
@@ -351,8 +353,8 @@ export default function FilterAgents({
     <>
       <div className="filters-box">
         <div className="filter-section filter-section-groups">
-          <span className="filter-section-title">Filter group</span>
-          <div className="filter-chip-group" role="group" aria-label="Filter group">
+          <span className="filter-section-title">{t('filter.group')}</span>
+          <div className="filter-chip-group" role="group" aria-label={t('filter.group')}>
             {filterFieldGroups.map((group) => (
               <button
                 key={group.value}
@@ -383,20 +385,20 @@ export default function FilterAgents({
                   }));
                 }}
               >
-                {group.label}
+                {t(`groups.${group.value}`)}
               </button>
             ))}
           </div>
 
           {openFilterGroup && (
-            <div className="filter-popover" role="dialog" aria-label="Filter fields">
+            <div className="filter-popover" role="dialog" aria-label={t('filter.ariaFilterFields')}>
               <div className="filter-popover-header">
-                <span className="filter-section-title">{openFilterGroup}</span>
+                <span className="filter-section-title">{t(`groups.${openFilterGroup}`)}</span>
                 <button
                   type="button"
                   className="filter-popover-close"
                   onClick={() => setOpenFilterGroup(null)}
-                  aria-label="Close filter fields"
+                  aria-label={t('filter.ariaCloseFields')}
                 >
                   ×
                 </button>
@@ -404,12 +406,12 @@ export default function FilterAgents({
 
               <div className="filter-section filter-section-fields">
                 <span className="filter-label-row">
-                  <span className="filter-section-title">Field</span>
+                  <span className="filter-section-title">{t('filter.field')}</span>
                   {selectedCategoryField?.group === 'Configuration' && (
-                    <span className="filter-field-context">Configuration field</span>
+                    <span className="filter-field-context">{t('filter.configField')}</span>
                   )}
                 </span>
-                <div className="filter-chip-group" role="group" aria-label="Filter field">
+                <div className="filter-chip-group" role="group" aria-label={t('filter.ariaFilterField')}>
                   {activeGroupFields.map((field) => (
                     <button
                       key={field.value}
@@ -428,7 +430,7 @@ export default function FilterAgents({
                         setSearch(nextSearch);
                       }}
                     >
-                      {field.label}
+                      {t(`fields.${field.value}`)}
                     </button>
                   ))}
                   <button
@@ -447,7 +449,7 @@ export default function FilterAgents({
                       setSearch(nextSearch);
                     }}
                   >
-                    Other
+                    {t('filter.other')}
                   </button>
                 </div>
               </div>
@@ -455,8 +457,8 @@ export default function FilterAgents({
               {draftSearch.field === 'other' && (
                 <label className="filter-section filter-custom-field">
                   <span className="filter-label-row">
-                    <span className="filter-section-title">Other field</span>
-                    <span className="filter-selected-field">{activeFilterGroup}</span>
+                    <span className="filter-section-title">{t('filter.otherField')}</span>
+                    <span className="filter-selected-field">{activeFilterGroup ? t(`groups.${activeFilterGroup}`) : ''}</span>
                   </span>
                   <input
                     type="text"
@@ -475,14 +477,14 @@ export default function FilterAgents({
               {selectedCategoryField && (
                 <label className="agent-free-text-filter">
                   <span className="filter-label-row">
-                    <span>{selectedCategoryField.kind === 'enum' ? 'Value' : 'Search value'}</span>
-                    <span className="filter-selected-field">{selectedCategoryField.label}</span>
+                    <span>{selectedCategoryField.kind === 'enum' ? t('filter.value') : t('filter.searchValue')}</span>
+                    <span className="filter-selected-field">{t(`fields.${selectedCategoryField.value}`)}</span>
                   </span>
                   {selectedCategoryField.kind === 'enum' ? (
                     <div
                       className="filter-chip-group filter-value-chip-group"
                       role="group"
-                      aria-label="Filter value"
+                      aria-label={t('filter.ariaFilterValue')}
                     >
                       <button
                         type="button"
@@ -500,7 +502,7 @@ export default function FilterAgents({
                           setOpenFilterGroup(null);
                         }}
                       >
-                        All
+                        {t('filter.all')}
                       </button>
                       {selectedCategoryField.options.map((option) => (
                         <button
@@ -527,7 +529,7 @@ export default function FilterAgents({
                   ) : (
                     <input
                       type="search"
-                      placeholder="Type to filter"
+                      placeholder={t('filter.typeToFilter')}
                       value={draftSearch.text}
                       onChange={(event) =>
                         setDraftSearch((prev) => ({
@@ -543,12 +545,12 @@ export default function FilterAgents({
               {draftSearch.field === 'other' && (
                 <label className="agent-free-text-filter">
                   <span className="filter-label-row">
-                    <span>Search value</span>
-                    <span className="filter-selected-field">Other</span>
+                    <span>{t('filter.searchValue')}</span>
+                    <span className="filter-selected-field">{t('filter.other')}</span>
                   </span>
                   <input
                     type="search"
-                    placeholder="Type to filter"
+                    placeholder={t('filter.typeToFilter')}
                     value={draftSearch.text}
                     onChange={(event) =>
                       setDraftSearch((prev) => ({
@@ -564,12 +566,12 @@ export default function FilterAgents({
                 <div className="filter-popover-message">
                   {isCustomSearchFieldMissing && (
                     <p className="filter-message" role="alert">
-                      העמודה "{customSearchField}" לא קיימת.
+                      {t('filter.columnMissing', { field: customSearchField })}
                     </p>
                   )}
                   {hasNoSearchResults && (
                     <p className="filter-message" role="status">
-                      No search results.
+                      {t('filter.noResults')}
                     </p>
                   )}
                 </div>
@@ -590,7 +592,7 @@ export default function FilterAgents({
               className="filter-clear-button"
               onClick={clearSearch}
             >
-              Clear
+              {t('filter.clear')}
             </button>
           </div>
         )}
@@ -598,18 +600,18 @@ export default function FilterAgents({
 
       {!openFilterGroup && isCustomSearchFieldMissing && (
         <p className="filter-message" role="alert">
-          העמודה "{customSearchField}" לא קיימת.
+          {t('filter.columnMissing', { field: customSearchField })}
         </p>
       )}
 
       {!openFilterGroup && hasNoSearchResults && (
         <p className="filter-message" role="status">
-          No search results.
+          {t('filter.noResults')}
         </p>
       )}
 
       <div className="agents-results-summary" aria-live="polite">
-        <span className="agents-results-label">Agents</span>
+        <span className="agents-results-label">{t('filter.agents')}</span>
         <span className="agents-results-count">
           {isSearchActive ? `${filteredAgents.length} / ${agents.length}` : agents.length}
         </span>

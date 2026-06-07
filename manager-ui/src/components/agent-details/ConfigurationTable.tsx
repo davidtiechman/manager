@@ -1,6 +1,7 @@
 import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
 import type { ConfigurationTableData } from '../../types/realTimeAgents/tables';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ApiService } from '../../api';
 import { toConfigurationTable } from '../../types/realTimeAgents/adapter';
 
@@ -38,6 +39,7 @@ export default function ConfigurationTable({
   message,
   onMessageChange,
 }: Props) {
+  const { t } = useTranslation('realtime');
   const [configuration, setConfiguration] = useState<ConfigurationTableData>(
     toConfigurationTable(agent)
   );
@@ -109,13 +111,13 @@ export default function ConfigurationTable({
       setIsDirty(false);
       setIsEdit(false);
       setIsMenuOpen(false);
-      onMessageChange('Configuration saved successfully');
+      onMessageChange(t('tables.configuration.saved'));
       setTimeout(() => {
         onMessageChange('');
       }, 2000);
     } catch (error) {
       console.error('Error saving configuration:', error);
-      onMessageChange('Failed to save configuration');
+      onMessageChange(t('tables.configuration.saveFailed'));
       setTimeout(() => {
 
       }, 2000);
@@ -125,12 +127,12 @@ export default function ConfigurationTable({
   return (
     <section className="details-section">
       <div className="details-section-header">
-        <h3>Configuration</h3>
+        <h3>{t('tables.configuration.title')}</h3>
         <div className="table-menu">
           <button
             type="button"
             className="menu-button"
-            aria-label="Configuration actions"
+            aria-label={t('tables.configuration.actions')}
             aria-haspopup="menu"
             aria-expanded={isMenuOpen}
             onClick={() => setIsMenuOpen((prev) => !prev)}
@@ -140,7 +142,7 @@ export default function ConfigurationTable({
           {isMenuOpen && (
             <div className="menu-dropdown" role="menu">
               <button type="button" role="menuitem" onClick={openEdit}>
-                Edit
+                {t('tables.configuration.edit')}
               </button>
             </div>
           )}
@@ -149,12 +151,12 @@ export default function ConfigurationTable({
 
       <table className="details-table">
         <tbody>
-          {fields.map(([field, label, type]) => {
+          {fields.map(([field, , type]) => {
             const value = configuration[field];
 
             return (
               <tr key={field}>
-                <td>{label}</td>
+                <td>{t(`tables.configuration.${field}`)}</td>
                 <td>
                   {isEdit ? (
                     <input
@@ -188,10 +190,10 @@ export default function ConfigurationTable({
       {isEdit && (
         <div className="edit-actions">
           <button onClick={handleSave} disabled={!isDirty}>
-            Save
+            {t('tables.configuration.save')}
           </button>
           <button type="button" onClick={cancelEdit}>
-            Cancel
+            {t('tables.configuration.cancel')}
           </button>
         </div>
       )}

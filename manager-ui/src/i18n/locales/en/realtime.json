@@ -1,1 +1,121 @@
-{}
+{
+  "header": {
+    "title": "Real-Time Agent Monitoring",
+    "toHistory": "Go to History"
+  },
+  "loading": "Loading data…",
+  "view": {
+    "icons": "Icons",
+    "list": "List",
+    "aria": "Select view"
+  },
+  "hint": {
+    "icon": "Click an icon to see details",
+    "row": "Click a row to see details"
+  },
+  "card": {
+    "callSign": "Call Sign",
+    "status": "Status",
+    "unit": "Unit",
+    "platformId": "Platform ID",
+    "zayadId": "Zayad ID"
+  },
+  "details": {
+    "title": "Agent Details",
+    "history": "History",
+    "agentId": "Agent ID",
+    "unitCode": "Unit Code",
+    "close": "Close"
+  },
+  "filter": {
+    "group": "Filter group",
+    "field": "Field",
+    "configField": "Configuration field",
+    "other": "Other",
+    "otherField": "Other field",
+    "value": "Value",
+    "searchValue": "Search value",
+    "typeToFilter": "Type to filter",
+    "noResults": "No search results.",
+    "clear": "Clear",
+    "agents": "Agents",
+    "noFilter": "No filter",
+    "all": "All",
+    "columnMissing": "Column \"{{field}}\" does not exist.",
+    "ariaFilterField": "Filter field",
+    "ariaFilterValue": "Filter value",
+    "ariaFilterFields": "Filter fields",
+    "ariaCloseFields": "Close filter fields",
+    "ariaStatusFilter": "Status filter",
+    "ariaAllAgents": "All agents",
+    "statusTitle": "Status"
+  },
+  "groups": {
+    "Platform": "Platform",
+    "Live Status": "Live Status",
+    "Link Quality": "Link Quality",
+    "Configuration": "Configuration"
+  },
+  "fields": {
+    "platformId": "Platform ID",
+    "platformName": "Platform Name",
+    "unit": "Unit",
+    "unit_code": "Unit Code",
+    "zayad_id": "Zayad ID",
+    "call_sign": "Call Sign",
+    "status": "Status",
+    "selectedLink": "Runtime Selected Link",
+    "schedulerMode": "Runtime Scheduler Mode",
+    "linkType": "Link Type",
+    "linkQuality": "Link Quality",
+    "configSelectedLink": "Configuration Selected Link",
+    "configSchedulerMode": "Configuration Scheduler Mode"
+  },
+  "tables": {
+    "platform": {
+      "title": "Platform",
+      "unit_code": "unit code",
+      "unit": "unit",
+      "zayad_id": "zayad id",
+      "call_sign": "call sign",
+      "platform_id": "platform id",
+      "platform_name": "platform name"
+    },
+    "linkQuality": {
+      "title": "Link Quality",
+      "link_type": "link type",
+      "available": "available",
+      "quality": "quality",
+      "latency": "latency",
+      "reliability": "reliability",
+      "timestamp": "timestamp"
+    },
+    "syncDetails": {
+      "title": "Sync Details",
+      "status": "status",
+      "scheduler_mode": "scheduler mode",
+      "selected_link": "selected link",
+      "messages_in_queue": "messages in queue",
+      "next_delivery_time": "next delivery time",
+      "server_lut": "server lut",
+      "last_seen": "last seen"
+    },
+    "configuration": {
+      "title": "Configuration",
+      "selectedLink": "selected link",
+      "schedulerMode": "scheduler mode",
+      "intervalMs": "interval ms",
+      "maxRetries": "max retries",
+      "sparkProxyUrl": "spark proxy url",
+      "token": "token",
+      "batchSize": "batch size",
+      "isManualMode": "is manual mode",
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "actions": "Configuration actions",
+      "saved": "Configuration saved successfully",
+      "saveFailed": "Failed to save configuration"
+    }
+  }
+}

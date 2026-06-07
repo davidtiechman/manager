@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
 import type {
   AgentPreviewData,
@@ -75,6 +76,7 @@ export default function Preview() {
   const isConfigurationEditingRef = useRef(isConfigurationEditing);
   const { agentId: routeAgentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation('realtime');
 
   useEffect(() => {
     isConfigurationEditingRef.current = isConfigurationEditing;
@@ -154,11 +156,11 @@ export default function Preview() {
         <div className="page-header">
           <ModeNavigationLink
             to="/history"
-            label="למעבר להיסטוריה"
+            label={t('header.toHistory')}
             variant="history"
           />
-          <h1>ניטור סוכנים בזמן אמת</h1>
-          <p className="muted">טוען נתונים...</p>
+          <h1>{t('header.title')}</h1>
+          <p className="muted">{t('loading')}</p>
         </div>
       </div>
     );
@@ -172,28 +174,26 @@ export default function Preview() {
             <div className="top-bar">
               <ModeNavigationLink
                 to="/history"
-                label="למעבר להיסטוריה"
+                label={t('header.toHistory')}
                 variant="history"
               />
               <div className="top-bar-status">{statusFilter}</div>
-              <h1 className="top-bar-title">ניטור סוכנים בזמן אמת</h1>
+              <h1 className="top-bar-title">{t('header.title')}</h1>
               <div className="top-bar-actions">
                 <LanguageToggle />
                 {!selectedAgent && (
                   <p className="top-bar-hint">
-                    {viewMode === 'icon'
-                      ? 'לחץ על אייקון כדי לראות פרטים'
-                      : 'לחץ על שורה כדי לראות פרטים'}
+                    {viewMode === 'icon' ? t('hint.icon') : t('hint.row')}
                   </p>
                 )}
                 {!selectedAgent && (
-                  <div className="view-toggle" role="group" aria-label="בחירת תצוגה">
+                  <div className="view-toggle" role="group" aria-label={t('view.aria')}>
                     <button
                       type="button"
                       className={`view-toggle-button ${viewMode === 'icon' ? 'active' : ''}`}
                       onClick={() => setViewMode('icon')}
                     >
-                      אייקונים
+                      {t('view.icons')}
                     </button>
 
                     <button
@@ -201,7 +201,7 @@ export default function Preview() {
                       className={`view-toggle-button ${viewMode === 'list' ? 'active' : ''}`}
                       onClick={() => setViewMode('list')}
                     >
-                      רשימה
+                      {t('view.list')}
                     </button>
                   </div>
                 )}
@@ -254,23 +254,23 @@ export default function Preview() {
                             <div className="agent-label">{getAgentLabel(previewAgent)}</div>
                             <div className="agent-info">
                               <div className="info-item">
-                                <span className="info-label">Call Sign:</span>
+                                <span className="info-label">{t('card.callSign')}:</span>
                                 <span className="info-value">{previewAgent.call_sign}</span>
                               </div>
                               <div className="info-item">
-                                <span className="info-label">Status:</span>
+                                <span className="info-label">{t('card.status')}:</span>
                                 <span className="info-value">{previewAgent.status}</span>
                               </div>
                               <div className="info-item">
-                                <span className="info-label">Unit:</span>
+                                <span className="info-label">{t('card.unit')}:</span>
                                 <span className="info-value">{previewAgent.unit}</span>
                               </div>
                               <div className="info-item">
-                                <span className="info-label">Platform ID:</span>
+                                <span className="info-label">{t('card.platformId')}:</span>
                                 <span className="info-value">{previewAgent.platformId}</span>
                               </div>
                               <div className="info-item">
-                                <span className="info-label">Zayad ID:</span>
+                                <span className="info-label">{t('card.zayadId')}:</span>
                                 <span className="info-value">{previewAgent.zayad_id}</span>
                               </div>
                             </div>
