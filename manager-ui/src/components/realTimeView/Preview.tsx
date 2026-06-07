@@ -180,7 +180,6 @@ export default function Preview() {
               <div className="top-bar-status">{statusFilter}</div>
               <h1 className="top-bar-title">{t('header.title')}</h1>
               <div className="top-bar-actions">
-                <LanguageToggle />
                 {!selectedAgent && (
                   <p className="top-bar-hint">
                     {viewMode === 'icon' ? t('hint.icon') : t('hint.row')}
@@ -205,6 +204,7 @@ export default function Preview() {
                     </button>
                   </div>
                 )}
+                <LanguageToggle />
               </div>
             </div>
 

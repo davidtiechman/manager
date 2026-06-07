@@ -62,6 +62,18 @@
   min-width: 0;
 }
 
+/* Language toggle — readable on the dark top-bar */
+.top-bar .lang-toggle {
+  flex: none;
+  color: #e2e8f0;
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+}
+.top-bar .lang-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
 .top-bar-hint {
   margin: 0;
   color: #cbd5e1;
