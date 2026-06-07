@@ -19,12 +19,13 @@ interface RecordDetailPanelProps {
   eyebrow: string;
   title: string;
   ariaLabel: string;
+  closeLabel: string;
   sections: DetailSection[];
   onClose: () => void;
 }
 
 export function RecordDetailPanel({
-  open, eyebrow, title, ariaLabel, sections, onClose,
+  open, eyebrow, title, ariaLabel, closeLabel, sections, onClose,
 }: RecordDetailPanelProps) {
   const visibleSections = sections.filter((s) => s.rows.length > 0);
 
@@ -51,7 +52,7 @@ export function RecordDetailPanel({
             type="button"
             className="snc-dp-close"
             onClick={onClose}
-            aria-label="Close details"
+            aria-label={closeLabel}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor"

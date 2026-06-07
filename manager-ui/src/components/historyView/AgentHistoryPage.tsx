@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 import './AgentSyncsList.css';
 
 import { ApiService } from '../../api';
+import { useLang } from '../../i18n/LanguageProvider';
 import type { HistoryAgent } from '../../types/history/historyAgent';
 import { formatRosterDate } from '../rosterView/rosterFormat';
 import { unitDotColor } from '../rosterView/rosterColors';
@@ -17,10 +19,7 @@ import { messagesConfig } from './messagesConfig';
 
 type HistoryTab = 'syncs' | 'messages';
 
-const TABS: Array<{ id: HistoryTab; label: string }> = [
-  { id: 'syncs', label: 'Syncs' },
-  { id: 'messages', label: 'Messages' },
-];
+const TAB_IDS: HistoryTab[] = ['syncs', 'messages'];
 
 function TabIcon({ tab }: { tab: HistoryTab }) {
   if (tab === 'syncs') {
@@ -53,6 +52,12 @@ export default function AgentHistoryPage() {
   const location = useLocation();
   const backTo = location.state?.backTo ?? '/history';
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation('history');
+  const { lang } = useLang();
+
+  // Rebuild table configs on language change.
+  const syncs = useMemo(() => syncsConfig(t), [i18n.language]);
+  const messages = useMemo(() => messagesConfig(t), [i18n.language]);
 
   const [activeTab, setActiveTab] = useState<HistoryTab>('syncs');
 
@@ -91,7 +96,7 @@ export default function AgentHistoryPage() {
   if (!agentId) {
     return (
       <div className="page">
-        <p className="muted">No agent id in the URL.</p>
+        <p className="muted">{t('header.noAgentId')}</p>
       </div>
     );
   }
@@ -101,27 +106,27 @@ export default function AgentHistoryPage() {
     return (
       <NotFound
         code=""
-        message={`Agent "${agentId}" not found`}
+        message={t('header.agentNotFound', { id: agentId })}
         to={backTo}
-        linkLabel="Back to history"
+        linkLabel={t('header.backToHistory')}
       />
     );
   }
 
   // Switcher lives inside the grid toolbar (no dedicated row).
   const tabSwitcher = (
-    <div className="snc-tabs" role="tablist" aria-label="History tables">
-      {TABS.map((tab) => (
+    <div className="snc-tabs" role="tablist" aria-label={t('header.historyTables')}>
+      {TAB_IDS.map((id) => (
         <button
-          key={tab.id}
+          key={id}
           type="button"
           role="tab"
-          aria-selected={activeTab === tab.id}
-          className={`snc-tab${activeTab === tab.id ? ' snc-tab--active' : ''}`}
-          onClick={() => setActiveTab(tab.id)}
+          aria-selected={activeTab === id}
+          className={`snc-tab${activeTab === id ? ' snc-tab--active' : ''}`}
+          onClick={() => setActiveTab(id)}
         >
-          <TabIcon tab={tab.id} />
-          <span className="snc-tab-label">{tab.label}</span>
+          <TabIcon tab={id} />
+          <span className="snc-tab-label">{t(`tabs.${id}`)}</span>
         </button>
       ))}
     </div>
@@ -143,7 +148,7 @@ export default function AgentHistoryPage() {
               <path d="M9.5 3L5 7.5L9.5 12" stroke="currentColor"
                 strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            Back
+            {t('header.back')}
           </button>
 
           <div className="snc-header-sep" aria-hidden="true" />
@@ -160,9 +165,9 @@ export default function AgentHistoryPage() {
           <div className="snc-agent-identity">
             <div className="snc-agent-identity-line">
               <span className="snc-agent-callsign" title={agent?.callSign ?? undefined}>
-                {agent?.callSign ?? 'Agent'}
+                {agent?.callSign ?? t('header.agent')}
               </span>
-              <span className="snc-page-label">History</span>
+              <span className="snc-page-label">{t('header.history')}</span>
             </div>
             <span className="snc-agent-id-text" title={agentId}>{agentId}</span>
           </div>
@@ -171,7 +176,7 @@ export default function AgentHistoryPage() {
           {agent && (
             <div className="snc-meta-row">
               <div className="snc-meta-item">
-                <span className="snc-meta-label">Unit</span>
+                <span className="snc-meta-label">{t('meta.unit')}</span>
                 <span className="snc-meta-value">
                   <span
                     className="snc-meta-dot"
@@ -182,23 +187,23 @@ export default function AgentHistoryPage() {
                 </span>
               </div>
               <div className="snc-meta-item">
-                <span className="snc-meta-label">Platform</span>
+                <span className="snc-meta-label">{t('meta.platform')}</span>
                 <span className="snc-meta-value">{agent.platfrom.platform}</span>
               </div>
               <div className="snc-meta-item">
-                <span className="snc-meta-label">Zayad ID</span>
+                <span className="snc-meta-label">{t('meta.zayadId')}</span>
                 <span className="snc-meta-value snc-meta-num">{agent.platfrom.zayadId}</span>
               </div>
               <div className="snc-meta-item">
-                <span className="snc-meta-label">Platform ID</span>
+                <span className="snc-meta-label">{t('meta.platformId')}</span>
                 <span className="snc-meta-value snc-meta-num">{agent.platfrom.platformId}</span>
               </div>
               <div className="snc-meta-item">
-                <span className="snc-meta-label">Unit Code</span>
+                <span className="snc-meta-label">{t('meta.unitCode')}</span>
                 <span className="snc-meta-value snc-meta-num">{agent.platfrom.unitCode}</span>
               </div>
               <div className="snc-meta-item snc-meta-item--created">
-                <span className="snc-meta-label">Created</span>
+                <span className="snc-meta-label">{t('meta.created')}</span>
                 <span className="snc-meta-value">{formatRosterDate(agent.createdAt)}</span>
               </div>
             </div>
@@ -206,7 +211,7 @@ export default function AgentHistoryPage() {
         </div>
 
         <div className="snc-header-end">
-          <ModeNavigationLink to="/" label="ניטור זמן אמת" variant="real-time" />
+          <ModeNavigationLink to="/" label={t('header.realtimeLink')} variant="real-time" />
           <LanguageToggle />
         </div>
 
@@ -214,9 +219,9 @@ export default function AgentHistoryPage() {
 
       {/* ── Active table (switcher sits in its toolbar) ────────── */}
       {activeTab === 'syncs' ? (
-        <HistoryDataGrid key="syncs" agentId={agentId} config={syncsConfig} leftSlot={tabSwitcher} />
+        <HistoryDataGrid key={`syncs-${lang}`} agentId={agentId} config={syncs} leftSlot={tabSwitcher} />
       ) : (
-        <HistoryDataGrid key="messages" agentId={agentId} config={messagesConfig} leftSlot={tabSwitcher} />
+        <HistoryDataGrid key={`messages-${lang}`} agentId={agentId} config={messages} leftSlot={tabSwitcher} />
       )}
 
     </div>

@@ -189,14 +189,16 @@ export function makeCol<T>(def: ColInput<T>): GridColDef<T> {
   };
 }
 
-// Flat columns → ColGroupDefs by group.
+// Flat columns → ColGroupDefs by group. groupId stays the (English) name for a
+// stable color slug; labelFor supplies the translated display name.
 export function groupColumns<T>(
   defs: GridColDef<T>[],
-  groupOrder: readonly string[]
+  groupOrder: readonly string[],
+  labelFor?: (group: string) => string
 ): (ColDef<T> | ColGroupDef<T>)[] {
   return groupOrder
     .map((groupName) => ({
-      headerName: groupName,
+      headerName: labelFor ? labelFor(groupName) : groupName,
       groupId: groupName,
       toolPanelClass: `snc-tp-group snc-tp-group--${groupSlug(groupName)}`,
       children: defs.filter((d) => d.context?.group === groupName),

@@ -1,1 +1,151 @@
-{}
+{
+  "tabs": {
+    "syncs": "סנכרונים",
+    "messages": "הודעות"
+  },
+  "header": {
+    "back": "חזרה",
+    "backToHistory": "חזרה להיסטוריה",
+    "history": "היסטוריה",
+    "agent": "סוכן",
+    "noAgentId": "אין מזהה סוכן בכתובת.",
+    "agentNotFound": "הסוכן \"{{id}}\" לא נמצא",
+    "historyTables": "טבלאות היסטוריה",
+    "realtimeLink": "ניטור זמן אמת"
+  },
+  "meta": {
+    "unit": "יחידה",
+    "platform": "סוג פלטפורמה",
+    "zayadId": "מזהה צי\"די",
+    "platformId": "צ",
+    "unitCode": "קוד יחידה",
+    "created": "נוצר"
+  },
+  "groups": {
+    "general": "כללי",
+    "sync-details": "פרטי סנכרון",
+    "agent-config": "תצורת סוכן",
+    "platform-data": "נתוני פלטפורמה",
+    "link-quality": "איכות חיבור",
+    "message": "הודעה",
+    "payload": "תוכן (payload)"
+  },
+  "sync": {
+    "columns": {
+      "createdAt": "נוצר ב",
+      "id": "מזהה",
+      "agentId": "מזהה סוכן",
+      "status": "סטטוס",
+      "selectedLink": "קישור נבחר",
+      "schedulerMode": "מצב תזמון",
+      "messagesInQueue": "הודעות בתור",
+      "nextDeliveryTime": "מסירה הבאה",
+      "geoData": "נתוני מיקום",
+      "serverLut": "עדכון אחרון מהשרת",
+      "linkType": "סוג חיבור",
+      "linkAvailable": "זמין",
+      "linkQuality": "איכות",
+      "latency": "השהיה (מָש)",
+      "reliability": "אמינות",
+      "linkTimestamp": "חותמת זמן קישור",
+      "timestamp": "חותמת זמן",
+      "cfgSchedulerMode": "תזמון (תצורה)",
+      "cfgSelectedLink": "קישור (תצורה)",
+      "intervalMs": "זמן שליחה (מָש)",
+      "maxRetries": "מקסימום ניסיונות שליחה",
+      "batchSize": "גודל batch",
+      "isManualMode": "מצב ידני",
+      "sparkProxyUrl": "כתובת Proxy",
+      "token": "מפתח",
+      "cfgCreatedAt": "נוצר ב (תצורה)",
+      "unit": "יחידה",
+      "unitCode": "קוד יחידה",
+      "zayadId": "מזהה צי\"די",
+      "platform": "סוג פלטפורמה",
+      "platformId": "צ",
+      "platCreatedAt": "נוצר ב (פלטפורמה)"
+    },
+    "tooltips": {
+      "createdAt": "נוצר ב",
+      "id": "מזהה",
+      "status": "סטטוס",
+      "selectedLink": "קישור נבחר",
+      "schedulerMode": "מצב תזמון",
+      "messagesInQueue": "הודעות בתור",
+      "nextDeliveryTime": "זמן שליחה הבא",
+      "geoData": "נתוני מיקום",
+      "serverLut": "זמן עדכון אחרון מהשרת",
+      "linkType": "סוג חיבור",
+      "linkAvailable": "זמינות תקשורת",
+      "linkQuality": "איכות חיבור",
+      "latency": "השהיה (מש)",
+      "reliability": "אמינות תקשורת",
+      "linkTimestamp": "חותמת זמן איכות קישור",
+      "cfgSchedulerMode": "תצורת סוכן — מצב תזמון",
+      "cfgSelectedLink": "תצורת סוכן — סוג תקשורת",
+      "intervalMs": "תצורת סוכן — זמן שליחה (מָש)",
+      "maxRetries": "תצורת סוכן — כמות נסיונות מרבית",
+      "batchSize": "תצורת סוכן — גודל batch",
+      "isManualMode": "תצורת סוכן — מצב ידני",
+      "sparkProxyUrl": "תצורת סוכן — כתובת Proxy",
+      "token": "תצורת סוכן — מפתח",
+      "cfgCreatedAt": "תצורת סוכן — נוצר ב",
+      "unit": "פלטפורמה — יחידה",
+      "unitCode": "פלטפורמה — קוד יחידה",
+      "zayadId": "פלטפורמה — מזהה צי\"די",
+      "platform": "פלטפורמה — שם",
+      "platformId": "פלטפורמה — צ",
+      "platCreatedAt": "פלטפורמה — נוצר ב"
+    }
+  },
+  "messages": {
+    "columns": {
+      "receivedAt": "התקבל ב",
+      "sentAt": "נשלח ב",
+      "id": "מזהה",
+      "agentId": "מזהה סוכן",
+      "contentType": "סוג תוכן",
+      "priority": "עדיפות",
+      "processed": "עובד",
+      "content": "תוכן",
+      "contentJson": "תוכן JSON",
+      "contentExcel": "תוכן Excel"
+    },
+    "tooltips": {
+      "receivedAt": "התקבל ב",
+      "sentAt": "נשלח ב",
+      "id": "מזהה הודעה",
+      "agentId": "מזהה סוכן",
+      "contentType": "סוג תוכן",
+      "priority": "עדיפות",
+      "processed": "עובד",
+      "content": "תוכן",
+      "contentJson": "תוכן JSON",
+      "contentExcel": "תוכן Excel"
+    }
+  },
+  "toolbar": {
+    "columns": "עמודות",
+    "filters": "מסננים",
+    "filtersLabel": "מסננים:",
+    "filtered": "מסונן",
+    "total": "סה״כ",
+    "rows": "שורות",
+    "clearAll": "ניקוי הכול",
+    "clearFilter": "ניקוי סינון {{label}}",
+    "pinLeft": "הצמדה לשמאל",
+    "unpinColumn": "ביטול הצמדת עמודה",
+    "resetColumns": "איפוס עמודות"
+  },
+  "detail": {
+    "syncEyebrow": "סנכרון",
+    "syncAria": "פרטי סנכרון",
+    "messageEyebrow": "הודעה",
+    "messageAria": "פרטי הודעה",
+    "closeDetails": "סגירת פרטים"
+  },
+  "noRows": {
+    "syncs": "אין רשומות עבור סוכן זה",
+    "messages": "אין הודעות עבור סוכן זה"
+  }
+}
