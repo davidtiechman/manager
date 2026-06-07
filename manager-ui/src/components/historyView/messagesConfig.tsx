@@ -14,10 +14,10 @@ import {
 } from './messagesGrid.columns';
 import { messagesDetailSections } from './messagesDetailSections';
 
-export function messagesConfig(t: TFunction): GridConfig<AgentMessageRecord> {
+export function messagesConfig(t: TFunction, dir: 'rtl' | 'ltr'): GridConfig<AgentMessageRecord> {
   return {
     storageKey: 'msg-col-state',
-    columnDefs: buildMessagesColumnDefs(t),
+    columnDefs: buildMessagesColumnDefs(t, dir),
     groupColors: MESSAGES_GROUP_COLORS,
     groupLabelColors: messagesGroupLabelColors(t),
     columnLabels: buildMessagesColumnLabelsFor(t),

@@ -134,6 +134,7 @@
     "clearAll": "ניקוי הכול",
     "clearFilter": "ניקוי סינון {{label}}",
     "pinLeft": "הצמדה לשמאל",
+    "pinRight": "הצמדה לימין",
     "unpinColumn": "ביטול הצמדת עמודה",
     "resetColumns": "איפוס עמודות"
   },

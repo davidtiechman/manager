@@ -53,9 +53,13 @@ const groupLabel = (t: TFunction) => (name: string) => t(`groups.${groupSlug(nam
 
 // ── Column definitions ──────────────────────────────────────────────
 
-function buildColumnDefsInternal(t: TFunction): GridColDef<AgentHistoryRecord>[] {
+function buildColumnDefsInternal(
+  t: TFunction,
+  dir: 'rtl' | 'ltr'
+): GridColDef<AgentHistoryRecord>[] {
   const c = (id: string) => t(`sync.columns.${id}`);
   const tip = (id: string) => t(`sync.tooltips.${id}`);
+  const pinStart = dir === 'rtl' ? 'right' : 'left'; // freeze on the leading edge
   return [
     // ── General ──────────────────────────────────────────────────
     col({
@@ -63,7 +67,7 @@ function buildColumnDefsInternal(t: TFunction): GridColDef<AgentHistoryRecord>[]
       field: 'createdAt',
       headerName: c('createdAt'),
       headerTooltip: tip('createdAt'),
-      pinned: 'left',
+      pinned: pinStart,
       width: 160,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -394,14 +398,15 @@ function buildColumnDefsInternal(t: TFunction): GridColDef<AgentHistoryRecord>[]
 // ── Public API ──────────────────────────────────────────────────────
 
 export function buildColumnDefs(
-  t: TFunction
+  t: TFunction,
+  dir: 'rtl' | 'ltr'
 ): (ColDef<AgentHistoryRecord> | ColGroupDef<AgentHistoryRecord>)[] {
-  return groupColumns(buildColumnDefsInternal(t), GROUP_ORDER, groupLabel(t));
+  return groupColumns(buildColumnDefsInternal(t, dir), GROUP_ORDER, groupLabel(t));
 }
 
-// colId → translated label (filter chips).
+// colId → translated label (filter chips). Pin side irrelevant here.
 export function buildColumnLabelsFor(t: TFunction): Record<string, string> {
-  return buildColumnLabels(buildColumnDefsInternal(t));
+  return buildColumnLabels(buildColumnDefsInternal(t, 'ltr'));
 }
 
 // Translated group label → color (tool-panel title painting).

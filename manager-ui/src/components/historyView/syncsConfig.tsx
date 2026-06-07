@@ -14,10 +14,10 @@ import {
 } from './syncGrid.columns';
 import { syncsDetailSections } from './syncsDetailSections';
 
-export function syncsConfig(t: TFunction): GridConfig<AgentHistoryRecord> {
+export function syncsConfig(t: TFunction, dir: 'rtl' | 'ltr'): GridConfig<AgentHistoryRecord> {
   return {
     storageKey: 'snc-col-state',
-    columnDefs: buildColumnDefs(t),
+    columnDefs: buildColumnDefs(t, dir),
     groupColors: GROUP_COLORS,
     groupLabelColors: groupLabelColors(t),
     columnLabels: buildColumnLabelsFor(t),

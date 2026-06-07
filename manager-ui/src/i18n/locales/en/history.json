@@ -134,6 +134,7 @@
     "clearAll": "Clear all",
     "clearFilter": "Clear {{label}} filter",
     "pinLeft": "Pin Left",
+    "pinRight": "Pin Right",
     "unpinColumn": "Unpin Column",
     "resetColumns": "Reset Columns"
   },

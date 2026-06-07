@@ -53,11 +53,11 @@ export default function AgentHistoryPage() {
   const backTo = location.state?.backTo ?? '/history';
   const navigate = useNavigate();
   const { t, i18n } = useTranslation('history');
-  const { lang } = useLang();
+  const { lang, dir } = useLang();
 
-  // Rebuild table configs on language change.
-  const syncs = useMemo(() => syncsConfig(t), [i18n.language]);
-  const messages = useMemo(() => messagesConfig(t), [i18n.language]);
+  // Rebuild table configs on language change (freeze side follows direction).
+  const syncs = useMemo(() => syncsConfig(t, dir), [i18n.language, dir]);
+  const messages = useMemo(() => messagesConfig(t, dir), [i18n.language, dir]);
 
   const [activeTab, setActiveTab] = useState<HistoryTab>('syncs');
 

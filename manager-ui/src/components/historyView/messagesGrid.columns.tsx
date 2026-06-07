@@ -39,9 +39,13 @@ const col = (def: ColInput<AgentMessageRecord>): GridColDef<AgentMessageRecord> 
 // Translated group name, keyed by stable slug.
 const groupLabel = (t: TFunction) => (name: string) => t(`groups.${groupSlug(name)}`);
 
-function buildColumnDefsInternal(t: TFunction): GridColDef<AgentMessageRecord>[] {
+function buildColumnDefsInternal(
+  t: TFunction,
+  dir: 'rtl' | 'ltr'
+): GridColDef<AgentMessageRecord>[] {
   const c = (id: string) => t(`messages.columns.${id}`);
   const tip = (id: string) => t(`messages.tooltips.${id}`);
+  const pinStart = dir === 'rtl' ? 'right' : 'left'; // freeze on the leading edge
   return [
     // ── General ──────────────────────────────────────────────────
     col({
@@ -49,7 +53,7 @@ function buildColumnDefsInternal(t: TFunction): GridColDef<AgentMessageRecord>[]
       field: 'receivedAt',
       headerName: c('receivedAt'),
       headerTooltip: tip('receivedAt'),
-      pinned: 'left',
+      pinned: pinStart,
       width: 170,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -151,14 +155,15 @@ function buildColumnDefsInternal(t: TFunction): GridColDef<AgentMessageRecord>[]
 }
 
 export function buildMessagesColumnDefs(
-  t: TFunction
+  t: TFunction,
+  dir: 'rtl' | 'ltr'
 ): (ColDef<AgentMessageRecord> | ColGroupDef<AgentMessageRecord>)[] {
-  return groupColumns(buildColumnDefsInternal(t), GROUP_ORDER, groupLabel(t));
+  return groupColumns(buildColumnDefsInternal(t, dir), GROUP_ORDER, groupLabel(t));
 }
 
-// colId → translated label (filter chips).
+// colId → translated label (filter chips). Pin side irrelevant here.
 export function buildMessagesColumnLabelsFor(t: TFunction): Record<string, string> {
-  return buildColumnLabels(buildColumnDefsInternal(t));
+  return buildColumnLabels(buildColumnDefsInternal(t, 'ltr'));
 }
 
 // Translated group label → color (tool-panel title painting).

@@ -296,13 +296,15 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
     (params: GetMainMenuItemsParams): (DefaultMenuItem | MenuItemDef)[] => {
       const colId = params.column?.getColId();
       const isPinned = !!params.column?.isPinned();
+      const pinStart = dir === 'rtl' ? 'right' : 'left'; // leading edge
+      const pinLabel = dir === 'rtl' ? t('toolbar.pinRight') : t('toolbar.pinLeft');
       return [
         {
-          name: isPinned ? t('toolbar.unpinColumn') : t('toolbar.pinLeft'),
+          name: isPinned ? t('toolbar.unpinColumn') : pinLabel,
           icon: '<span class="ag-icon ag-icon-pin" role="presentation"></span>',
           action: () => {
             params.api.applyColumnState({
-              state: [{ colId: colId!, pinned: isPinned ? null : 'left' }],
+              state: [{ colId: colId!, pinned: isPinned ? null : pinStart }],
             });
           },
         },
@@ -318,7 +320,7 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
         },
       ];
     },
-    [resetColumns, t]
+    [resetColumns, t, dir]
   );
 
   // ── Detail panel: dbl-click opens, click closes ──
