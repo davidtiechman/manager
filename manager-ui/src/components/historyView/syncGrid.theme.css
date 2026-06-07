@@ -258,3 +258,9 @@
 .snc-grid-wrapper .ag-column-select-column .ag-column-select-column-label {
   color: #4b5563;
 }
+
+/* Quartz adds transform: rotate(0.05deg) to the vertical side-button labels,
+   which rasterizes the text on a GPU layer and makes it blurry — drop it. */
+.snc-grid-wrapper .ag-side-button-label {
+  transform: none;
+}
