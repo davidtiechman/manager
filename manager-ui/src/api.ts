@@ -61,7 +61,7 @@ export class ApiService {
   }
 
   static async getHistoryAgents(): Promise<HistoryAgent[]> {
-    const response = await apiFetch('/history/agents');
+    const response = await apiFetch('/agents-history');
     return response.json();
   }
 
@@ -82,7 +82,7 @@ export class ApiService {
     let response: Response;
     try {
       response = await apiFetch(
-        `/history/agents/${encodeURIComponent(agentId)}/${resource}?${query}`
+        `/agent/${encodeURIComponent(agentId)}/${resource}?${query}`
       );
     } catch {
       throw new Error(errorMessage);
@@ -121,7 +121,7 @@ export class ApiService {
     agentId: string,
     config: ConfigurationTableData
   ): Promise<ConfigurationTableData> {
-    const response = await apiFetch(`/agents/${encodeURIComponent(agentId)}/config`, {
+    const response = await apiFetch(`/agents/${encodeURIComponent(agentId)}/configuration`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
