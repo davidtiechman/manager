@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
-  SCOPE_OPTIONS, GROUP_BY_OPTIONS, SORT_OPTIONS,
+  getScopeOptions, getGroupByOptions, getSortOptions,
   type RosterScope, type RosterGroupBy, type RosterFacets, type RosterSortKey,
 } from './rosterSearch';
 import RosterFacet from './RosterFacet';
@@ -36,15 +38,24 @@ export default function RosterCommandBar({
   groupBy, onGroupByChange, onExpandAll, onCollapseAll,
   total, shown, loading, error,
 }: RosterCommandBarProps) {
+  const { t } = useTranslation('roster');
+  const scopeOptions = useMemo(() => getScopeOptions(t), [t]);
+  const sortOptions = useMemo(() => getSortOptions(t), [t]);
+  const groupByOptions = useMemo(() => getGroupByOptions(t), [t]);
+
   const placeholder =
-    SCOPE_OPTIONS.find((o) => o.value === scope)?.placeholder ?? 'Search…';
+    scopeOptions.find((o) => o.value === scope)?.placeholder ?? t('search.fallbackPlaceholder');
   const isFiltered = shown !== total; // search and/or facets narrowing
 
   let count: string;
   if (error) count = error;
-  else if (loading) count = 'Loading…';
-  else if (isFiltered) count = `${shown.toLocaleString('en-US')} of ${total.toLocaleString('en-US')} agents`;
-  else count = `${total.toLocaleString('en-US')} agents`;
+  else if (loading) count = t('count.loading');
+  else if (isFiltered)
+    count = t('count.filtered', {
+      shown: shown.toLocaleString('en-US'),
+      total: total.toLocaleString('en-US'),
+    });
+  else count = t('count.agents', { n: total.toLocaleString('en-US') });
 
   return (
     <div className="rstr-cmdbar">
@@ -59,27 +70,27 @@ export default function RosterCommandBar({
           value={search}
           placeholder={placeholder}
           onChange={(e) => onSearchChange(e.target.value)}
-          aria-label="Search agents"
+          aria-label={t('search.ariaSearch')}
         />
-        <span className="rstr-scope-label">in</span>
+        <span className="rstr-scope-label">{t('search.in')}</span>
         <RosterSelect
           value={scope}
-          options={SCOPE_OPTIONS}
+          options={scopeOptions}
           onChange={(v) => onScopeChange(v as RosterScope)}
-          ariaLabel="Search scope"
+          ariaLabel={t('search.ariaScope')}
           triggerClassName="rstr-scope-trigger"
           align="right"
         />
       </div>
       <div className="rstr-facets">
         <RosterFacet
-          label="Unit"
+          label={t('facets.unit')}
           options={unitOptions}
           selected={facets.unit}
           onChange={(v) => onFacetChange('unit', v)}
         />
         <RosterFacet
-          label="Platform"
+          label={t('facets.platform')}
           options={platformOptions}
           selected={facets.platform}
           onChange={(v) => onFacetChange('platform', v)}
@@ -87,20 +98,20 @@ export default function RosterCommandBar({
       </div>
       <div className="rstr-cmdbar-right">
         <div className="rstr-sort">
-          <span className="rstr-ctl-label">Sort by</span>
+          <span className="rstr-ctl-label">{t('sort.label')}</span>
           <RosterSelect
             value={sortBy}
-            options={SORT_OPTIONS}
+            options={sortOptions}
             onChange={(v) => onSortByChange(v as RosterSortKey)}
-            ariaLabel="Sort by"
+            ariaLabel={t('sort.label')}
             align="right"
           />
           <button
             type="button"
             className="rstr-ctl rstr-sort-dir"
             onClick={onToggleSortDir}
-            aria-label={`Sort direction: ${sortDir === 'asc' ? 'ascending' : 'descending'}`}
-            title="Toggle sort direction"
+            aria-label={sortDir === 'asc' ? t('sort.ariaAsc') : t('sort.ariaDesc')}
+            title={t('sort.toggleTitle')}
           >
             <svg viewBox="0 0 16 16" fill="none" className={sortDir === 'desc' ? 'is-desc' : ''} aria-hidden="true">
               <path d="M8 3v10M8 3L4.5 6.5M8 3l3.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -108,19 +119,19 @@ export default function RosterCommandBar({
           </button>
         </div>
         <div className="rstr-groupby">
-          <span className="rstr-ctl-label">Group by</span>
+          <span className="rstr-ctl-label">{t('group.label')}</span>
           <RosterSelect
             value={groupBy}
-            options={GROUP_BY_OPTIONS}
+            options={groupByOptions}
             onChange={(v) => onGroupByChange(v as RosterGroupBy)}
-            ariaLabel="Group by"
+            ariaLabel={t('group.label')}
             align="right"
           />
         </div>
         {groupBy !== 'none' && (
           <div className="rstr-bulk">
-            <button type="button" className="rstr-ctl" onClick={onExpandAll}>Expand all</button>
-            <button type="button" className="rstr-ctl" onClick={onCollapseAll}>Collapse all</button>
+            <button type="button" className="rstr-ctl" onClick={onExpandAll}>{t('bulk.expandAll')}</button>
+            <button type="button" className="rstr-ctl" onClick={onCollapseAll}>{t('bulk.collapseAll')}</button>
           </div>
         )}
         <div className="rstr-count">{count}</div>

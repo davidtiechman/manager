@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import './roster.css';
 
 import { ApiService } from '../../api';
@@ -30,6 +31,7 @@ type FlatRow =
 // Roster page: a virtualized card gallery over the client-side agent list, with search, facets, sort, and grouping.
 export default function AgentRosterList() {
   const navigate = useNavigate();
+  const { t } = useTranslation('roster');
 
   const [agents, setAgents] = useState<HistoryAgent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,7 @@ export default function AgentRosterList() {
       .then((data) => { if (!cancelled) setAgents(data); })
       .catch((err) => {
         console.error('[Roster] failed to load history agents:', err);
-        if (!cancelled) setError('Failed to load agents');
+        if (!cancelled) setError(t('error.loadFailed'));
       })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -192,12 +194,12 @@ export default function AgentRosterList() {
               <circle cx="7.5" cy="17" r="1" fill="currentColor" />
             </svg>
           </span>
-          <span className="rstr-topbar-name">Agent History</span>
+          <span className="rstr-topbar-name">{t('topbar.title')}</span>
         </div>
         <div className="rstr-topbar-end">
           <Link to="/" className="rstr-topbar-link">
             <span className="rstr-live-dot" aria-hidden="true" />
-            Real-time monitoring
+            {t('topbar.realtimeLink')}
           </Link>
           <LanguageToggle />
         </div>
@@ -291,14 +293,14 @@ export default function AgentRosterList() {
               <path d="M16 16l4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
             {agents.length === 0 ? (
-              <p className="rstr-empty-title">No agents yet</p>
+              <p className="rstr-empty-title">{t('empty.noAgents')}</p>
             ) : (
               <>
-                <p className="rstr-empty-title">No matching agents</p>
-                <p className="rstr-empty-sub">Try adjusting your search or filters.</p>
+                <p className="rstr-empty-title">{t('empty.noMatch')}</p>
+                <p className="rstr-empty-sub">{t('empty.tryAdjust')}</p>
                 {hasFilters && (
                   <button type="button" className="rstr-empty-clear" onClick={clearAllFilters}>
-                    Clear filters
+                    {t('empty.clearFilters')}
                   </button>
                 )}
               </>

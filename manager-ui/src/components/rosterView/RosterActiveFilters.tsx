@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { RosterFacets } from './rosterSearch';
 
 interface RosterActiveFiltersProps {
@@ -6,13 +7,11 @@ interface RosterActiveFiltersProps {
   onClearAll: () => void;
 }
 
-const FACET_LABELS: Record<keyof RosterFacets, string> = {
-  unit: 'Unit',
-  platform: 'Platform',
-};
-
 // Row of removable chips for the active facet selections, with Clear all.
 export default function RosterActiveFilters({ facets, onRemove, onClearAll }: RosterActiveFiltersProps) {
+  const { t } = useTranslation('roster');
+  const facetLabel = (key: keyof RosterFacets) => t(`facets.${key}`);
+
   const chips = (Object.keys(facets) as (keyof RosterFacets)[]).flatMap((key) =>
     facets[key].map((value) => ({ key, value }))
   );
@@ -26,13 +25,15 @@ export default function RosterActiveFilters({ facets, onRemove, onClearAll }: Ro
           type="button"
           className="rstr-filter-chip"
           onClick={() => onRemove(key, value)}
-          title={`Remove ${FACET_LABELS[key]}: ${value}`}
+          title={t('activeFilters.remove', { label: facetLabel(key), value })}
         >
-          {FACET_LABELS[key]}: {value}
+          {facetLabel(key)}: {value}
           <span className="rstr-filter-chip-x" aria-hidden="true">×</span>
         </button>
       ))}
-      <button type="button" className="rstr-clear-all" onClick={onClearAll}>Clear all</button>
+      <button type="button" className="rstr-clear-all" onClick={onClearAll}>
+        {t('activeFilters.clearAll')}
+      </button>
     </div>
   );
 }
