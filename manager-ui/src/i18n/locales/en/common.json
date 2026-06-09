@@ -1,1 +1,29 @@
-{}
+{
+  "topbar": {
+    "brand": "tactic-spark",
+    "subtitle": "Management",
+    "navAria": "Primary navigation"
+  },
+  "nav": {
+    "realtime": "Real-time",
+    "history": "Agent history"
+  },
+  "profile": {
+    "menuAria": "User menu",
+    "displayName": "Display name",
+    "personalNumber": "Personal number",
+    "email": "Email"
+  },
+  "auth": {
+    "loading": "Loading…",
+    "signIn": "Sign in",
+    "signInHint": "Sign-in required",
+    "accessDenied": {
+      "welcome": "Welcome to",
+      "intro": "We haven't met yet!",
+      "message": "It looks like you don't have access to the system yet",
+      "retryHint": "If you've already been granted access, you can try again",
+      "refresh": "Refresh"
+    }
+  }
+}

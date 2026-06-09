@@ -1,0 +1,262 @@
+/* Shared application top bar — dark professional theme. */
+.atb {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 64px;
+  padding: 0 24px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #0f172a 0%, #14213d 100%);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow: 0 2px 10px rgba(2, 6, 23, 0.35);
+  font-family: inherit;
+}
+
+.atb-start {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.atb-center {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.atb-end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
+
+/* ── Brand ──────────────────────────────────────────────────── */
+.atb-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #f8fafc;
+}
+
+.atb-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.45);
+}
+
+.atb-brand-mark svg { width: 22px; height: 22px; }
+
+.atb-brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.atb-brand-name {
+  font-weight: 800;
+  font-size: 21px;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: #f8fafc;
+}
+
+.atb-brand-sub {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8597b0;
+  white-space: nowrap;
+}
+
+/* ── Page nav ───────────────────────────────────────────────── */
+.atb-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.atb-nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.atb-nav-link:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #e2e8f0;
+}
+
+/* Active page: filled accent pill + glow → clear "you are here". */
+.atb-nav-link--active,
+.atb-nav-link--active:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 3px 12px rgba(37, 99, 235, 0.5);
+}
+
+.atb-nav-icon { display: inline-flex; width: 19px; height: 19px; }
+.atb-nav-icon svg { width: 19px; height: 19px; }
+
+/* ── Profile button: [personal number] | [display name] ─────── */
+.atb-profile-wrap { position: relative; }
+
+.atb-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.atb-profile:hover,
+.atb-profile.is-open {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.atb-profile-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.atb-profile-id {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #e2e8f0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.atb-profile-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(148, 163, 184, 0.4);
+  flex-shrink: 0;
+}
+
+.atb-profile-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.atb-profile-chevron {
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+
+.atb-profile.is-open .atb-profile-chevron { transform: rotate(180deg); }
+
+/* ── Profile popup ──────────────────────────────────────────── */
+.atb-profile-pop {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 10px);
+  z-index: 60;
+  width: 270px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 18px 44px rgba(2, 6, 23, 0.55);
+  color: #e2e8f0;
+}
+
+.atb-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.atb-pop-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.atb-pop-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.atb-pop-name { font-size: 15px; font-weight: 700; color: #f8fafc; }
+.atb-pop-upn { font-size: 12px; color: #94a3b8; font-variant-numeric: tabular-nums; }
+
+.atb-pop-rows { margin: 12px 0 2px; display: flex; flex-direction: column; gap: 10px; }
+
+.atb-pop-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.atb-pop-row dt { font-size: 11px; font-weight: 700; color: #7c8aa3; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+.atb-pop-row dd { margin: 0; font-size: 13.5px; font-weight: 600; color: #e2e8f0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: end; }
+.atb-pop-num { font-variant-numeric: tabular-nums; }
+.atb-pop-email { direction: ltr; }
+
+/* ── Language toggle on the dark bar ────────────────────────── */
+.atb .lang-toggle {
+  color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.atb .lang-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+/* ── Narrow viewports: collapse to icons/avatars ───────────── */
+@media (max-width: 760px) {
+  .atb-brand-sub,
+  .atb-nav-label,
+  .atb-profile-divider,
+  .atb-profile-name { display: none; }
+}

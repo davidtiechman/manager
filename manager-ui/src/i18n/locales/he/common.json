@@ -1,1 +1,29 @@
-{}
+{
+  "topbar": {
+    "brand": "tactic-spark",
+    "subtitle": "ניהול",
+    "navAria": "ניווט ראשי"
+  },
+  "nav": {
+    "realtime": "ניטור זמן אמת",
+    "history": "היסטוריית סוכנים"
+  },
+  "profile": {
+    "menuAria": "תפריט משתמש",
+    "displayName": "שם תצוגה",
+    "personalNumber": "מספר אישי",
+    "email": "אימייל"
+  },
+  "auth": {
+    "loading": "טוען…",
+    "signIn": "התחברות",
+    "signInHint": "נדרשת התחברות למערכת",
+    "accessDenied": {
+      "welcome": "ברוכים הבאים למערכת",
+      "intro": "עוד לא יצא לנו להכיר!",
+      "message": "נראה שעדיין לא קיבלת הרשאה לשימוש במערכת",
+      "retryHint": "אם כבר קיבלת הרשאות אפשר לנסות שוב",
+      "refresh": "רענן"
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import './roster.css';
 
@@ -9,7 +9,7 @@ import AgentCard from './AgentCard';
 import { unitDotColor } from './rosterColors';
 import RosterCommandBar from './RosterCommandBar';
 import RosterActiveFilters from './RosterActiveFilters';
-import LanguageToggle from '../../i18n/LanguageToggle';
+import AppTopBar from '../AppTopBar/AppTopBar';
 import {
   filterAgents, sortAgents, groupAgents, distinctFacetValues,
   DEFAULT_SCOPE, DEFAULT_SORT,
@@ -184,26 +184,7 @@ export default function AgentRosterList() {
 
   return (
     <div className="rstr-page">
-      <header className="rstr-topbar">
-        <div className="rstr-topbar-title">
-          <span className="rstr-topbar-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <rect x="4" y="5" width="16" height="6" rx="1.6" stroke="currentColor" strokeWidth="1.8" />
-              <rect x="4" y="14" width="16" height="6" rx="1.6" stroke="currentColor" strokeWidth="1.8" />
-              <circle cx="7.5" cy="8" r="1" fill="currentColor" />
-              <circle cx="7.5" cy="17" r="1" fill="currentColor" />
-            </svg>
-          </span>
-          <span className="rstr-topbar-name">{t('topbar.title')}</span>
-        </div>
-        <div className="rstr-topbar-end">
-          <Link to="/" className="rstr-topbar-link">
-            <span className="rstr-live-dot" aria-hidden="true" />
-            {t('topbar.realtimeLink')}
-          </Link>
-          <LanguageToggle />
-        </div>
-      </header>
+      <AppTopBar className="rstr-atb" />
       <RosterCommandBar
         search={search}
         scope={scope}

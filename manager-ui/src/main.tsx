@@ -27,6 +27,7 @@ import {
 } from 'ag-grid-enterprise';
 import App from './App';
 import { LanguageProvider } from './i18n/LanguageProvider';
+import { AuthProvider } from './auth/AuthContext';
 import './index.css';
 
 
@@ -55,7 +56,9 @@ LicenseManager.setLicenseKey(import.meta.env.VITE_AG_GRID_LICENSE_KEY ?? "MyComp
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <LanguageProvider>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </LanguageProvider>
   </React.StrictMode>,
 );
