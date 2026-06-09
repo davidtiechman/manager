@@ -1,1 +1,10 @@
-{}
+{
+  "topbar": {
+    "brand": "Agent Manager",
+    "navAria": "Primary navigation"
+  },
+  "nav": {
+    "realtime": "Real-time",
+    "history": "Agent history"
+  }
+}

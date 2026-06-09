@@ -15,6 +15,12 @@
   color: #1e293b;
 }
 
+/* Shared top bar: break out of the page gutter → edge-to-edge. */
+.rstr-page > .atb.rstr-atb {
+  margin: 0 -32px;
+  padding-inline: 32px;
+}
+
 /* ── Top banner (full-bleed dark app bar — anchors the page) ─── */
 .rstr-topbar {
   flex: none;

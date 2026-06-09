@@ -9,9 +9,8 @@ import { useLang } from '../../i18n/LanguageProvider';
 import type { HistoryAgent } from '../../types/history/historyAgent';
 import { formatRosterDate } from '../rosterView/rosterFormat';
 import { unitDotColor } from '../rosterView/rosterColors';
-import ModeNavigationLink from '../ModeNavigationLink';
 import NotFound from '../NotFound';
-import LanguageToggle from '../../i18n/LanguageToggle';
+import AppTopBar from '../AppTopBar/AppTopBar';
 
 import HistoryDataGrid from './grid/HistoryDataGrid';
 import { syncsConfig } from './syncsConfig';
@@ -135,10 +134,10 @@ export default function AgentHistoryPage() {
   return (
     <div className="snc-page">
 
-      {/* ── Page header (single row) ────────────────────────────── */}
-      <header className="snc-header">
+      <AppTopBar />
 
-        <div className="snc-header-start">
+      {/* ── Agent context sub-bar (below the shared bar) ───────── */}
+      <div className="snc-subbar">
           <button
             type="button"
             className="snc-back-btn"
@@ -208,14 +207,7 @@ export default function AgentHistoryPage() {
               </div>
             </div>
           )}
-        </div>
-
-        <div className="snc-header-end">
-          <ModeNavigationLink to="/" label={t('header.realtimeLink')} variant="real-time" />
-          <LanguageToggle />
-        </div>
-
-      </header>
+      </div>
 
       {/* ── Active table (switcher sits in its toolbar) ────────── */}
       {activeTab === 'syncs' ? (

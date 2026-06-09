@@ -1,0 +1,150 @@
+/* Shared application top bar — dark professional theme. */
+.atb {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 60px;
+  padding: 0 24px;
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #0f172a 0%, #14213d 100%);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+  box-shadow: 0 2px 10px rgba(2, 6, 23, 0.35);
+  font-family: inherit;
+}
+
+.atb-start {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.atb-center {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.atb-end {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
+
+/* ── Brand ──────────────────────────────────────────────────── */
+.atb-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #f8fafc;
+}
+
+.atb-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.atb-brand-mark svg { width: 20px; height: 20px; }
+
+.atb-brand-name {
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  color: #f8fafc;
+}
+
+/* ── Page nav ───────────────────────────────────────────────── */
+.atb-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.atb-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border-radius: 9px;
+  text-decoration: none;
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.atb-nav-link:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #e2e8f0;
+}
+
+.atb-nav-link--active {
+  background: rgba(59, 130, 246, 0.2);
+  color: #bfdbfe;
+}
+
+.atb-nav-icon { display: inline-flex; width: 18px; height: 18px; }
+.atb-nav-icon svg { width: 18px; height: 18px; }
+
+/* ── Profile ────────────────────────────────────────────────── */
+.atb-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 3px 4px;
+}
+
+.atb-profile-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.atb-profile-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #e2e8f0;
+  white-space: nowrap;
+}
+
+/* ── Language toggle on the dark bar ────────────────────────── */
+.atb .lang-toggle {
+  color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.atb .lang-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+/* ── Narrow viewports: collapse to icons/avatars ───────────── */
+@media (max-width: 760px) {
+  .atb-brand-name,
+  .atb-nav-label,
+  .atb-profile-name { display: none; }
+}
