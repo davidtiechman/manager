@@ -11,8 +11,7 @@ import Details from './AgentDetails';
 import FilterAgents from './FilterAgents';
 import { ApiService } from '../../api';
 import TankIcon from '../agent-details/TankIcon';
-import ModeNavigationLink from '../ModeNavigationLink';
-import LanguageToggle from '../../i18n/LanguageToggle';
+import AppTopBar from '../AppTopBar/AppTopBar';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
 const DEFAULT_SIDEBAR_WIDTH = Number(import.meta.env.VITE_DEFAULT_SIDEBAR_WIDTH) || 960;
@@ -152,61 +151,41 @@ export default function Preview() {
 
   if (loading) {
     return (
-      <div className="dashboard-layout">
-        <div className="page-header">
-          <ModeNavigationLink
-            to="/history"
-            label={t('header.toHistory')}
-            variant="history"
-          />
-          <h1>{t('header.title')}</h1>
-          <p className="muted">{t('loading')}</p>
-        </div>
+      <div className="page">
+        <AppTopBar />
+        <p className="muted rt-loading">{t('loading')}</p>
       </div>
     );
   }
 
   return (
     <div className={`page ${selectedAgent ? 'has-selected-agent-page' : ''}`}>
-      <FilterAgents agents={agents}>
-        {(filteredAgents, statusFilter, filtersPanel) => (
-          <>
-            <div className="top-bar">
-              <ModeNavigationLink
-                to="/history"
-                label={t('header.toHistory')}
-                variant="history"
-              />
-              <div className="top-bar-status">{statusFilter}</div>
-              <h1 className="top-bar-title">{t('header.title')}</h1>
-              <div className="top-bar-actions">
-                {!selectedAgent && (
-                  <p className="top-bar-hint">
-                    {viewMode === 'icon' ? t('hint.icon') : t('hint.row')}
-                  </p>
-                )}
-                {!selectedAgent && (
-                  <div className="view-toggle" role="group" aria-label={t('view.aria')}>
-                    <button
-                      type="button"
-                      className={`view-toggle-button ${viewMode === 'icon' ? 'active' : ''}`}
-                      onClick={() => setViewMode('icon')}
-                    >
-                      {t('view.icons')}
-                    </button>
-
-                    <button
-                      type="button"
-                      className={`view-toggle-button ${viewMode === 'list' ? 'active' : ''}`}
-                      onClick={() => setViewMode('list')}
-                    >
-                      {t('view.list')}
-                    </button>
-                  </div>
-                )}
-                <LanguageToggle />
-              </div>
+      <FilterAgents
+        agents={agents}
+        groupRowExtra={
+          !selectedAgent ? (
+            <div className="view-toggle" role="group" aria-label={t('view.aria')}>
+              <button
+                type="button"
+                className={`view-toggle-button ${viewMode === 'icon' ? 'active' : ''}`}
+                onClick={() => setViewMode('icon')}
+              >
+                {t('view.icons')}
+              </button>
+              <button
+                type="button"
+                className={`view-toggle-button ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+              >
+                {t('view.list')}
+              </button>
             </div>
+          ) : null
+        }
+      >
+        {(filteredAgents, _statusFilter, filtersPanel) => (
+          <>
+            <AppTopBar />
 
             <div
               className={`home-layout ${

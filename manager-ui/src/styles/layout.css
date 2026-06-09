@@ -15,6 +15,16 @@
   padding-bottom: 0;
 }
 
+/* Shared app bar on the realtime page: full-bleed + reserve 80px like the old top-bar. */
+.page > .atb {
+  margin: 0 -20px 16px;
+  padding-inline: 20px;
+}
+
+.rt-loading {
+  padding: 20px;
+}
+
 .top-bar {
   position: relative;
   height: 64px;

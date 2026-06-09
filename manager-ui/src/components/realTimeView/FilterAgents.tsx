@@ -11,6 +11,8 @@ import {
 
 type FilterAgentsProps = {
   agents: AgentResponse[];
+  // Extra controls rendered on the filter-group row (e.g. the view toggle).
+  groupRowExtra?: ReactNode;
   children: (
     filteredAgents: AgentResponse[],
     statusFilter: ReactNode,
@@ -156,6 +158,7 @@ function findCustomSearchEntry(
 
 export default function FilterAgents({
   agents,
+  groupRowExtra,
   children,
 }: FilterAgentsProps) {
   const { t } = useTranslation('realtime');
@@ -354,7 +357,8 @@ export default function FilterAgents({
       <div className="filters-box">
         <div className="filter-section filter-section-groups">
           <span className="filter-section-title">{t('filter.group')}</span>
-          <div className="filter-chip-group" role="group" aria-label={t('filter.group')}>
+          <div className="filter-group-row">
+            <div className="filter-chip-group" role="group" aria-label={t('filter.group')}>
             {filterFieldGroups.map((group) => (
               <button
                 key={group.value}
@@ -388,6 +392,13 @@ export default function FilterAgents({
                 {t(`groups.${group.value}`)}
               </button>
             ))}
+            </div>
+            {(statusFilter || groupRowExtra) && (
+              <div className="filter-group-extra">
+                {statusFilter}
+                {groupRowExtra}
+              </div>
+            )}
           </div>
 
           {openFilterGroup && (
