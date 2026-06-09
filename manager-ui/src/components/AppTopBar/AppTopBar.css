@@ -124,12 +124,26 @@
 .atb-nav-icon { display: inline-flex; width: 19px; height: 19px; }
 .atb-nav-icon svg { width: 19px; height: 19px; }
 
-/* ── Profile ────────────────────────────────────────────────── */
+/* ── Profile button: [personal number] | [display name] ─────── */
+.atb-profile-wrap { position: relative; }
+
 .atb-profile {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  padding: 3px 4px;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.atb-profile:hover,
+.atb-profile.is-open {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .atb-profile-avatar {
@@ -146,12 +160,86 @@
   flex-shrink: 0;
 }
 
-.atb-profile-name {
-  font-weight: 600;
-  font-size: 15px;
+.atb-profile-id {
+  font-size: 13.5px;
+  font-weight: 700;
   color: #e2e8f0;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+.atb-profile-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(148, 163, 184, 0.4);
+  flex-shrink: 0;
+}
+
+.atb-profile-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.atb-profile-chevron {
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+}
+
+.atb-profile.is-open .atb-profile-chevron { transform: rotate(180deg); }
+
+/* ── Profile popup ──────────────────────────────────────────── */
+.atb-profile-pop {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 10px);
+  z-index: 60;
+  width: 270px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 18px 44px rgba(2, 6, 23, 0.55);
+  color: #e2e8f0;
+}
+
+.atb-pop-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.atb-pop-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.atb-pop-head-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.atb-pop-name { font-size: 15px; font-weight: 700; color: #f8fafc; }
+.atb-pop-upn { font-size: 12px; color: #94a3b8; font-variant-numeric: tabular-nums; }
+
+.atb-pop-rows { margin: 12px 0 2px; display: flex; flex-direction: column; gap: 10px; }
+
+.atb-pop-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.atb-pop-row dt { font-size: 11px; font-weight: 700; color: #7c8aa3; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+.atb-pop-row dd { margin: 0; font-size: 13.5px; font-weight: 600; color: #e2e8f0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: end; }
+.atb-pop-num { font-variant-numeric: tabular-nums; }
+.atb-pop-email { direction: ltr; }
 
 /* ── Language toggle on the dark bar ────────────────────────── */
 .atb .lang-toggle {
@@ -169,5 +257,6 @@
 @media (max-width: 760px) {
   .atb-brand-sub,
   .atb-nav-label,
+  .atb-profile-divider,
   .atb-profile-name { display: none; }
 }

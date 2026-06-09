@@ -4,12 +4,14 @@ import AgentHistoryPage from './components/historyView/AgentHistoryPage';
 import AgentRosterList from './components/rosterView/AgentRosterList';
 import ErrorBoundary from './components/ErrorBoundary';
 import NotFound from './components/NotFound';
+import AuthGate from './auth/AuthGate';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <ErrorBoundary>
-        <Routes>
+    <AuthGate>
+      <BrowserRouter>
+        <ErrorBoundary>
+          <Routes>
           {/* Default view */}
           <Route path="/" element={<Preview />} />
           <Route path="/agents/:agentId" element={<Preview />} />
@@ -19,8 +21,9 @@ export default function App() {
 
           {/* Unknown routes */}
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </ErrorBoundary>
-    </BrowserRouter>
+          </Routes>
+        </ErrorBoundary>
+      </BrowserRouter>
+    </AuthGate>
   );
 }

@@ -1,0 +1,155 @@
+.acd-page {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(900px 500px at 18% 12%, rgba(59, 130, 246, 0.22), transparent 60%),
+    radial-gradient(900px 600px at 85% 88%, rgba(99, 102, 241, 0.2), transparent 60%),
+    linear-gradient(160deg, #0b1220 0%, #0f172a 55%, #0b1120 100%);
+  font-family: 'Inter', 'Rubik', 'Segoe UI', system-ui, sans-serif;
+}
+
+.acd-lang {
+  position: absolute;
+  top: 22px;
+  inset-inline-end: 22px;
+}
+
+.acd-page .lang-toggle {
+  color: #cbd5e1;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.acd-page .lang-toggle:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.acd-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: min(640px, 100%);
+  padding: 64px 56px 52px;
+  border-radius: 28px;
+  background:
+    radial-gradient(600px 300px at 50% -20%, rgba(59, 130, 246, 0.16), transparent 70%),
+    rgba(15, 23, 42, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 40px 90px rgba(2, 6, 23, 0.6);
+}
+
+/* Brand mark with a soft pulsing halo. */
+.acd-mark {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 84px;
+  height: 84px;
+  margin-bottom: 30px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  color: #ffffff;
+  box-shadow: 0 12px 36px rgba(59, 130, 246, 0.55);
+}
+
+.acd-mark svg { width: 44px; height: 44px; }
+
+.acd-mark::before {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 30px;
+  border: 1.5px solid rgba(96, 165, 250, 0.5);
+  animation: acd-halo 2.4s ease-out infinite;
+}
+
+@keyframes acd-halo {
+  0% { transform: scale(0.92); opacity: 0.7; }
+  70% { transform: scale(1.18); opacity: 0; }
+  100% { opacity: 0; }
+}
+
+.acd-eyebrow {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #cbd5e1;
+  letter-spacing: 0.01em;
+}
+
+.acd-brand {
+  margin: 0 0 16px;
+  font-size: 44px;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #93c5fd 0%, #a5b4fc 50%, #c4b5fd 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.acd-intro {
+  margin: 0 0 28px;
+  font-size: 19px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.acd-divider {
+  width: 64px;
+  height: 3px;
+  margin: 0 0 28px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.7), transparent);
+}
+
+.acd-message {
+  margin: 0 0 14px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: #aab6c8;
+  max-width: 440px;
+}
+
+.acd-hint {
+  margin: 0 0 30px;
+  font-size: 14px;
+  color: #7c8aa3;
+}
+
+.acd-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 32px;
+  border: none;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.5);
+  transition: filter 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.acd-refresh:hover { filter: brightness(1.08); box-shadow: 0 10px 30px rgba(37, 99, 235, 0.6); }
+.acd-refresh:active { transform: translateY(1px); }
+.acd-refresh svg { width: 17px; height: 17px; }
+
+@media (max-width: 560px) {
+  .acd-card { padding: 48px 28px 40px; }
+  .acd-brand { font-size: 34px; }
+}

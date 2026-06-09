@@ -1,24 +1,21 @@
-// Shared app shell bar: brand + page nav (start), contextual slot (center), profile + language (end).
+// Shared app top bar: brand, nav, contextual slot, profile, language.
 import type { ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 import LanguageToggle from '../../i18n/LanguageToggle';
-import { useProfile, profileInitials } from '../../profile/ProfileProvider';
+import ProfileMenu from './ProfileMenu';
 import { NAV_ITEMS } from './navConfig';
 import './AppTopBar.css';
 
 interface AppTopBarProps {
-  // Page-specific content (e.g. agent identity, view toggles). Optional.
-  children?: ReactNode;
-  // Extra class on the root, e.g. to flush against a padded page.
+  children?: ReactNode; // contextual content
   className?: string;
 }
 
 export default function AppTopBar({ children, className }: AppTopBarProps) {
   const { t } = useTranslation('common');
   const { pathname } = useLocation();
-  const { displayName } = useProfile();
 
   return (
     <header className={`atb${className ? ` ${className}` : ''}`}>
@@ -56,10 +53,7 @@ export default function AppTopBar({ children, className }: AppTopBarProps) {
       {children && <div className="atb-center">{children}</div>}
 
       <div className="atb-end">
-        <div className="atb-profile" title={displayName}>
-          <span className="atb-profile-avatar" aria-hidden="true">{profileInitials(displayName)}</span>
-          <span className="atb-profile-name">{displayName}</span>
-        </div>
+        <ProfileMenu />
         <LanguageToggle />
       </div>
     </header>
