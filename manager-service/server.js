@@ -839,14 +839,17 @@ app.get('/api/ui/agents/:id/history', handleLoadAgentHistory);
 app.get('/api/history/agents', handleLoadHistoryAgents);
 app.get('/manager/history/agents', handleLoadHistoryAgents);
 app.get('/agents-history', handleLoadHistoryAgents);
+app.get('/manager/agents-history', handleLoadHistoryAgents);
 
 app.get('/api/history/agents/:id/syncs', handleLoadHistoryAgentSyncs);
 app.get('/manager/history/agents/:id/syncs', handleLoadHistoryAgentSyncs);
 app.get('/agent/:id/syncs', handleLoadHistoryAgentSyncs);
+app.get('/manager/agent/:id/syncs', handleLoadHistoryAgentSyncs);
 
 app.get('/api/history/agents/:id/messages', handleLoadHistoryAgentMessages);
 app.get('/manager/history/agents/:id/messages', handleLoadHistoryAgentMessages);
 app.get('/agent/:id/messages', handleLoadHistoryAgentMessages);
+app.get('/manager/agent/:id/messages', handleLoadHistoryAgentMessages);
 
 app.get('/api/ui/agents/:id/config', handleLoadAgentConfig);
 app.get('/manager/agents/:id/config', handleLoadAgentConfig);
@@ -854,6 +857,7 @@ app.get('/manager/agents/:id/config', handleLoadAgentConfig);
 app.put('/api/ui/agents/:id/config', updateAgentConfig);
 app.put('/manager/agents/:id/config', updateAgentConfig);
 app.put('/agents/:id/configuration', updateAgentConfig);
+app.put('/manager/agents/:id/configuration', updateAgentConfig);
 
 app.get('/api/agents/:id/config', async (req, res) => {
     try {
