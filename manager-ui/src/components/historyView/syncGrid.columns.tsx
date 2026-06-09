@@ -1,6 +1,7 @@
 // Sync-history column definitions.
 
 import type { ColDef, ColGroupDef } from 'ag-grid-community';
+import type { TFunction } from 'i18next';
 import type { AgentHistoryRecord } from '../../types/history/agentHistoryRecord';
 import {
   LinkQualityType,
@@ -13,6 +14,7 @@ import {
   groupColumns,
   buildColumnLabels,
   groupColorMap,
+  groupSlug,
   DateCell,
   NumericCell,
   TextCell,
@@ -46,17 +48,26 @@ export const GROUP_COLORS: Record<string, string> = groupColorMap(GROUP_DEFS);
 const col = (def: ColInput<AgentHistoryRecord>): GridColDef<AgentHistoryRecord> =>
   makeCol<AgentHistoryRecord>(def);
 
+// Translated group name, keyed by stable slug.
+const groupLabel = (t: TFunction) => (name: string) => t(`groups.${groupSlug(name)}`);
+
 // ── Column definitions ──────────────────────────────────────────────
 
-function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
+function buildColumnDefsInternal(
+  t: TFunction,
+  dir: 'rtl' | 'ltr'
+): GridColDef<AgentHistoryRecord>[] {
+  const c = (id: string) => t(`sync.columns.${id}`);
+  const tip = (id: string) => t(`sync.tooltips.${id}`);
+  const pinStart = dir === 'rtl' ? 'right' : 'left'; // freeze on the leading edge
   return [
     // ── General ──────────────────────────────────────────────────
     col({
       group: 'General',
       field: 'createdAt',
-      headerName: 'Created At',
-      headerTooltip: 'Created At',
-      pinned: 'left',
+      headerName: c('createdAt'),
+      headerTooltip: tip('createdAt'),
+      pinned: pinStart,
       width: 160,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -64,8 +75,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'General',
       field: 'id',
-      headerName: 'ID',
-      headerTooltip: 'ID',
+      headerName: c('id'),
+      headerTooltip: tip('id'),
       width: 82,
       minWidth: 72,
       filter: 'agNumberColumnFilter',
@@ -75,8 +86,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'General',
       field: 'status',
-      headerName: 'Status',
-      headerTooltip: 'Status',
+      headerName: c('status'),
+      headerTooltip: tip('status'),
       width: 105,
       cellRenderer: StatusCell,
       enum: StatusAgent,
@@ -86,8 +97,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Sync Details',
       colId: 'selectedLink',
-      headerName: 'Selected Link',
-      headerTooltip: 'Selected Link',
+      headerName: c('selectedLink'),
+      headerTooltip: tip('selectedLink'),
       valueGetter: (p) => p.data?.details?.selectedLink,
       flex: 1.5,
       enum: LinkType,
@@ -95,8 +106,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Sync Details',
       colId: 'schedulerMode',
-      headerName: 'Scheduler Mode',
-      headerTooltip: 'Scheduler Mode',
+      headerName: c('schedulerMode'),
+      headerTooltip: tip('schedulerMode'),
       valueGetter: (p) => p.data?.details?.schedulerMode,
       flex: 1.5,
       enum: SchedulerMode,
@@ -104,8 +115,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Sync Details',
       colId: 'messagesInQueue',
-      headerName: 'Msgs In Queue',
-      headerTooltip: 'Messages In Queue',
+      headerName: c('messagesInQueue'),
+      headerTooltip: tip('messagesInQueue'),
       valueGetter: (p) => p.data?.details?.messagesInQueue,
       flex: 1,
       filter: 'agNumberColumnFilter',
@@ -114,8 +125,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Sync Details',
       colId: 'nextDeliveryTime',
-      headerName: 'Next Delivery',
-      headerTooltip: 'Next Delivery Time',
+      headerName: c('nextDeliveryTime'),
+      headerTooltip: tip('nextDeliveryTime'),
       valueGetter: (p) => p.data?.details?.nextDeliveryTime,
       flex: 2,
       cellRenderer: DateCell,
@@ -125,8 +136,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Sync Details',
       colId: 'geoData',
-      headerName: 'Geo Data',
-      headerTooltip: 'Geo Data',
+      headerName: c('geoData'),
+      headerTooltip: tip('geoData'),
       valueGetter: (p) => p.data?.details?.geoData,
       flex: 1,
       cellRenderer: TextCell,
@@ -136,8 +147,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Sync Details',
       colId: 'serverLut',
-      headerName: 'Server LUT',
-      headerTooltip: 'Server Last Update Time',
+      headerName: c('serverLut'),
+      headerTooltip: tip('serverLut'),
       valueGetter: (p) => p.data?.details?.serverLut,
       flex: 2,
       cellRenderer: DateCell,
@@ -149,8 +160,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Link Quality',
       colId: 'linkType',
-      headerName: 'Link Type',
-      headerTooltip: 'Link Type',
+      headerName: c('linkType'),
+      headerTooltip: tip('linkType'),
       valueGetter: (p) => p.data?.link_quality?.type,
       flex: 1,
       enum: LinkType,
@@ -158,8 +169,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Link Quality',
       colId: 'linkAvailable',
-      headerName: 'Available',
-      headerTooltip: 'Link Available',
+      headerName: c('linkAvailable'),
+      headerTooltip: tip('linkAvailable'),
       valueGetter: (p) => p.data?.link_quality?.available,
       flex: 1,
       cellRenderer: AvailabilityCell,
@@ -172,8 +183,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Link Quality',
       colId: 'linkQuality',
-      headerName: 'Quality',
-      headerTooltip: 'Link Quality',
+      headerName: c('linkQuality'),
+      headerTooltip: tip('linkQuality'),
       valueGetter: (p) => p.data?.link_quality?.quality,
       flex: 1,
       enum: LinkQualityType,
@@ -181,8 +192,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Link Quality',
       colId: 'latency',
-      headerName: 'Latency (ms)',
-      headerTooltip: 'Latency in milliseconds',
+      headerName: c('latency'),
+      headerTooltip: tip('latency'),
       valueGetter: (p) => p.data?.link_quality?.latency,
       flex: 1,
       filter: 'agNumberColumnFilter',
@@ -191,8 +202,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Link Quality',
       colId: 'reliability',
-      headerName: 'Reliability',
-      headerTooltip: 'Link Reliability',
+      headerName: c('reliability'),
+      headerTooltip: tip('reliability'),
       valueGetter: (p) => p.data?.link_quality?.reliability,
       flex: 1,
       filter: 'agNumberColumnFilter',
@@ -202,8 +213,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Link Quality',
       colId: 'linkTimestamp',
-      headerName: 'Link Timestamp',
-      headerTooltip: 'Link Quality Timestamp',
+      headerName: c('linkTimestamp'),
+      headerTooltip: tip('linkTimestamp'),
       valueGetter: (p) => p.data?.link_quality?.timestamp,
       flex: 2,
       cellRenderer: DateCell,
@@ -215,8 +226,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Agent Config',
       colId: 'cfgSchedulerMode',
-      headerName: 'Cfg Scheduler',
-      headerTooltip: 'Agent Config — Scheduler Mode',
+      headerName: c('cfgSchedulerMode'),
+      headerTooltip: tip('cfgSchedulerMode'),
       valueGetter: (p) => p.data?.details?.agentConfig?.schedulerMode,
       flex: 1.2,
       enum: SchedulerMode,
@@ -225,8 +236,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Agent Config',
       colId: 'cfgSelectedLink',
-      headerName: 'Cfg Link',
-      headerTooltip: 'Agent Config — Selected Link',
+      headerName: c('cfgSelectedLink'),
+      headerTooltip: tip('cfgSelectedLink'),
       valueGetter: (p) => p.data?.details?.agentConfig?.selectedLink,
       flex: 1,
       enum: LinkType,
@@ -235,8 +246,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Agent Config',
       colId: 'intervalMs',
-      headerName: 'Interval (ms)',
-      headerTooltip: 'Agent Config — Interval (ms)',
+      headerName: c('intervalMs'),
+      headerTooltip: tip('intervalMs'),
       valueGetter: (p) => p.data?.details?.agentConfig?.intervalMs,
       flex: 1,
       filter: 'agNumberColumnFilter',
@@ -246,8 +257,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Agent Config',
       colId: 'maxRetries',
-      headerName: 'Max Retries',
-      headerTooltip: 'Agent Config — Max Retries',
+      headerName: c('maxRetries'),
+      headerTooltip: tip('maxRetries'),
       valueGetter: (p) => p.data?.details?.agentConfig?.maxRetries,
       flex: 1,
       filter: 'agNumberColumnFilter',
@@ -257,8 +268,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Agent Config',
       colId: 'batchSize',
-      headerName: 'Batch Size',
-      headerTooltip: 'Agent Config — Batch Size',
+      headerName: c('batchSize'),
+      headerTooltip: tip('batchSize'),
       valueGetter: (p) => p.data?.details?.agentConfig?.batchSize,
       flex: 1,
       filter: 'agNumberColumnFilter',
@@ -268,8 +279,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Agent Config',
       colId: 'isManualMode',
-      headerName: 'Manual Mode',
-      headerTooltip: 'Agent Config — Manual Mode',
+      headerName: c('isManualMode'),
+      headerTooltip: tip('isManualMode'),
       valueGetter: (p) => p.data?.details?.agentConfig?.isManualMode,
       flex: 1,
       cellRenderer: AvailabilityCell,
@@ -283,8 +294,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Agent Config',
       colId: 'sparkProxyUrl',
-      headerName: 'Spark Proxy URL',
-      headerTooltip: 'Agent Config — Spark Proxy URL',
+      headerName: c('sparkProxyUrl'),
+      headerTooltip: tip('sparkProxyUrl'),
       valueGetter: (p) => p.data?.details?.agentConfig?.sparkProxyUrl,
       flex: 2,
       cellRenderer: TextCell,
@@ -294,8 +305,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Agent Config',
       colId: 'token',
-      headerName: 'Token',
-      headerTooltip: 'Agent Config — Token',
+      headerName: c('token'),
+      headerTooltip: tip('token'),
       valueGetter: (p) => p.data?.details?.agentConfig?.token,
       flex: 1.5,
       cellRenderer: TextCell,
@@ -305,8 +316,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Agent Config',
       colId: 'cfgCreatedAt',
-      headerName: 'Cfg Created At',
-      headerTooltip: 'Agent Config — Created At',
+      headerName: c('cfgCreatedAt'),
+      headerTooltip: tip('cfgCreatedAt'),
       valueGetter: (p) => p.data?.details?.agentConfig?.createdAt,
       flex: 2,
       cellRenderer: DateCell,
@@ -318,8 +329,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Platform Data',
       colId: 'unit',
-      headerName: 'Unit',
-      headerTooltip: 'Platform — Unit',
+      headerName: c('unit'),
+      headerTooltip: tip('unit'),
       valueGetter: (p) => p.data?.details?.platfromData?.unit,
       flex: 1.2,
       cellRenderer: TextCell,
@@ -329,8 +340,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Platform Data',
       colId: 'unitCode',
-      headerName: 'Unit Code',
-      headerTooltip: 'Platform — Unit Code',
+      headerName: c('unitCode'),
+      headerTooltip: tip('unitCode'),
       valueGetter: (p) => p.data?.details?.platfromData?.unitCode,
       flex: 1,
       cellRenderer: TextCell,
@@ -340,8 +351,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Platform Data',
       colId: 'zayadId',
-      headerName: 'Zayad ID',
-      headerTooltip: 'Platform — Zayad ID',
+      headerName: c('zayadId'),
+      headerTooltip: tip('zayadId'),
       valueGetter: (p) => p.data?.details?.platfromData?.zayadId,
       flex: 1.2,
       filter: 'agNumberColumnFilter',
@@ -351,8 +362,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Platform Data',
       colId: 'platform',
-      headerName: 'Platform',
-      headerTooltip: 'Platform — Name',
+      headerName: c('platform'),
+      headerTooltip: tip('platform'),
       valueGetter: (p) => p.data?.details?.platfromData?.platform,
       flex: 1.2,
       cellRenderer: TextCell,
@@ -362,8 +373,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Platform Data',
       colId: 'platformId',
-      headerName: 'Platform ID',
-      headerTooltip: 'Platform — ID',
+      headerName: c('platformId'),
+      headerTooltip: tip('platformId'),
       valueGetter: (p) => p.data?.details?.platfromData?.platformId,
       flex: 1.2,
       filter: 'agNumberColumnFilter',
@@ -373,8 +384,8 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
     col({
       group: 'Platform Data',
       colId: 'platCreatedAt',
-      headerName: 'Plat Created At',
-      headerTooltip: 'Platform — Created At',
+      headerName: c('platCreatedAt'),
+      headerTooltip: tip('platCreatedAt'),
       valueGetter: (p) => p.data?.details?.platfromData?.createdAt,
       flex: 2,
       cellRenderer: DateCell,
@@ -386,9 +397,19 @@ function buildColumnDefsInternal(): GridColDef<AgentHistoryRecord>[] {
 
 // ── Public API ──────────────────────────────────────────────────────
 
-export function buildColumnDefs(): (ColDef<AgentHistoryRecord> | ColGroupDef<AgentHistoryRecord>)[] {
-  return groupColumns(buildColumnDefsInternal(), GROUP_ORDER);
+export function buildColumnDefs(
+  t: TFunction,
+  dir: 'rtl' | 'ltr'
+): (ColDef<AgentHistoryRecord> | ColGroupDef<AgentHistoryRecord>)[] {
+  return groupColumns(buildColumnDefsInternal(t, dir), GROUP_ORDER, groupLabel(t));
 }
 
-// colId → human label.
-export const COLUMN_LABELS: Record<string, string> = buildColumnLabels(buildColumnDefsInternal());
+// colId → translated label.
+export function buildColumnLabelsFor(t: TFunction): Record<string, string> {
+  return buildColumnLabels(buildColumnDefsInternal(t, 'ltr'));
+}
+
+// Translated group label → color.
+export function groupLabelColors(t: TFunction): Record<string, string> {
+  return Object.fromEntries(GROUP_DEFS.map((g) => [t(`groups.${groupSlug(g.name)}`), g.color]));
+}

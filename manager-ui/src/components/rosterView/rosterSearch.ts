@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import type { HistoryAgent } from '../../types/history/historyAgent';
 
 export type RosterScope =
@@ -9,16 +10,18 @@ export interface ScopeOption {
   placeholder: string; // rewrites the search placeholder
 }
 
-export const SCOPE_OPTIONS: ScopeOption[] = [
-  { value: 'callsign',   label: 'Call Sign',   placeholder: 'Search call sign…' },
-  { value: 'id',         label: 'Agent ID',    placeholder: 'Search agent id…' },
-  { value: 'zayadId',    label: 'Zayad ID',    placeholder: 'Search zayad id…' },
-  { value: 'unit',       label: 'Unit',        placeholder: 'Search unit…' },
-  { value: 'platform',   label: 'Platform',    placeholder: 'Search platform…' },
-  { value: 'platformId', label: 'Platform ID', placeholder: 'Search platform id…' },
-  { value: 'unitCode',   label: 'Unit Code',   placeholder: 'Search unit code…' },
-  { value: 'all',        label: 'All fields',  placeholder: 'Search all fields…' },
+const SCOPE_ORDER: RosterScope[] = [
+  'callsign', 'id', 'zayadId', 'unit', 'platform', 'platformId', 'unitCode', 'all',
 ];
+
+// Translated scope options for the search selector.
+export function getScopeOptions(t: TFunction): ScopeOption[] {
+  return SCOPE_ORDER.map((value) => ({
+    value,
+    label: t(`scope.${value}`),
+    placeholder: t(`placeholder.${value}`),
+  }));
+}
 
 export const DEFAULT_SCOPE: RosterScope = 'callsign';
 
@@ -52,24 +55,24 @@ function matchesFacets(agent: HistoryAgent, facets: RosterFacets): boolean {
 // ── Group by ──────────────────────────────────────────────────
 export type RosterGroupBy = 'none' | 'unit' | 'platform';
 
-export const GROUP_BY_OPTIONS: { value: RosterGroupBy; label: string }[] = [
-  { value: 'none',     label: 'None' },
-  { value: 'unit',     label: 'Unit' },
-  { value: 'platform', label: 'Platform' },
-];
+const GROUP_BY_ORDER: RosterGroupBy[] = ['none', 'unit', 'platform'];
+
+// Translated group-by options.
+export function getGroupByOptions(t: TFunction): { value: RosterGroupBy; label: string }[] {
+  return GROUP_BY_ORDER.map((value) => ({ value, label: t(`groupBy.${value}`) }));
+}
 
 // ── Sort ──────────────────────────────────────────────────────
 export type RosterSortKey = 'callsign' | 'id' | 'createdAt' | 'zayadId' | 'platformId' | 'unit' | 'platform';
 
-export const SORT_OPTIONS: { value: RosterSortKey; label: string }[] = [
-  { value: 'callsign',   label: 'Call Sign' },
-  { value: 'id',         label: 'Agent ID' },
-  { value: 'createdAt',  label: 'Created' },
-  { value: 'zayadId',    label: 'Zayad ID' },
-  { value: 'platformId', label: 'Platform ID' },
-  { value: 'unit',       label: 'Unit' },
-  { value: 'platform',   label: 'Platform' },
+const SORT_ORDER: RosterSortKey[] = [
+  'callsign', 'id', 'createdAt', 'zayadId', 'platformId', 'unit', 'platform',
 ];
+
+// Translated sort options.
+export function getSortOptions(t: TFunction): { value: RosterSortKey; label: string }[] {
+  return SORT_ORDER.map((value) => ({ value, label: t(`sortOptions.${value}`) }));
+}
 
 export const DEFAULT_SORT: RosterSortKey = 'callsign';
 

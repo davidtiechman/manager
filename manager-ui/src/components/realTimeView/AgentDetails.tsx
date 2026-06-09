@@ -5,6 +5,7 @@ import LinkQualityTable from '../agent-details/LinkQualityTable';
 import PlatformTable from '../agent-details/PlatformTable';
 import SyncDetailsTable from '../agent-details/SyncDetailsTable';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
   agent: AgentResponse;
@@ -26,28 +27,29 @@ export default function AgentDetails({
   configurationMessage,
   onConfigurationMessageChange,
 }: Props) {
+  const { t } = useTranslation('realtime');
   const unitCode = agent.status.details.agentData.unit_code;
 
   return (
     <div className="details-panel">
       <div className="details-header">
         <div className="details-title-block">
-          <h2>Agent Details</h2>
+          <h2>{t('details.title')}</h2>
         </div>
         <div className="details-header-actions details-header-actions-left">
           <Link to={`/history/${agent.id}`}
             state={{backTo: `/agents/${agent.id}`}}
            className="details-history-button">
-            History
+            {t('details.history')}
           </Link>
           <div className="details-agent-badges">
-            <p className="details-agent-id">Agent ID: {agent.id}</p>
-            <p className="details-agent-id">Unit Code: {unitCode}</p>
+            <p className="details-agent-id">{t('details.agentId')}: {agent.id}</p>
+            <p className="details-agent-id">{t('details.unitCode')}: {unitCode}</p>
           </div>
         </div>
         <div className="details-header-actions details-header-actions-right">
           <button type="button" className="details-close-button" onClick={onClose}>
-            Close
+            {t('details.close')}
           </button>
         </div>
       </div>

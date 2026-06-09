@@ -8,6 +8,7 @@ export interface GridConfig<T> {
   storageKey: string;                                  // namespaces saved layout
   columnDefs: (ColDef<T> | ColGroupDef<T>)[];
   groupColors: Record<string, string>;                 // slug → color
+  groupLabelColors: Record<string, string>;            // translated group label → color
   columnLabels: Record<string, string>;                // colId → label
   blockSize: number;
   fetchRows: (agentId: string, params: IrmParams) => Promise<IrmResponse<T>>;

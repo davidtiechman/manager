@@ -36,6 +36,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  gap: 10px;
   flex-shrink: 0;
 }
 
@@ -50,7 +51,7 @@
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   color: #2563eb;
   flex-shrink: 0;
-  margin-right: 12px;
+  margin-inline-end: 12px;
 }
 
 .snc-agent-avatar svg {
@@ -63,7 +64,8 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 10px 6px 4px;
+  padding-block: 6px;
+  padding-inline: 4px 10px;
   border: none;
   border-radius: 6px;
   background: transparent;
@@ -165,9 +167,9 @@
   display: flex;
   align-items: center;
   min-width: 0;
-  margin-left: 18px;
-  padding-left: 18px;
-  border-left: 1px solid #e8edf3;
+  margin-inline-start: 18px;
+  padding-inline-start: 18px;
+  border-inline-start: 1px solid #e8edf3;
   overflow: hidden;
 }
 
@@ -176,17 +178,17 @@
   flex-direction: column;
   gap: 2px;
   padding: 0 16px;
-  border-right: 1px solid #eef2f6;
+  border-inline-end: 1px solid #eef2f6;
   min-width: 0;
 }
 
 .snc-meta-item:first-child {
-  padding-left: 0;
+  padding-inline-start: 0;
 }
 
 .snc-meta-item--created {
-  border-right: none;
-  padding-right: 0;
+  border-inline-end: none;
+  padding-inline-end: 0;
 }
 
 .snc-meta-label {
@@ -283,7 +285,8 @@
 .snc-header .mode-navigation-link.real-time {
   position: relative;
   gap: 9px;
-  padding: 8px 16px 8px 14px;
+  padding-block: 8px;
+  padding-inline: 14px 16px;
   border: 1px solid #bbf7d0;
   border-radius: 9px;
   background: #f0fdf4;
@@ -421,7 +424,7 @@
 .snc-filter-more-panel {
   position: absolute;
   top: calc(100% + 15px);
-  left: 0;
+  inset-inline-start: 0;
   z-index: 50;
   display: flex;
   flex-wrap: wrap;
@@ -481,14 +484,15 @@
   color: #64748b;
   text-transform: uppercase;
   flex-shrink: 0;
-  margin-right: 2px;
+  margin-inline-end: 2px;
 }
 
 .snc-filter-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 7px 2px 9px;
+  padding-block: 2px;
+  padding-inline: 9px 7px;
   border: 1px solid #93c5fd;
   border-radius: 20px;
   background: #eff6ff;
@@ -518,7 +522,7 @@
 }
 
 .snc-filter-clear-all {
-  margin-left: 2px;
+  margin-inline-start: 2px;
   padding: 3px 10px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
@@ -535,4 +539,12 @@
 .snc-filter-clear-all:hover {
   background: #f1f5f9;
   color: #1e293b;
+}
+
+/* ── RTL overrides ── */
+[dir='rtl'] .snc-back-btn svg {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .snc-back-btn:hover svg {
+  transform: scaleX(-1) translateX(-2px);
 }

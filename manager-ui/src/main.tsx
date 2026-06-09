@@ -1,5 +1,5 @@
 import '@fontsource/inter';
-import '@fontsource/heebo';
+import '@fontsource/rubik';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ModuleRegistry } from 'ag-grid-community';
@@ -13,6 +13,7 @@ import {
   RowSelectionModule,
   TooltipModule,
   ValidationModule,
+  LocaleModule,
 } from 'ag-grid-community';
 import {
   LicenseManager,
@@ -25,6 +26,7 @@ import {
   ClipboardModule,
 } from 'ag-grid-enterprise';
 import App from './App';
+import { LanguageProvider } from './i18n/LanguageProvider';
 import './index.css';
 
 
@@ -38,6 +40,7 @@ ModuleRegistry.registerModules([
   RowSelectionModule,
   TooltipModule,
   ValidationModule,
+  LocaleModule,
   SetFilterModule,
   ColumnMenuModule,
   ContextMenuModule,
@@ -51,6 +54,8 @@ LicenseManager.setLicenseKey(import.meta.env.VITE_AG_GRID_LICENSE_KEY ?? "MyComp
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App />
+    <LanguageProvider>
+      <App />
+    </LanguageProvider>
   </React.StrictMode>,
 );

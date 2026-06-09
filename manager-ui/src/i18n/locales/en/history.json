@@ -1,0 +1,152 @@
+{
+  "tabs": {
+    "syncs": "Syncs",
+    "messages": "Messages"
+  },
+  "header": {
+    "back": "Back",
+    "backToHistory": "Back to history",
+    "history": "History",
+    "agent": "Agent",
+    "noAgentId": "No agent id in the URL.",
+    "agentNotFound": "Agent \"{{id}}\" not found",
+    "historyTables": "History tables",
+    "realtimeLink": "Real-Time Monitoring"
+  },
+  "meta": {
+    "unit": "Unit",
+    "platform": "Platform",
+    "zayadId": "Zayad ID",
+    "platformId": "Platform ID",
+    "unitCode": "Unit Code",
+    "created": "Created"
+  },
+  "groups": {
+    "general": "General",
+    "sync-details": "Sync Details",
+    "agent-config": "Agent Config",
+    "platform-data": "Platform Data",
+    "link-quality": "Link Quality",
+    "message": "Message",
+    "payload": "Payload"
+  },
+  "sync": {
+    "columns": {
+      "createdAt": "Created At",
+      "id": "ID",
+      "agentId": "Agent ID",
+      "status": "Status",
+      "selectedLink": "Selected Link",
+      "schedulerMode": "Scheduler Mode",
+      "messagesInQueue": "Msgs In Queue",
+      "nextDeliveryTime": "Next Delivery",
+      "geoData": "Geo Data",
+      "serverLut": "Server LUT",
+      "linkType": "Link Type",
+      "linkAvailable": "Available",
+      "linkQuality": "Quality",
+      "latency": "Latency (ms)",
+      "reliability": "Reliability",
+      "linkTimestamp": "Link Timestamp",
+      "timestamp": "Timestamp",
+      "cfgSchedulerMode": "Cfg Scheduler",
+      "cfgSelectedLink": "Cfg Link",
+      "intervalMs": "Interval (ms)",
+      "maxRetries": "Max Retries",
+      "batchSize": "Batch Size",
+      "isManualMode": "Manual Mode",
+      "sparkProxyUrl": "Spark Proxy URL",
+      "token": "Token",
+      "cfgCreatedAt": "Cfg Created At",
+      "unit": "Unit",
+      "unitCode": "Unit Code",
+      "zayadId": "Zayad ID",
+      "platform": "Platform",
+      "platformId": "Platform ID",
+      "platCreatedAt": "Plat Created At"
+    },
+    "tooltips": {
+      "createdAt": "Created At",
+      "id": "ID",
+      "status": "Status",
+      "selectedLink": "Selected Link",
+      "schedulerMode": "Scheduler Mode",
+      "messagesInQueue": "Messages In Queue",
+      "nextDeliveryTime": "Next Delivery Time",
+      "geoData": "Geo Data",
+      "serverLut": "Server Last Update Time",
+      "linkType": "Link Type",
+      "linkAvailable": "Link Available",
+      "linkQuality": "Link Quality",
+      "latency": "Latency in milliseconds",
+      "reliability": "Link Reliability",
+      "linkTimestamp": "Link Quality Timestamp",
+      "cfgSchedulerMode": "Agent Config — Scheduler Mode",
+      "cfgSelectedLink": "Agent Config — Selected Link",
+      "intervalMs": "Agent Config — Interval (ms)",
+      "maxRetries": "Agent Config — Max Retries",
+      "batchSize": "Agent Config — Batch Size",
+      "isManualMode": "Agent Config — Manual Mode",
+      "sparkProxyUrl": "Agent Config — Spark Proxy URL",
+      "token": "Agent Config — Token",
+      "cfgCreatedAt": "Agent Config — Created At",
+      "unit": "Platform — Unit",
+      "unitCode": "Platform — Unit Code",
+      "zayadId": "Platform — Zayad ID",
+      "platform": "Platform — Name",
+      "platformId": "Platform — ID",
+      "platCreatedAt": "Platform — Created At"
+    }
+  },
+  "messages": {
+    "columns": {
+      "receivedAt": "Received At",
+      "sentAt": "Sent At",
+      "id": "ID",
+      "agentId": "Agent ID",
+      "contentType": "Content Type",
+      "priority": "Priority",
+      "processed": "Processed",
+      "content": "Content",
+      "contentJson": "Content JSON",
+      "contentExcel": "Content Excel"
+    },
+    "tooltips": {
+      "receivedAt": "Received At",
+      "sentAt": "Sent At",
+      "id": "Message ID",
+      "agentId": "Agent ID",
+      "contentType": "Content Type",
+      "priority": "Priority",
+      "processed": "Processed",
+      "content": "Content",
+      "contentJson": "Content JSON",
+      "contentExcel": "Content Excel"
+    }
+  },
+  "toolbar": {
+    "columns": "Columns",
+    "filters": "Filters",
+    "filtersLabel": "Filters:",
+    "filtered": "Filtered",
+    "total": "Total",
+    "rows": "rows",
+    "clearAll": "Clear all",
+    "clearFilter": "Clear {{label}} filter",
+    "pinLeft": "Pin Left",
+    "pinRight": "Pin Right",
+    "unpinColumn": "Unpin Column",
+    "resetColumns": "Reset Columns"
+  },
+  "detail": {
+    "syncEyebrow": "Sync",
+    "syncAria": "Sync details",
+    "messageEyebrow": "Message",
+    "messageAria": "Message details",
+    "closeDetails": "Close details"
+  },
+  "noRows": {
+    "syncs": "No records for this agent",
+    "messages": "No messages for this agent"
+  }
+}

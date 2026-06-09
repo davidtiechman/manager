@@ -1,0 +1,87 @@
+{
+  "topbar": {
+    "title": "היסטוריית סוכנים",
+    "realtimeLink": "ניטור בזמן אמת"
+  },
+  "empty": {
+    "noAgents": "אין סוכנים עדיין",
+    "noMatch": "לא נמצאו סוכנים תואמים",
+    "tryAdjust": "נסה/י לשנות את החיפוש או הסינון.",
+    "clearFilters": "ניקוי סינון"
+  },
+  "search": {
+    "in": "ב־",
+    "fallbackPlaceholder": "חיפוש…",
+    "ariaSearch": "חיפוש סוכנים",
+    "ariaScope": "תחום חיפוש"
+  },
+  "sort": {
+    "label": "מיון לפי",
+    "ariaAsc": "כיוון מיון: עולה",
+    "ariaDesc": "כיוון מיון: יורד",
+    "toggleTitle": "החלפת כיוון מיון"
+  },
+  "group": {
+    "label": "קיבוץ לפי"
+  },
+  "bulk": {
+    "expandAll": "הרחבת הכול",
+    "collapseAll": "כיווץ הכול"
+  },
+  "count": {
+    "loading": "טוען…",
+    "agents": "{{n}} סוכנים",
+    "filtered": "{{shown}} מתוך {{total}} סוכנים"
+  },
+  "facets": {
+    "unit": "יחידה",
+    "platform": "סוג פלטפורמה"
+  },
+  "activeFilters": {
+    "remove": "הסרה {{label}}: {{value}}",
+    "clearAll": "ניקוי הכול"
+  },
+  "error": {
+    "loadFailed": "טעינת הסוכנים נכשלה"
+  },
+  "scope": {
+    "callsign": "או\"ק",
+    "id": "מזהה סוכן",
+    "zayadId": "מזהה צי\"די",
+    "unit": "יחידה",
+    "platform": "סוג פלטפורמה",
+    "platformId": "צ",
+    "unitCode": "קוד יחידה",
+    "all": "כל השדות"
+  },
+  "placeholder": {
+    "callsign": "חיפוש או\"ק…",
+    "id": "חיפוש מזהה סוכן…",
+    "zayadId": "חיפוש מזהה צי\"די…",
+    "unit": "חיפוש יחידה…",
+    "platform": "חיפוש פלטפורמה…",
+    "platformId": "חיפוש צ…",
+    "unitCode": "חיפוש קוד יחידה…",
+    "all": "חיפוש בכל השדות…"
+  },
+  "groupBy": {
+    "none": "ללא",
+    "unit": "יחידה",
+    "platform": "סוג פלטפורמה"
+  },
+  "sortOptions": {
+    "callsign": "או\"ק",
+    "id": "מזהה סוכן",
+    "createdAt": "נוצר",
+    "zayadId": "מזהה צי\"די",
+    "platformId": "צ",
+    "unit": "יחידה",
+    "platform": "סוג פלטפורמה"
+  },
+  "card": {
+    "zayadId": "מזהה צי\"די",
+    "platformId": "צ",
+    "unitCode": "קוד יחידה",
+    "created": "נוצר"
+  }
+}

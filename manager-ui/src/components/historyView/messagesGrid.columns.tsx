@@ -1,6 +1,7 @@
 // Messages column definitions (all visible).
 
 import type { ColDef, ColGroupDef } from 'ag-grid-community';
+import type { TFunction } from 'i18next';
 import type { AgentMessageRecord } from '../../types/history/agentMessageRecord';
 import { ContentType } from '../../types/serverEnums';
 import {
@@ -8,6 +9,7 @@ import {
   groupColumns,
   buildColumnLabels,
   groupColorMap,
+  groupSlug,
   DateCell,
   NumericCell,
   TextCell,
@@ -34,15 +36,24 @@ export const MESSAGES_GROUP_COLORS: Record<string, string> = groupColorMap(MESSA
 const col = (def: ColInput<AgentMessageRecord>): GridColDef<AgentMessageRecord> =>
   makeCol<AgentMessageRecord>(def);
 
-function buildColumnDefsInternal(): GridColDef<AgentMessageRecord>[] {
+// Translated group name, keyed by stable slug.
+const groupLabel = (t: TFunction) => (name: string) => t(`groups.${groupSlug(name)}`);
+
+function buildColumnDefsInternal(
+  t: TFunction,
+  dir: 'rtl' | 'ltr'
+): GridColDef<AgentMessageRecord>[] {
+  const c = (id: string) => t(`messages.columns.${id}`);
+  const tip = (id: string) => t(`messages.tooltips.${id}`);
+  const pinStart = dir === 'rtl' ? 'right' : 'left'; // freeze on the leading edge
   return [
     // ── General ──────────────────────────────────────────────────
     col({
       group: 'General',
       field: 'receivedAt',
-      headerName: 'Received At',
-      headerTooltip: 'Received At',
-      pinned: 'left',
+      headerName: c('receivedAt'),
+      headerTooltip: tip('receivedAt'),
+      pinned: pinStart,
       width: 170,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -50,8 +61,8 @@ function buildColumnDefsInternal(): GridColDef<AgentMessageRecord>[] {
     col({
       group: 'General',
       field: 'sentAt',
-      headerName: 'Sent At',
-      headerTooltip: 'Sent At',
+      headerName: c('sentAt'),
+      headerTooltip: tip('sentAt'),
       width: 170,
       cellRenderer: DateCell,
       filter: 'agDateColumnFilter',
@@ -59,8 +70,8 @@ function buildColumnDefsInternal(): GridColDef<AgentMessageRecord>[] {
     col({
       group: 'General',
       field: 'id',
-      headerName: 'ID',
-      headerTooltip: 'Message ID',
+      headerName: c('id'),
+      headerTooltip: tip('id'),
       flex: 1.5,
       minWidth: 150,
       cellRenderer: TextCell,
@@ -69,8 +80,8 @@ function buildColumnDefsInternal(): GridColDef<AgentMessageRecord>[] {
     col({
       group: 'General',
       field: 'agentId',
-      headerName: 'Agent ID',
-      headerTooltip: 'Agent ID',
+      headerName: c('agentId'),
+      headerTooltip: tip('agentId'),
       flex: 1,
       minWidth: 110,
       cellRenderer: TextCell,
@@ -81,16 +92,16 @@ function buildColumnDefsInternal(): GridColDef<AgentMessageRecord>[] {
     col({
       group: 'Message',
       field: 'contentType',
-      headerName: 'Content Type',
-      headerTooltip: 'Content Type',
+      headerName: c('contentType'),
+      headerTooltip: tip('contentType'),
       width: 130,
       enum: ContentType,
     }),
     col({
       group: 'Message',
       field: 'priority',
-      headerName: 'Priority',
-      headerTooltip: 'Priority',
+      headerName: c('priority'),
+      headerTooltip: tip('priority'),
       width: 110,
       filter: 'agNumberColumnFilter',
       cellRenderer: NumericCell,
@@ -98,8 +109,8 @@ function buildColumnDefsInternal(): GridColDef<AgentMessageRecord>[] {
     col({
       group: 'Message',
       field: 'processed',
-      headerName: 'Processed',
-      headerTooltip: 'Processed',
+      headerName: c('processed'),
+      headerTooltip: tip('processed'),
       width: 120,
       cellRenderer: AvailabilityCell,
       enum: [true, false],
@@ -111,8 +122,8 @@ function buildColumnDefsInternal(): GridColDef<AgentMessageRecord>[] {
     col({
       group: 'Message',
       field: 'content',
-      headerName: 'Content',
-      headerTooltip: 'Content',
+      headerName: c('content'),
+      headerTooltip: tip('content'),
       flex: 2,
       minWidth: 160,
       cellRenderer: TextCell,
@@ -123,8 +134,8 @@ function buildColumnDefsInternal(): GridColDef<AgentMessageRecord>[] {
     col({
       group: 'Payload',
       field: 'contentJson',
-      headerName: 'Content JSON',
-      headerTooltip: 'Content JSON',
+      headerName: c('contentJson'),
+      headerTooltip: tip('contentJson'),
       flex: 2,
       minWidth: 160,
       cellRenderer: TextCell,
@@ -133,8 +144,8 @@ function buildColumnDefsInternal(): GridColDef<AgentMessageRecord>[] {
     col({
       group: 'Payload',
       field: 'contentExcel',
-      headerName: 'Content Excel',
-      headerTooltip: 'Content Excel',
+      headerName: c('contentExcel'),
+      headerTooltip: tip('contentExcel'),
       flex: 2,
       minWidth: 160,
       cellRenderer: TextCell,
@@ -143,8 +154,21 @@ function buildColumnDefsInternal(): GridColDef<AgentMessageRecord>[] {
   ];
 }
 
-export function buildMessagesColumnDefs(): (ColDef<AgentMessageRecord> | ColGroupDef<AgentMessageRecord>)[] {
-  return groupColumns(buildColumnDefsInternal(), GROUP_ORDER);
+export function buildMessagesColumnDefs(
+  t: TFunction,
+  dir: 'rtl' | 'ltr'
+): (ColDef<AgentMessageRecord> | ColGroupDef<AgentMessageRecord>)[] {
+  return groupColumns(buildColumnDefsInternal(t, dir), GROUP_ORDER, groupLabel(t));
 }
 
-export const MESSAGES_COLUMN_LABELS: Record<string, string> = buildColumnLabels(buildColumnDefsInternal());
+// colId → translated label.
+export function buildMessagesColumnLabelsFor(t: TFunction): Record<string, string> {
+  return buildColumnLabels(buildColumnDefsInternal(t, 'ltr'));
+}
+
+// Translated group label → color.
+export function messagesGroupLabelColors(t: TFunction): Record<string, string> {
+  return Object.fromEntries(
+    MESSAGES_GROUP_DEFS.map((g) => [t(`groups.${groupSlug(g.name)}`), g.color])
+  );
+}

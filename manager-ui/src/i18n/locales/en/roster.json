@@ -1,0 +1,87 @@
+{
+  "topbar": {
+    "title": "Agent History",
+    "realtimeLink": "Real-time monitoring"
+  },
+  "empty": {
+    "noAgents": "No agents yet",
+    "noMatch": "No matching agents",
+    "tryAdjust": "Try adjusting your search or filters.",
+    "clearFilters": "Clear filters"
+  },
+  "search": {
+    "in": "in",
+    "fallbackPlaceholder": "Search…",
+    "ariaSearch": "Search agents",
+    "ariaScope": "Search scope"
+  },
+  "sort": {
+    "label": "Sort by",
+    "ariaAsc": "Sort direction: ascending",
+    "ariaDesc": "Sort direction: descending",
+    "toggleTitle": "Toggle sort direction"
+  },
+  "group": {
+    "label": "Group by"
+  },
+  "bulk": {
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all"
+  },
+  "count": {
+    "loading": "Loading…",
+    "agents": "{{n}} agents",
+    "filtered": "{{shown}} of {{total}} agents"
+  },
+  "facets": {
+    "unit": "Unit",
+    "platform": "Platform"
+  },
+  "activeFilters": {
+    "remove": "Remove {{label}}: {{value}}",
+    "clearAll": "Clear all"
+  },
+  "error": {
+    "loadFailed": "Failed to load agents"
+  },
+  "scope": {
+    "callsign": "Call Sign",
+    "id": "Agent ID",
+    "zayadId": "Zayad ID",
+    "unit": "Unit",
+    "platform": "Platform",
+    "platformId": "Platform ID",
+    "unitCode": "Unit Code",
+    "all": "All fields"
+  },
+  "placeholder": {
+    "callsign": "Search call sign…",
+    "id": "Search agent id…",
+    "zayadId": "Search zayad id…",
+    "unit": "Search unit…",
+    "platform": "Search platform…",
+    "platformId": "Search platform id…",
+    "unitCode": "Search unit code…",
+    "all": "Search all fields…"
+  },
+  "groupBy": {
+    "none": "None",
+    "unit": "Unit",
+    "platform": "Platform"
+  },
+  "sortOptions": {
+    "callsign": "Call Sign",
+    "id": "Agent ID",
+    "createdAt": "Created",
+    "zayadId": "Zayad ID",
+    "platformId": "Platform ID",
+    "unit": "Unit",
+    "platform": "Platform"
+  },
+  "card": {
+    "zayadId": "Zayad ID",
+    "platformId": "Platform ID",
+    "unitCode": "Unit Code",
+    "created": "Created"
+  }
+}

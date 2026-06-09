@@ -1,43 +1,47 @@
 // Builds the detail-drawer sections for one message record.
 
+import type { TFunction } from 'i18next';
 import type { AgentMessageRecord } from '../../types/history/agentMessageRecord';
 import type { DetailSection } from './grid/RecordDetailPanel';
 import { formatDate, formatValue } from './grid/detailFormat';
 
-export function messagesDetailSections(record: AgentMessageRecord): DetailSection[] {
+export function messagesDetailSections(record: AgentMessageRecord, t: TFunction): DetailSection[] {
+  const c = (id: string) => t(`messages.columns.${id}`);
+  const group = (slug: string) => t(`groups.${slug}`);
+
   return [
     {
-      title: 'General',
+      title: group('general'),
       slug: 'general',
       rows: [
-        { label: 'ID', value: formatValue(record.id) },
-        { label: 'Agent ID', value: formatValue(record.agentId) },
-        { label: 'Received At', value: formatDate(record.receivedAt) },
-        { label: 'Sent At', value: formatDate(record.sentAt) },
-        { label: 'Processed', value: formatValue(record.processed) },
+        { label: c('id'), value: formatValue(record.id) },
+        { label: c('agentId'), value: formatValue(record.agentId) },
+        { label: c('receivedAt'), value: formatDate(record.receivedAt) },
+        { label: c('sentAt'), value: formatDate(record.sentAt) },
+        { label: c('processed'), value: formatValue(record.processed) },
       ],
     },
     {
-      title: 'Message',
+      title: group('message'),
       slug: 'message',
       rows: [
         {
-          label: 'Content Type',
+          label: c('contentType'),
           value: formatValue(record.contentType),
           className: record.contentType
             ? `snc-dp-chip snc-chip snc-chip--contentType-${String(record.contentType).toLowerCase()}`
             : undefined,
         },
-        { label: 'Priority', value: formatValue(record.priority) },
-        { label: 'Content', value: formatValue(record.content) },
+        { label: c('priority'), value: formatValue(record.priority) },
+        { label: c('content'), value: formatValue(record.content) },
       ],
     },
     {
-      title: 'Payload',
+      title: group('payload'),
       slug: 'payload',
       rows: [
-        { label: 'Content JSON', value: formatValue(record.contentJson) },
-        { label: 'Content Excel', value: formatValue(record.contentExcel) },
+        { label: c('contentJson'), value: formatValue(record.contentJson) },
+        { label: c('contentExcel'), value: formatValue(record.contentExcel) },
       ],
     },
   ];

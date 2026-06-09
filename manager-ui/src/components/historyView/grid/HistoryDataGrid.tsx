@@ -22,12 +22,16 @@ import '../syncGrid.theme.css';
 import '../syncGrid.cells.css';
 import '../ColumnPicker.css';
 
+import { useTranslation } from 'react-i18next';
+
 import type { GridConfig } from './gridConfig';
 import {
   loadColumnState,
   saveColumnState,
   clearColumnState,
 } from '../gridStatePersistence';
+import { useLang } from '../../../i18n/LanguageProvider';
+import { AG_GRID_LOCALE_HE } from '../../../i18n/agGridLocale';
 
 interface HistoryDataGridProps<T> {
   agentId: string;
@@ -38,6 +42,8 @@ interface HistoryDataGridProps<T> {
 export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: HistoryDataGridProps<T>) {
   const gridRef = useRef<AgGridReact<T>>(null);
   const columnDefs = config.columnDefs;
+  const { t } = useTranslation('history');
+  const { dir } = useLang();
 
   const defaultColDef = useMemo<ColDef>(
     () => ({
@@ -55,7 +61,7 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
       toolPanels: [
         {
           id: 'columns',
-          labelDefault: 'Columns',
+          labelDefault: t('toolbar.columns'),
           labelKey: 'columns',
           iconKey: 'columns',
           toolPanel: 'agColumnsToolPanel',
@@ -68,14 +74,14 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
         },
         {
           id: 'filters',
-          labelDefault: 'Filters',
+          labelDefault: t('toolbar.filters'),
           labelKey: 'filters',
           iconKey: 'filter',
           toolPanel: 'agFiltersToolPanel',
         },
       ],
     }),
-    []
+    [t]
   );
 
   // ── Per-group color CSS ──
@@ -178,10 +184,7 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
       wrapper
         .querySelectorAll<HTMLElement>('.ag-filter-toolpanel-group-title')
         .forEach((el) => {
-          const slug = (el.textContent?.trim() ?? '')
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-');
-          const color = config.groupColors[slug];
+          const color = config.groupLabelColors[el.textContent?.trim() ?? ''];
           if (color) el.style.color = color;
         });
     };
@@ -189,7 +192,7 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
     observer.observe(wrapper, { childList: true, subtree: true });
     paint();
     return () => observer.disconnect();
-  }, [config.groupColors]);
+  }, [config.groupLabelColors]);
 
   // ── Reset count when agentId changes ───────────────────────────────
   useEffect(() => {
@@ -293,13 +296,15 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
     (params: GetMainMenuItemsParams): (DefaultMenuItem | MenuItemDef)[] => {
       const colId = params.column?.getColId();
       const isPinned = !!params.column?.isPinned();
+      const pinStart = dir === 'rtl' ? 'right' : 'left'; // leading edge
+      const pinLabel = dir === 'rtl' ? t('toolbar.pinRight') : t('toolbar.pinLeft');
       return [
         {
-          name: isPinned ? 'Unpin Column' : 'Pin Left',
+          name: isPinned ? t('toolbar.unpinColumn') : pinLabel,
           icon: '<span class="ag-icon ag-icon-pin" role="presentation"></span>',
           action: () => {
             params.api.applyColumnState({
-              state: [{ colId: colId!, pinned: isPinned ? null : 'left' }],
+              state: [{ colId: colId!, pinned: isPinned ? null : pinStart }],
             });
           },
         },
@@ -309,13 +314,13 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
         'separator',
         'columnChooser',
         {
-          name: 'Reset Columns',
+          name: t('toolbar.resetColumns'),
           icon: '<span class="ag-icon ag-icon-columns" role="presentation"></span>',
           action: resetColumns,
         },
       ];
     },
-    [resetColumns]
+    [resetColumns, t, dir]
   );
 
   // ── Detail panel: dbl-click opens, click closes ──
@@ -356,7 +361,7 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
       type="button"
       className="snc-filter-chip"
       onClick={() => clearFilter(colId)}
-      title={`Clear ${config.columnLabels[colId] ?? colId} filter`}
+      title={t('toolbar.clearFilter', { label: config.columnLabels[colId] ?? colId })}
     >
       {config.columnLabels[colId] ?? colId}
       <span className="snc-filter-chip-x" aria-hidden="true">×</span>
@@ -388,7 +393,7 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
               <rect x="6"  y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
               <rect x="11" y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.4"/>
             </svg>
-            Columns
+            {t('toolbar.columns')}
             {hiddenCount > 0 && (
               <span className="snc-col-picker-badge">{hiddenCount}</span>
             )}
@@ -404,14 +409,14 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
               <path d="M1.5 3h13l-5 6v4l-3 1.5V9l-5-6z" stroke="currentColor"
                 strokeWidth="1.3" strokeLinejoin="round"/>
             </svg>
-            Filters
+            {t('toolbar.filters')}
           </button>
 
           {/* Active filter chips; extras beyond the row width collapse into "+N" */}
           {activeColIds.length > 0 && (
             <>
               <div className="snc-toolbar-vr" aria-hidden="true" />
-              <span className="snc-filter-bar-label">Filters:</span>
+              <span className="snc-filter-bar-label">{t('toolbar.filtersLabel')}</span>
               <div className="snc-filter-row" ref={filterRowRef}>
                 {visibleColIds.map(renderChip)}
                 {hiddenColIds.length > 0 && (
@@ -437,7 +442,7 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
                 className="snc-filter-clear-all"
                 onClick={clearAllFilters}
               >
-                Clear all
+                {t('toolbar.clearAll')}
               </button>
 
               {/* Hidden row used only to measure each chip's natural width */}
@@ -460,15 +465,15 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
             <div className="snc-row-count">
               {activeColIds.length > 0 ? (
                 <>
-                  <span className="snc-row-count-badge">Filtered</span>
+                  <span className="snc-row-count-badge">{t('toolbar.filtered')}</span>
                   <span className="snc-row-count-num">{totalRows.toLocaleString('en-US')}</span>
-                  <span>rows</span>
+                  <span>{t('toolbar.rows')}</span>
                 </>
               ) : (
                 <>
-                  <span>Total</span>
+                  <span>{t('toolbar.total')}</span>
                   <span className="snc-row-count-num">{totalRows.toLocaleString('en-US')}</span>
-                  <span>rows</span>
+                  <span>{t('toolbar.rows')}</span>
                 </>
               )}
             </div>
@@ -486,6 +491,8 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
             columnDefs={columnDefs}
             defaultColDef={defaultColDef}
             theme="legacy"
+            enableRtl={dir === 'rtl'}
+            localeText={dir === 'rtl' ? AG_GRID_LOCALE_HE : undefined}
             rowModelType="infinite"
             cacheBlockSize={config.blockSize}
             cacheOverflowSize={2}

@@ -1,0 +1,121 @@
+{
+  "header": {
+    "title": "ניטור סוכנים בזמן אמת",
+    "toHistory": "למעבר להיסטוריה"
+  },
+  "loading": "טוען נתונים...",
+  "view": {
+    "icons": "אייקונים",
+    "list": "רשימה",
+    "aria": "בחירת תצוגה"
+  },
+  "hint": {
+    "icon": "לחץ על אייקון כדי לראות פרטים",
+    "row": "לחץ על שורה כדי לראות פרטים"
+  },
+  "card": {
+    "callSign": "או\"ק",
+    "status": "סטטוס",
+    "unit": "יחידה",
+    "platformId": "צ",
+    "zayadId": "מזהה צי\"די"
+  },
+  "details": {
+    "title": "פרטי סוכן",
+    "history": "היסטוריה",
+    "agentId": "מזהה סוכן",
+    "unitCode": "קוד יחידה",
+    "close": "סגירה"
+  },
+  "filter": {
+    "group": "קבוצת סינון",
+    "field": "שדה",
+    "configField": "שדה תצורה",
+    "other": "אחר",
+    "otherField": "שדה אחר",
+    "value": "ערך",
+    "searchValue": "ערך לחיפוש",
+    "typeToFilter": "הקלד/י לסינון",
+    "noResults": "אין תוצאות חיפוש.",
+    "clear": "ניקוי",
+    "agents": "סוכנים",
+    "noFilter": "ללא סינון",
+    "all": "הכול",
+    "columnMissing": "העמודה \"{{field}}\" לא קיימת.",
+    "ariaFilterField": "שדה סינון",
+    "ariaFilterValue": "ערך סינון",
+    "ariaFilterFields": "שדות סינון",
+    "ariaCloseFields": "סגירת שדות סינון",
+    "ariaStatusFilter": "סינון לפי סטטוס",
+    "ariaAllAgents": "כל הסוכנים",
+    "statusTitle": "סטטוס"
+  },
+  "groups": {
+    "Platform": "סוג פלטפורמה",
+    "Live Status": "סטטוס נוכחי",
+    "Link Quality": "איכות חיבור",
+    "Configuration": "תצורה"
+  },
+  "fields": {
+    "platformId": "צ",
+    "platformName": "פלטפורמה",
+    "unit": "יחידה",
+    "unit_code": "קוד יחידה",
+    "zayad_id": "מזהה צי\"די",
+    "call_sign": "או\"ק",
+    "status": "סטטוס",
+    "selectedLink": "סוג תקשורת (Runtime)",
+    "schedulerMode": "תזמון שליחה (Runtime)",
+    "linkType": "סוג חיבור",
+    "linkQuality": "איכות חיבור",
+    "configSelectedLink": "סוג תקשורת (תצורה)",
+    "configSchedulerMode": "תזמון שליחה (תצורה)"
+  },
+  "tables": {
+    "platform": {
+      "title": "סוג פלטפורמה",
+      "unit_code": "קוד יחידה",
+      "unit": "יחידה",
+      "zayad_id": "מזהה צי\"די",
+      "call_sign": "או\"ק",
+      "platform_id": "צ",
+      "platform_name": "פלטפורמה"
+    },
+    "linkQuality": {
+      "title": "איכות חיבור",
+      "link_type": "סוג חיבור",
+      "available": "זמין",
+      "quality": "איכות",
+      "latency": "השהיה",
+      "reliability": "אמינות",
+      "timestamp": "חותמת זמן"
+    },
+    "syncDetails": {
+      "title": "פרטי סנכרון",
+      "status": "סטטוס",
+      "scheduler_mode": "תזמון שליחה",
+      "selected_link": "סוג תקשורת",
+      "messages_in_queue": "הודעות לשליחה",
+      "next_delivery_time": "זמן שליחה הבא",
+      "server_lut": "עדכון אחרון מהשרת",
+      "last_seen": "נראה לאחרונה"
+    },
+    "configuration": {
+      "title": "תצורה",
+      "selectedLink": "סוג תקשורת",
+      "schedulerMode": "תזמון שליחה",
+      "intervalMs": "מרווח שליחה",
+      "maxRetries": "מספר ניסיונות מרבי",
+      "sparkProxyUrl": "כתובת proxy",
+      "token": "מפתח",
+      "batchSize": "גודל batch",
+      "isManualMode": "מצב ידני",
+      "edit": "עריכה",
+      "save": "שמירה",
+      "cancel": "ביטול",
+      "actions": "פעולות תצורה",
+      "saved": "התצורה נשמרה בהצלחה",
+      "saveFailed": "שמירת התצורה נכשלה"
+    }
+  }
+}
