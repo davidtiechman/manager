@@ -1,6 +1,7 @@
 {
   "topbar": {
-    "brand": "Agent Manager",
+    "brand": "tactic-spark",
+    "subtitle": "Management",
     "navAria": "Primary navigation"
   },
   "nav": {

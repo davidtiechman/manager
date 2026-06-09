@@ -26,13 +26,13 @@ export default function AppTopBar({ children, className }: AppTopBarProps) {
         <Link to="/" className="atb-brand" title={t('topbar.brand')}>
           <span className="atb-brand-mark" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none">
-              <rect x="4" y="5" width="16" height="6" rx="1.6" stroke="currentColor" strokeWidth="1.8" />
-              <rect x="4" y="14" width="16" height="6" rx="1.6" stroke="currentColor" strokeWidth="1.8" />
-              <circle cx="7.5" cy="8" r="1" fill="currentColor" />
-              <circle cx="7.5" cy="17" r="1" fill="currentColor" />
+              <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" />
             </svg>
           </span>
-          <span className="atb-brand-name">{t('topbar.brand')}</span>
+          <span className="atb-brand-text">
+            <span className="atb-brand-name">{t('topbar.brand')}</span>
+            <span className="atb-brand-sub">{t('topbar.subtitle')}</span>
+          </span>
         </Link>
 
         <nav className="atb-nav" aria-label={t('topbar.navAria')}>

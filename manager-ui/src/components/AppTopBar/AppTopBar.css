@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  height: 60px;
+  height: 64px;
   padding: 0 24px;
   flex-shrink: 0;
   background: linear-gradient(180deg, #0f172a 0%, #14213d 100%);
@@ -48,23 +48,41 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
   background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
   color: #ffffff;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.45);
 }
 
-.atb-brand-mark svg { width: 20px; height: 20px; }
+.atb-brand-mark svg { width: 22px; height: 22px; }
+
+.atb-brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  line-height: 1.1;
+  min-width: 0;
+}
 
 .atb-brand-name {
   font-weight: 800;
-  font-size: 15px;
-  letter-spacing: -0.01em;
+  font-size: 21px;
+  letter-spacing: -0.02em;
   white-space: nowrap;
   color: #f8fafc;
+}
+
+.atb-brand-sub {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8597b0;
+  white-space: nowrap;
 }
 
 /* ── Page nav ───────────────────────────────────────────────── */
@@ -75,15 +93,16 @@
 }
 
 .atb-nav-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 14px;
-  border-radius: 9px;
+  padding: 8px 16px;
+  border-radius: 10px;
   text-decoration: none;
   color: #94a3b8;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
   white-space: nowrap;
   transition: background 0.15s ease, color 0.15s ease;
 }
@@ -93,13 +112,17 @@
   color: #e2e8f0;
 }
 
-.atb-nav-link--active {
-  background: rgba(59, 130, 246, 0.2);
-  color: #bfdbfe;
+/* Active page: filled accent pill + glow → clear "you are here". */
+.atb-nav-link--active,
+.atb-nav-link--active:hover {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 3px 12px rgba(37, 99, 235, 0.5);
 }
 
-.atb-nav-icon { display: inline-flex; width: 18px; height: 18px; }
-.atb-nav-icon svg { width: 18px; height: 18px; }
+.atb-nav-icon { display: inline-flex; width: 19px; height: 19px; }
+.atb-nav-icon svg { width: 19px; height: 19px; }
 
 /* ── Profile ────────────────────────────────────────────────── */
 .atb-profile {
@@ -125,7 +148,7 @@
 
 .atb-profile-name {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
   color: #e2e8f0;
   white-space: nowrap;
 }
@@ -144,7 +167,7 @@
 
 /* ── Narrow viewports: collapse to icons/avatars ───────────── */
 @media (max-width: 760px) {
-  .atb-brand-name,
+  .atb-brand-sub,
   .atb-nav-label,
   .atb-profile-name { display: none; }
 }

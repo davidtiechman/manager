@@ -1,6 +1,7 @@
 {
   "topbar": {
-    "brand": "ניהול סוכנים",
+    "brand": "tactic-spark",
+    "subtitle": "ניהול",
     "navAria": "ניווט ראשי"
   },
   "nav": {
