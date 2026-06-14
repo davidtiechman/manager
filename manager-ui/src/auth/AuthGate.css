@@ -30,22 +30,6 @@
   to { transform: rotate(360deg); }
 }
 
-.auth-login-btn {
-  padding: 11px 26px;
-  border: none;
-  border-radius: 11px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: #ffffff;
-  font-family: 'Inter', 'Rubik', system-ui, sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.45);
-  transition: filter 0.15s ease;
-}
-
-.auth-login-btn:hover { filter: brightness(1.08); }
-
 .auth-lang {
   position: absolute;
   top: 22px;

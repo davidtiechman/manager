@@ -8,27 +8,12 @@ import './AuthGate.css';
 
 export default function AuthGate({ children }: { children: ReactNode }) {
   const { t } = useTranslation('common');
-  const { status, login } = useAuth();
+  const { status } = useAuth();
 
   if (status === 'authenticated') return <>{children}</>;
   if (status === 'forbidden') return <AccessDenied />;
 
-  // Dev login button (prod redirects to SSO).
-  if (status === 'unauthenticated') {
-    return (
-      <div className="auth-loading">
-        <div className="auth-lang">
-          <LanguageToggle />
-        </div>
-        <p className="auth-loading-text">{t('auth.signInHint')}</p>
-        <button type="button" className="auth-login-btn" onClick={login}>
-          {t('auth.signIn')}
-        </button>
-      </div>
-    );
-  }
-
-  // loading
+  // loading / redirecting to SSO
   return (
     <div className="auth-loading">
       <div className="auth-lang">

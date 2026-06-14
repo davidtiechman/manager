@@ -4,6 +4,7 @@ import type { AgentMessageRecord } from './types/history/agentMessageRecord';
 import type { HistoryAgent } from './types/history/historyAgent';
 import type { ConfigurationTableData } from './types/realTimeAgents/tables';
 import { MOCK_AGENTS } from './MOCK_AGENT';
+import { refreshSession, redirectToLogin } from './auth/refreshSession';
 
 // IRM request params.
 export interface IrmParams {
@@ -23,15 +24,21 @@ export interface IrmResponse<T> {
 export type SyncsIrmParams = IrmParams;
 export type SyncsIrmResponse = IrmResponse<AgentHistoryRecord>;
 
-const VITE_API_TOKEN = import.meta.env.VITE_API_TOKEN || 'test';
 const API_ROOT = import.meta.env.VITE_API_URL || 'http://localhost:9000';
 const API_BASE = `${API_ROOT}/manager`;
 
 async function apiFetch(path: string, init?: RequestInit): Promise<Response> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: { Authorization: `Bearer ${VITE_API_TOKEN}`, ...init?.headers },
-  });
+  let res = await fetch(`${API_BASE}${path}`, { ...init, credentials: 'include' });
+
+  // 401 → refresh + retry, else re-login.
+  if (res.status === 401) {
+    if (await refreshSession()) {
+      res = await fetch(`${API_BASE}${path}`, { ...init, credentials: 'include' });
+    } else {
+      redirectToLogin();
+    }
+  }
+
   if (!res.ok) {
     throw new Error(`${init?.method ?? 'GET'} ${path} → ${res.status}`);
   }

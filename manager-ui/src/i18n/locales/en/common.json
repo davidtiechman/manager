@@ -16,8 +16,6 @@
   },
   "auth": {
     "loading": "Loading…",
-    "signIn": "Sign in",
-    "signInHint": "Sign-in required",
     "accessDenied": {
       "welcome": "Welcome to",
       "intro": "We haven't met yet!",
