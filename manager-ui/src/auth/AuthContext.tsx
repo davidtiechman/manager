@@ -23,6 +23,7 @@ interface AuthContextValue {
 }
 
 const API_ROOT = import.meta.env.VITE_API_URL || 'http://localhost:9000';
+const AUTH_BASE = `${API_ROOT}/manager/auth`;
 // Refresh < 30m (SSO refresh-token life).
 const REFRESH_MINUTES = Number(import.meta.env.VITE_AUTH_REFRESH_MINUTES) || 25;
 
@@ -48,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadMe = useCallback(async (): Promise<Response | null> => {
     try {
-      return await fetch(`${API_ROOT}/auth/me`, {
+      return await fetch(`${AUTH_BASE}/me`, {
         credentials: 'include',
         redirect: 'manual',
         cache: 'no-store',
@@ -88,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status !== 'unauthenticated') return;
     if (new URLSearchParams(window.location.search).get('error')) return;
-    window.location.assign(`${API_ROOT}/auth/sso`);
+    window.location.assign(`${AUTH_BASE}/sso`);
   }, [status]);
 
   // Proactive renew before expiry.
@@ -104,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [status]);
 
-  const login = useCallback(() => window.location.assign(`${API_ROOT}/auth/sso`), []);
+  const login = useCallback(() => window.location.assign(`${AUTH_BASE}/sso`), []);
 
   return (
     <AuthContext.Provider value={{ status, user, refresh: fetchMe, login }}>
