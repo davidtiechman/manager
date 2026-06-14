@@ -36,7 +36,7 @@ export default function ProfileMenu() {
         aria-expanded={open}
         aria-label={t('profile.menuAria')}
       >
-        <span className="atb-profile-avatar" aria-hidden="true">{userInitials(user.name)}</span>
+        <span className="atb-profile-avatar" aria-hidden="true">{userInitials(user)}</span>
         <span className="atb-profile-id">{user.upn}</span>
         <span className="atb-profile-divider" aria-hidden="true" />
         <span className="atb-profile-name">{user.name}</span>
@@ -49,7 +49,7 @@ export default function ProfileMenu() {
       {open && (
         <div className="atb-profile-pop" role="menu">
           <div className="atb-pop-head">
-            <span className="atb-pop-avatar" aria-hidden="true">{userInitials(user.name)}</span>
+            <span className="atb-pop-avatar" aria-hidden="true">{userInitials(user)}</span>
             <div className="atb-pop-head-text">
               <span className="atb-pop-name">{user.name}</span>
               <span className="atb-pop-upn">{user.upn}</span>
