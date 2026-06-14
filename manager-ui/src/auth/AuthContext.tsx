@@ -1,7 +1,8 @@
-// Auth state: reads GET /auth/me, exposes the current user.
+// Auth state: /auth/me, auto-login, silent refresh.
 import {
   createContext, useCallback, useContext, useEffect, useState, type ReactNode,
 } from 'react';
+import { refreshSession } from './refreshSession';
 
 export interface AuthUser {
   upn: string; // personal number
@@ -22,6 +23,8 @@ interface AuthContextValue {
 }
 
 const API_ROOT = import.meta.env.VITE_API_URL || 'http://localhost:9000';
+// Refresh < 30m (SSO refresh-token life).
+const REFRESH_MINUTES = Number(import.meta.env.VITE_AUTH_REFRESH_MINUTES) || 25;
 
 // Dev mock user (override via VITE_AUTH_MOCK_USER JSON).
 function mockUser(): AuthUser {
@@ -43,6 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [user, setUser] = useState<AuthUser | null>(null);
 
+  const loadMe = useCallback(async (): Promise<Response | null> => {
+    try {
+      return await fetch(`${API_ROOT}/auth/me`, {
+        credentials: 'include',
+        redirect: 'manual',
+        cache: 'no-store',
+      });
+    } catch {
+      return null;
+    }
+  }, []);
+
   const fetchMe = useCallback(async () => {
     setStatus('loading');
 
@@ -55,33 +70,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const err = new URLSearchParams(window.location.search).get('error');
     if (err === 'access_denied') { setUser(null); setStatus('forbidden'); return; }
 
-    try {
-      const res = await fetch(`${API_ROOT}/auth/me`, {
-        credentials: 'include',
-        redirect: 'manual',
-      });
-
-      // Bounced to SSO → not logged in.
-      if (res.type === 'opaqueredirect' || res.status === 0) {
-        setStatus('unauthenticated');
-        return;
-      }
-      if (res.status === 403) { setUser(null); setStatus('forbidden'); return; }
-      if (res.ok) { setUser((await res.json()) as AuthUser); setStatus('authenticated'); return; }
-      setStatus('unauthenticated');
-    } catch (e) {
-      console.error('[Auth] /auth/me failed', e);
-      setStatus('unauthenticated');
+    let res = await loadMe();
+    // Expired → refresh, re-check.
+    if (res && res.status === 401 && (await refreshSession())) {
+      res = await loadMe();
     }
-  }, []);
+
+    if (!res || res.type === 'opaqueredirect' || res.status === 0) { setStatus('unauthenticated'); return; }
+    if (res.status === 403) { setUser(null); setStatus('forbidden'); return; }
+    if (res.ok) { setUser((await res.json()) as AuthUser); setStatus('authenticated'); return; }
+    setStatus('unauthenticated');
+  }, [loadMe]);
 
   useEffect(() => { void fetchMe(); }, [fetchMe]);
 
-  // Prod redirects to SSO; dev shows a login button.
+  // Not logged in → auto SSO (skip if ?error, avoid loop).
   useEffect(() => {
-    if (status === 'unauthenticated' && import.meta.env.PROD) {
-      window.location.assign(`${API_ROOT}/auth/sso`);
-    }
+    if (status !== 'unauthenticated') return;
+    if (new URLSearchParams(window.location.search).get('error')) return;
+    window.location.assign(`${API_ROOT}/auth/sso`);
+  }, [status]);
+
+  // Proactive renew before expiry.
+  useEffect(() => {
+    if (status !== 'authenticated') return;
+    const id = window.setInterval(() => { void refreshSession(); }, REFRESH_MINUTES * 60 * 1000);
+    // Renew on tab focus (background timers get throttled).
+    const onVisible = () => { if (document.visibilityState === 'visible') void refreshSession(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
   }, [status]);
 
   const login = useCallback(() => window.location.assign(`${API_ROOT}/auth/sso`), []);
