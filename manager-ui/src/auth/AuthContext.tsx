@@ -2,7 +2,7 @@
 import {
   createContext, useCallback, useContext, useEffect, useState, type ReactNode,
 } from 'react';
-import { refreshSession } from './refreshSession';
+import { refreshSession, saveReturnPath } from './refreshSession';
 
 export interface AuthUser {
   upn: string; // personal number
@@ -24,8 +24,6 @@ interface AuthContextValue {
 
 const API_ROOT = import.meta.env.VITE_API_URL || 'http://localhost:9000';
 const AUTH_BASE = `${API_ROOT}/manager/auth`;
-// Refresh < 30m (SSO refresh-token life).
-const REFRESH_MINUTES = Number(import.meta.env.VITE_AUTH_REFRESH_MINUTES) || 25;
 
 // Dev mock user (override via VITE_AUTH_MOCK_USER JSON).
 function mockUser(): AuthUser {
@@ -89,23 +87,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (status !== 'unauthenticated') return;
     if (new URLSearchParams(window.location.search).get('error')) return;
+    saveReturnPath();
     window.location.assign(`${AUTH_BASE}/sso`);
   }, [status]);
 
-  // Proactive renew before expiry.
-  useEffect(() => {
-    if (status !== 'authenticated') return;
-    const id = window.setInterval(() => { void refreshSession(); }, REFRESH_MINUTES * 60 * 1000);
-    // Renew on tab focus (background timers get throttled).
-    const onVisible = () => { if (document.visibilityState === 'visible') void refreshSession(); };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => {
-      window.clearInterval(id);
-      document.removeEventListener('visibilitychange', onVisible);
-    };
-  }, [status]);
-
-  const login = useCallback(() => window.location.assign(`${AUTH_BASE}/sso`), []);
+  const login = useCallback(() => {
+    saveReturnPath();
+    window.location.assign(`${AUTH_BASE}/sso`);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ status, user, refresh: fetchMe, login }}>

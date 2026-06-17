@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
 import AccessDenied from '../components/AccessDenied/AccessDenied';
+import AuthRetry from './AuthRetry';
 import LanguageToggle from '../i18n/LanguageToggle';
 import './AuthGate.css';
 
@@ -12,8 +13,9 @@ export default function AuthGate({ children }: { children: ReactNode }) {
 
   if (status === 'authenticated') return <>{children}</>;
   if (status === 'forbidden') return <AccessDenied />;
+  if (status === 'unauthenticated') return <AuthRetry />;
 
-  // loading / redirecting to SSO
+  // loading
   return (
     <div className="auth-loading">
       <div className="auth-lang">
