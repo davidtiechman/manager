@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 
 import LanguageToggle from '../../i18n/LanguageToggle';
 import ProfileMenu from './ProfileMenu';
+import BrandMark from '../BrandMark';
 import { NAV_ITEMS } from './navConfig';
 import './AppTopBar.css';
 
@@ -22,9 +23,7 @@ export default function AppTopBar({ children, className }: AppTopBarProps) {
       <div className="atb-start">
         <Link to="/" className="atb-brand" title={t('topbar.brand')}>
           <span className="atb-brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none">
-              <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" />
-            </svg>
+            <BrandMark size={40} />
           </span>
           <span className="atb-brand-text">
             <span className="atb-brand-name">{t('topbar.brand')}</span>

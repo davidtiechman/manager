@@ -2,6 +2,7 @@
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../auth/AuthContext';
 import LanguageToggle from '../../i18n/LanguageToggle';
+import BrandMark from '../BrandMark';
 import './AccessDenied.css';
 
 export default function AccessDenied() {
@@ -15,9 +16,7 @@ export default function AccessDenied() {
       </div>
       <div className="acd-card">
         <span className="acd-mark" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" />
-          </svg>
+          <BrandMark size={48} tone="mono" />
         </span>
 
         <p className="acd-eyebrow">{t('auth.accessDenied.welcome')}</p>

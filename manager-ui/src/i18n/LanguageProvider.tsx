@@ -18,6 +18,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const html = document.documentElement;
     html.lang = lang;
     html.dir = dirFor(lang);
+    document.title = lang === 'he' ? 'tactic-spark · ניהול' : 'tactic-spark · Management';
     localStorage.setItem(STORAGE_KEY, lang);
   }, [lang]);
 

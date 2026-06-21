@@ -1,12 +1,81 @@
 <!doctype html>
-<html lang="en">
+<html lang="he" dir="rtl">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>tactic-spark · Management</title>
+    <meta name="description" content="מערכת ניהול פנימית" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="robots" content="noindex, nofollow" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="icon" href="/favicon-16.png" sizes="16x16" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="tactic-spark · Management" />
+    <meta property="og:description" content="מערכת ניהול פנימית" />
+    <meta property="og:image" content="/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <style>
+      #app-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 26px;
+        background:
+          radial-gradient(900px 500px at 50% 28%, rgba(59, 130, 246, 0.16), transparent 60%),
+          linear-gradient(160deg, #0b1220 0%, #0f172a 55%, #0b1120 100%);
+        font-family: 'Segoe UI', system-ui, sans-serif;
+      }
+      #app-splash svg { width: 100px; height: 100px; }
+      #app-splash .spl-word {
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        color: #cbd5e1;
+      }
+      #app-splash .spl-ring {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 3px solid rgba(148, 163, 184, 0.22);
+        border-top-color: #60a5fa;
+        animation: spl-spin 0.8s linear infinite;
+      }
+      @keyframes spl-spin { to { transform: rotate(360deg); } }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="app-splash" role="status" aria-label="טוען">
+        <svg viewBox="0 0 150 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="spl-accent" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#60a5fa" />
+              <stop offset="1" stop-color="#6366f1" />
+            </linearGradient>
+          </defs>
+          <polygon points="75,26 118,50 118,100 75,124 32,100 32,50" fill="none" stroke="url(#spl-accent)" stroke-width="6" stroke-linejoin="round" />
+          <polygon points="75,44 102,59 102,91 75,106 48,91 48,59" fill="#3b82f6" opacity="0.18" />
+          <line x1="75" y1="38" x2="75" y2="62" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" />
+          <line x1="75" y1="88" x2="75" y2="112" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" />
+          <line x1="38" y1="75" x2="62" y2="75" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" />
+          <line x1="88" y1="75" x2="112" y2="75" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" />
+          <circle cx="75" cy="75" r="9" fill="url(#spl-accent)" />
+        </svg>
+        <span class="spl-word">tactic-spark</span>
+        <span class="spl-ring"></span>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
