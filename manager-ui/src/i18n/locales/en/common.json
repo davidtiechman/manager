@@ -8,6 +8,12 @@
     "realtime": "Real-time",
     "history": "Agent history"
   },
+  "error": {
+    "title": "Couldn't load data",
+    "body": "We couldn't reach the server. Check your connection and try again.",
+    "retry": "Try again",
+    "connectionLost": "Connection lost, retrying…"
+  },
   "profile": {
     "menuAria": "User menu",
     "displayName": "Display name",

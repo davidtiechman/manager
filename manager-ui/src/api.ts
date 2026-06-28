@@ -3,7 +3,6 @@ import type { AgentHistoryRecord } from './types/history/agentHistoryRecord';
 import type { AgentMessageRecord } from './types/history/agentMessageRecord';
 import type { HistoryAgent } from './types/history/historyAgent';
 import type { ConfigurationTableData } from './types/realTimeAgents/tables';
-import { MOCK_AGENTS } from './MOCK_AGENT';
 import { refreshSession, redirectToLogin } from './auth/refreshSession';
 
 // IRM request params.
@@ -58,13 +57,11 @@ export class ApiService {
       return this.getHistoryAgents();
     }
 
-    try {
-      const data = await apiFetch('/agents').then((r) => r.json());
-      return Array.isArray(data) ? data : MOCK_AGENTS;
-    } catch (error) {
-      console.warn('Failed to fetch agents from API, using mock data:', error);
-      return MOCK_AGENTS;
+    const data = await apiFetch('/agents').then((r) => r.json());
+    if (!Array.isArray(data)) {
+      throw new Error('GET /agents → unexpected response shape');
     }
+    return data;
   }
 
   static async getHistoryAgents(): Promise<HistoryAgent[]> {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { AgentResponse } from '../../types/realTimeAgents/agentResponse';
@@ -12,6 +12,7 @@ import FilterAgents from './FilterAgents';
 import { ApiService } from '../../api';
 import TankIcon from '../agent-details/TankIcon';
 import AppTopBar from '../AppTopBar/AppTopBar';
+import ErrorState from '../common/ErrorState';
 
 const intervalFetchManager = Number(import.meta.env.VITE_FETCH_INTERVAL) || 10_000;
 const DEFAULT_SIDEBAR_WIDTH = Number(import.meta.env.VITE_DEFAULT_SIDEBAR_WIDTH) || 960;
@@ -65,6 +66,7 @@ function getSelectedAgentCardSize(sidebarWidth: number) {
 export default function Preview() {
   const [agents, setAgents] = useState<AgentResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('icon');
   const [isConfigurationEditing, setIsConfigurationEditing] = useState(false);
@@ -76,6 +78,7 @@ export default function Preview() {
   const { agentId: routeAgentId } = useParams<{ agentId: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation('realtime');
+  const { t: tc } = useTranslation('common');
 
   useEffect(() => {
     isConfigurationEditingRef.current = isConfigurationEditing;
@@ -87,24 +90,31 @@ export default function Preview() {
     }
   }, [routeAgentId]);
 
-  useEffect(() => {
-    const fetchAgents = async () => {
-      try {
-        const data: AgentResponse[] = await ApiService.getAgents();
-        if (isConfigurationEditingRef.current) {
-          return;
-        }
-
-        setAgents(data);
-      } catch (err) {
-        console.error('Error fetching agents:', err);
-      } finally {
-        if (!isConfigurationEditingRef.current) {
-          setLoading(false);
-        }
+  const fetchAgents = useCallback(async () => {
+    try {
+      const data: AgentResponse[] = await ApiService.getAgents();
+      if (isConfigurationEditingRef.current) {
+        return;
       }
-    };
 
+      setAgents(data);
+      setError(false);
+    } catch (err) {
+      console.error('Error fetching agents:', err);
+      setError(true);
+    } finally {
+      if (!isConfigurationEditingRef.current) {
+        setLoading(false);
+      }
+    }
+  }, []);
+
+  const handleRetry = useCallback(() => {
+    setLoading(true);
+    fetchAgents();
+  }, [fetchAgents]);
+
+  useEffect(() => {
     if (isConfigurationEditing) {
       return;
     }
@@ -115,7 +125,7 @@ export default function Preview() {
     return () => {
       clearInterval(intervalId);
     };
-  }, [isConfigurationEditing]);
+  }, [isConfigurationEditing, fetchAgents]);
 
   const selectedAgent = agents.find((agent) => agent.id === selectedAgentId);
 
@@ -158,6 +168,15 @@ export default function Preview() {
     );
   }
 
+  if (error && agents.length === 0) {
+    return (
+      <div className="page">
+        <AppTopBar />
+        <ErrorState onRetry={handleRetry} />
+      </div>
+    );
+  }
+
   return (
     <div className={`page ${selectedAgent ? 'has-selected-agent-page' : ''}`}>
       <FilterAgents
@@ -186,6 +205,12 @@ export default function Preview() {
         {(filteredAgents, _statusFilter, filtersPanel) => (
           <>
             <AppTopBar />
+
+            {error && (
+              <div className="rt-connection-banner" role="status">
+                {tc('error.connectionLost')}
+              </div>
+            )}
 
             <div
               className={`home-layout ${
