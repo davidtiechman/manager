@@ -15,7 +15,7 @@ export function messagesDetailSections(record: AgentMessageRecord, t: TFunction)
       slug: 'general',
       rows: [
         { label: c('id'), value: formatValue(record.id) },
-        { label: c('agentId'), value: formatValue(record.agentId) },
+        { label: c('agentId'), value: formatValue(record.agent?.id) },
         { label: c('receivedAt'), value: formatDate(record.receivedAt) },
         { label: c('sentAt'), value: formatDate(record.sentAt) },
         { label: c('processed'), value: formatValue(record.processed) },
@@ -43,6 +43,19 @@ export function messagesDetailSections(record: AgentMessageRecord, t: TFunction)
         { label: c('contentJson'), value: formatValue(record.contentJson) },
         { label: c('contentExcel'), value: formatValue(record.contentExcel) },
       ],
+    },
+    {
+      title: group('platform-data'),
+      slug: 'platform-data',
+      rows: record.platform
+        ? [
+            { label: c('unit'), value: formatValue(record.platform.unit) },
+            { label: c('unitCode'), value: formatValue(record.platform.unitCode) },
+            { label: c('zayadId'), value: formatValue(record.platform.zayadId) },
+            { label: c('platform'), value: formatValue(record.platform.platform) },
+            { label: c('platformId'), value: formatValue(record.platform.platformId) },
+          ]
+        : [],
     },
   ];
 }

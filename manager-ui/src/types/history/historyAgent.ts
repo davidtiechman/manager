@@ -1,4 +1,4 @@
-export interface HistoryAgentPlatfrom {
+export interface HistoryAgentPlatform {
   id: number;
   unit: string;
   unitCode: string;
@@ -10,8 +10,8 @@ export interface HistoryAgentPlatfrom {
 
 export interface HistoryAgent {
   id: string;
-  // NOTE: field names match the server's exactly ("callSign", "platfrom").
+  // NOTE: field names match the server's exactly ("callSign", "platform").
   callSign: string;
   createdAt: string;
-  platfrom: HistoryAgentPlatfrom;
+  platform: HistoryAgentPlatform;
 }

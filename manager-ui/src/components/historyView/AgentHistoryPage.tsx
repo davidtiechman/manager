@@ -179,27 +179,27 @@ export default function AgentHistoryPage() {
                 <span className="snc-meta-value">
                   <span
                     className="snc-meta-dot"
-                    style={{ backgroundColor: unitDotColor(agent.platfrom.unit) }}
+                    style={{ backgroundColor: unitDotColor(agent.platform.unit) }}
                     aria-hidden="true"
                   />
-                  {agent.platfrom.unit}
+                  {agent.platform.unit}
                 </span>
               </div>
               <div className="snc-meta-item">
                 <span className="snc-meta-label">{t('meta.platform')}</span>
-                <span className="snc-meta-value">{agent.platfrom.platform}</span>
+                <span className="snc-meta-value">{agent.platform.platform}</span>
               </div>
               <div className="snc-meta-item">
                 <span className="snc-meta-label">{t('meta.zayadId')}</span>
-                <span className="snc-meta-value snc-meta-num">{agent.platfrom.zayadId}</span>
+                <span className="snc-meta-value snc-meta-num">{agent.platform.zayadId}</span>
               </div>
               <div className="snc-meta-item">
                 <span className="snc-meta-label">{t('meta.platformId')}</span>
-                <span className="snc-meta-value snc-meta-num">{agent.platfrom.platformId}</span>
+                <span className="snc-meta-value snc-meta-num">{agent.platform.platformId}</span>
               </div>
               <div className="snc-meta-item">
                 <span className="snc-meta-label">{t('meta.unitCode')}</span>
-                <span className="snc-meta-value snc-meta-num">{agent.platfrom.unitCode}</span>
+                <span className="snc-meta-value snc-meta-num">{agent.platform.unitCode}</span>
               </div>
               <div className="snc-meta-item snc-meta-item--created">
                 <span className="snc-meta-label">{t('meta.created')}</span>

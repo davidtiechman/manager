@@ -14,7 +14,7 @@ interface AgentCardProps {
 // One agent as a navigational card. The whole card is the click target.
 export default function AgentCard({ agent, onOpen, hideUnit, hidePlatform }: AgentCardProps) {
   const { t } = useTranslation('roster');
-  const p = agent.platfrom;
+  const p = agent.platform;
   return (
     <button type="button" className="rstr-card" onClick={() => onOpen(agent.id)}>
       <div className="rstr-card-top">

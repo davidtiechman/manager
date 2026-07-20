@@ -26,6 +26,7 @@ export const MESSAGES_GROUP_DEFS = [
   { name: 'General', color: '#0284c7' }, // sky
   { name: 'Message', color: '#7c3aed' }, // violet
   { name: 'Payload', color: '#059669' }, // emerald
+  { name: 'Platform Data', color: '#d97706' }, // amber
 ] as const satisfies readonly GroupDef[];
 
 type MessageGroup = (typeof MESSAGES_GROUP_DEFS)[number]['name'];
@@ -79,9 +80,10 @@ function buildColumnDefsInternal(
     }),
     col({
       group: 'General',
-      field: 'agentId',
+      colId: 'agentId',
       headerName: c('agentId'),
       headerTooltip: tip('agentId'),
+      valueGetter: (p) => p.data?.agent?.id,
       flex: 1,
       minWidth: 110,
       cellRenderer: TextCell,
@@ -150,6 +152,64 @@ function buildColumnDefsInternal(
       minWidth: 160,
       cellRenderer: TextCell,
       filter: 'agTextColumnFilter',
+    }),
+
+    // ── Platform Data ────────────────────────────────────────────
+    col({
+      group: 'Platform Data',
+      colId: 'platform',
+      headerName: c('platform'),
+      headerTooltip: tip('platform'),
+      valueGetter: (p) => p.data?.platform?.platform,
+      flex: 1.2,
+      minWidth: 120,
+      cellRenderer: TextCell,
+      filter: 'agTextColumnFilter',
+    }),
+    col({
+      group: 'Platform Data',
+      colId: 'platformId',
+      headerName: c('platformId'),
+      headerTooltip: tip('platformId'),
+      valueGetter: (p) => p.data?.platform?.platformId,
+      width: 120,
+      filter: 'agNumberColumnFilter',
+      cellRenderer: NumericCell,
+    }),
+    col({
+      group: 'Platform Data',
+      colId: 'unit',
+      headerName: c('unit'),
+      headerTooltip: tip('unit'),
+      valueGetter: (p) => p.data?.platform?.unit,
+      flex: 1.2,
+      minWidth: 120,
+      cellRenderer: TextCell,
+      filter: 'agTextColumnFilter',
+      hide: true,
+    }),
+    col({
+      group: 'Platform Data',
+      colId: 'unitCode',
+      headerName: c('unitCode'),
+      headerTooltip: tip('unitCode'),
+      valueGetter: (p) => p.data?.platform?.unitCode,
+      flex: 1,
+      minWidth: 110,
+      cellRenderer: TextCell,
+      filter: 'agTextColumnFilter',
+      hide: true,
+    }),
+    col({
+      group: 'Platform Data',
+      colId: 'zayadId',
+      headerName: c('zayadId'),
+      headerTooltip: tip('zayadId'),
+      valueGetter: (p) => p.data?.platform?.zayadId,
+      width: 120,
+      filter: 'agNumberColumnFilter',
+      cellRenderer: NumericCell,
+      hide: true,
     }),
   ];
 }

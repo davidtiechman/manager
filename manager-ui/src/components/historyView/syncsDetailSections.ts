@@ -7,7 +7,7 @@ import { formatDate, formatValue } from './grid/detailFormat';
 
 export function syncsDetailSections(record: AgentHistoryRecord, t: TFunction): DetailSection[] {
   const ac = record.details?.agentConfig;
-  const pd = record.details?.platfromData;
+  const pd = record.details?.platformData;
   const c = (id: string) => t(`sync.columns.${id}`);
   const group = (slug: string) => t(`groups.${slug}`);
 

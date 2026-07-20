@@ -109,7 +109,12 @@
       "processed": "עובד",
       "content": "תוכן",
       "contentJson": "תוכן JSON",
-      "contentExcel": "תוכן Excel"
+      "contentExcel": "תוכן Excel",
+      "platform": "סוג פלטפורמה",
+      "platformId": "צ",
+      "unit": "יחידה",
+      "unitCode": "קוד יחידה",
+      "zayadId": "מזהה צי\"די"
     },
     "tooltips": {
       "receivedAt": "התקבל ב",
@@ -121,7 +126,12 @@
       "processed": "עובד",
       "content": "תוכן",
       "contentJson": "תוכן JSON",
-      "contentExcel": "תוכן Excel"
+      "contentExcel": "תוכן Excel",
+      "platform": "פלטפורמה - שם",
+      "platformId": "פלטפורמה - צ",
+      "unit": "פלטפורמה - יחידה",
+      "unitCode": "פלטפורמה - קוד יחידה",
+      "zayadId": "פלטפורמה - מזהה צי\"די"
     }
   },
   "toolbar": {

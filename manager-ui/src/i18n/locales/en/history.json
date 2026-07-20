@@ -109,7 +109,12 @@
       "processed": "Processed",
       "content": "Content",
       "contentJson": "Content JSON",
-      "contentExcel": "Content Excel"
+      "contentExcel": "Content Excel",
+      "platform": "Platform",
+      "platformId": "Platform ID",
+      "unit": "Unit",
+      "unitCode": "Unit Code",
+      "zayadId": "Zayad ID"
     },
     "tooltips": {
       "receivedAt": "Received At",
@@ -121,7 +126,12 @@
       "processed": "Processed",
       "content": "Content",
       "contentJson": "Content JSON",
-      "contentExcel": "Content Excel"
+      "contentExcel": "Content Excel",
+      "platform": "Platform - Name",
+      "platformId": "Platform - ID",
+      "unit": "Platform - Unit",
+      "unitCode": "Platform - Unit Code",
+      "zayadId": "Platform - Zayad ID"
     }
   },
   "toolbar": {

@@ -38,7 +38,7 @@ export function distinctFacetValues(
 ): string[] {
   const set = new Set<string>();
   for (const a of agents) {
-    const v = a.platfrom?.[field];
+    const v = a.platform?.[field];
     if (v != null && v !== '') set.add(String(v));
   }
   return [...set].sort((x, y) => x.localeCompare(y));
@@ -46,7 +46,7 @@ export function distinctFacetValues(
 
 // Within a facet: OR (any selected value matches). Between facets: AND.
 function matchesFacets(agent: HistoryAgent, facets: RosterFacets): boolean {
-  const p = agent.platfrom;
+  const p = agent.platform;
   if (facets.unit.length && !facets.unit.includes(p?.unit)) return false;
   if (facets.platform.length && !facets.platform.includes(p?.platform)) return false;
   return true;
@@ -88,10 +88,10 @@ export function sortAgents(
       case 'callsign':   return a.callSign;
       case 'id':         return a.id;
       case 'createdAt':  return a.createdAt;
-      case 'zayadId':    return a.platfrom?.zayadId ?? 0;
-      case 'platformId': return a.platfrom?.platformId ?? 0;
-      case 'unit':       return a.platfrom?.unit ?? '';
-      case 'platform':   return a.platfrom?.platform ?? '';
+      case 'zayadId':    return a.platform?.zayadId ?? 0;
+      case 'platformId': return a.platform?.platformId ?? 0;
+      case 'unit':       return a.platform?.unit ?? '';
+      case 'platform':   return a.platform?.platform ?? '';
       default:           return a.callSign;
     }
   };
@@ -108,7 +108,7 @@ export interface AgentGroup { key: string; items: HistoryAgent[]; }
 export function groupAgents(agents: HistoryAgent[], by: 'unit' | 'platform'): AgentGroup[] {
   const map = new Map<string, HistoryAgent[]>();
   for (const a of agents) {
-    const k = a.platfrom?.[by] ?? '—';
+    const k = a.platform?.[by] ?? '—';
     let arr = map.get(k);
     if (!arr) { arr = []; map.set(k, arr); }
     arr.push(a);
@@ -118,9 +118,9 @@ export function groupAgents(agents: HistoryAgent[], by: 'unit' | 'platform'): Ag
     .sort((a, b) => a.key.localeCompare(b.key));
 }
 
-// The string value(s) a given scope searches against (note nested `platfrom`).
+// The string value(s) a given scope searches against (note nested `platform`).
 function valuesForScope(agent: HistoryAgent, scope: RosterScope): string[] {
-  const p = agent.platfrom;
+  const p = agent.platform;
   switch (scope) {
     case 'callsign':   return [agent.callSign];
     case 'id':         return [agent.id];

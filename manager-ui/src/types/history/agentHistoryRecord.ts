@@ -13,8 +13,8 @@ export interface AgentHistoryRecord {
     geoData: string | null;
     serverLut: string | null;
     agentConfig?: AgentConfig | null;
-    // NOTE: "platfrom" matches the server's (misspelled) field name.
-    platfromData?: PlatformData | null;
+    // Platform snapshot for this sync.
+    platformData?: PlatformData | null;
   };
 
   link_quality: {
