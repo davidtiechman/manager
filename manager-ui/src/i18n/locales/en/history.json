@@ -153,7 +153,25 @@
     "syncAria": "Sync details",
     "messageEyebrow": "Message",
     "messageAria": "Message details",
-    "closeDetails": "Close details"
+    "closeDetails": "Close details",
+    "expand": "Expand panel",
+    "collapse": "Shrink panel"
+  },
+  "json": {
+    "tree": "Tree",
+    "raw": "Raw",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
+    "copy": "Copy",
+    "copied": "Copied",
+    "search": "Search keys and values…",
+    "noMatches": "No matches",
+    "invalid": "Invalid JSON",
+    "empty": "No JSON content",
+    "truncated": "Preview truncated",
+    "tooLarge": "Payload too large for tree view ({{n}}+ nodes) — showing raw",
+    "keys": "{{n}} keys",
+    "items": "{{n}} items"
   },
   "noRows": {
     "syncs": "No records for this agent",

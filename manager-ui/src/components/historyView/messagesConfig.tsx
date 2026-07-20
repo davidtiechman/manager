@@ -32,6 +32,9 @@ export function messagesConfig(t: TFunction, dir: 'rtl' | 'ltr'): GridConfig<Age
         closeLabel={t('detail.closeDetails')}
         sections={record ? messagesDetailSections(record, t) : []}
         onClose={onClose}
+        expandable
+        expandLabel={t('detail.expand')}
+        collapseLabel={t('detail.collapse')}
       />
     ),
     noRowsText: t('noRows.messages'),

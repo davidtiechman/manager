@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next';
 import type { AgentMessageRecord } from '../../types/history/agentMessageRecord';
 import type { DetailSection } from './grid/RecordDetailPanel';
 import { formatDate, formatValue } from './grid/detailFormat';
+import { JsonTreeViewer } from './json/JsonTreeViewer';
 
 export function messagesDetailSections(record: AgentMessageRecord, t: TFunction): DetailSection[] {
   const c = (id: string) => t(`messages.columns.${id}`);
@@ -39,10 +40,8 @@ export function messagesDetailSections(record: AgentMessageRecord, t: TFunction)
     {
       title: group('payload'),
       slug: 'payload',
-      rows: [
-        { label: c('contentJson'), value: formatValue(record.contentJson) },
-        { label: c('contentExcel'), value: formatValue(record.contentExcel) },
-      ],
+      rows: [{ label: c('contentExcel'), value: formatValue(record.contentExcel) }],
+      content: <JsonTreeViewer key={record.id} value={record.contentJson} />,
     },
     {
       title: group('platform-data'),

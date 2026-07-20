@@ -18,6 +18,7 @@ import {
   type GridColDef,
   type GroupDef,
 } from './grid/gridCells';
+import { JsonPreviewCell, JsonCellTooltip } from './json/JsonPreviewCell';
 
 export const MESSAGES_BLOCK_SIZE = 200;
 
@@ -140,7 +141,11 @@ function buildColumnDefsInternal(
       headerTooltip: tip('contentJson'),
       flex: 2,
       minWidth: 160,
-      cellRenderer: TextCell,
+      cellRenderer: JsonPreviewCell,
+      tooltipComponent: JsonCellTooltip,
+      // Sentinel: any truthy string shows the tooltip; '' suppresses it.
+      tooltipValueGetter: (p) =>
+        p.data == null || p.value == null || p.value === '' ? '' : 'json',
       filter: 'agTextColumnFilter',
     }),
     col({

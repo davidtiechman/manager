@@ -153,7 +153,25 @@
     "syncAria": "פרטי סנכרון",
     "messageEyebrow": "הודעה",
     "messageAria": "פרטי הודעה",
-    "closeDetails": "סגירת פרטים"
+    "closeDetails": "סגירת פרטים",
+    "expand": "הרחבת החלונית",
+    "collapse": "כיווץ החלונית"
+  },
+  "json": {
+    "tree": "עץ",
+    "raw": "גולמי",
+    "expandAll": "הרחבת הכול",
+    "collapseAll": "כיווץ הכול",
+    "copy": "העתקה",
+    "copied": "הועתק",
+    "search": "חיפוש במפתחות ובערכים…",
+    "noMatches": "אין תוצאות",
+    "invalid": "JSON לא תקין",
+    "empty": "אין תוכן JSON",
+    "truncated": "התצוגה קוצרה",
+    "tooLarge": "התוכן גדול מדי לתצוגת עץ ({{n}}+ צמתים) — מוצג גולמי",
+    "keys": "{{n}} מפתחות",
+    "items": "{{n}} פריטים"
   },
   "noRows": {
     "syncs": "אין רשומות עבור סוכן זה",

@@ -21,6 +21,7 @@ import '../AgentSyncsList.css';
 import '../syncGrid.theme.css';
 import '../syncGrid.cells.css';
 import '../ColumnPicker.css';
+import '../json/jsonViewer.css';
 
 import { useTranslation } from 'react-i18next';
 
@@ -514,6 +515,7 @@ export default function HistoryDataGrid<T>({ agentId, config, leftSlot }: Histor
             suppressCellFocus={false}
             rowSelection={{ mode: 'singleRow', checkboxes: false, enableClickSelection: true }}
             tooltipShowDelay={400}
+            tooltipInteraction
             overlayNoRowsTemplate={`<span class="snc-no-rows">${config.noRowsText}</span>`}
           />
           {config.renderDetail(detailRecord, closeDetail)}
