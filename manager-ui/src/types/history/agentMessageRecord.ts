@@ -4,7 +4,6 @@ import type { PlatformData } from './agentHistoryRecord';
 
 export interface AgentMessageRecord {
   id: string;
-  // Server returns the agent as a nested relation, not a flat id.
   agent?: { id: string } | null;
   receivedAt: string | null;
   sentAt: string | null;
