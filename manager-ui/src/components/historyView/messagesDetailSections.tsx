@@ -41,7 +41,12 @@ export function messagesDetailSections(record: AgentMessageRecord, t: TFunction)
       title: group('payload'),
       slug: 'payload',
       rows: [{ label: c('contentExcel'), value: formatValue(record.contentExcel) }],
-      content: <JsonTreeViewer key={record.id} value={record.contentJson} />,
+      content: (
+        <div key={record.id}>
+          <div className="snc-json-title">{c('contentJson')}</div>
+          <JsonTreeViewer value={record.contentJson} />
+        </div>
+      ),
     },
     {
       title: group('platform-data'),
